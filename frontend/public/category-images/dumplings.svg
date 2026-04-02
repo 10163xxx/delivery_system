@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#304032"/>
+      <stop offset="100%" stop-color="#6a7b4c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect y="236" width="640" height="124" fill="#182117" opacity=".34"/>
+  <ellipse cx="320" cy="214" rx="170" ry="40" fill="#000" opacity=".22"/>
+  <rect x="174" y="78" width="292" height="176" rx="24" fill="#242b22" filter="url(#shadow)"/>
+  <rect x="188" y="92" width="264" height="148" rx="18" fill="#f7f2e9"/>
+  <g fill="#fbf4df" stroke="#e5d7b7" stroke-width="3">
+    <path d="M228 150c12-20 28-31 46-31 19 0 36 12 48 34-15 10-31 16-48 16-18 0-33-6-46-19z"/>
+    <path d="M292 154c13-23 29-35 49-35 19 0 36 13 47 36-13 10-31 16-47 16-18 0-35-6-49-17z"/>
+    <path d="M356 150c12-20 28-31 46-31 18 0 34 12 46 34-13 10-29 16-45 16-18 0-34-6-47-19z"/>
+    <path d="M244 198c13-20 29-31 47-31s34 12 46 34c-13 10-29 16-46 16-18 0-34-6-47-19z"/>
+    <path d="M308 201c13-22 29-34 48-34s35 13 46 36c-12 10-29 15-46 15-18 0-34-6-48-17z"/>
+  </g>
+  <circle cx="404" cy="119" r="18" fill="#7e2018"/>
+  <circle cx="404" cy="119" r="12" fill="#a82619"/>
+  <rect x="24" y="24" width="272" height="112" rx="24" fill="#050505" opacity=".8"/>
+  <rect x="36" y="36" width="248" height="88" rx="18" fill="#111111" opacity=".92"/>
+  <text x="52" y="74" font-size="34" font-weight="700" fill="#fff" stroke="#000" stroke-width="1.5" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">饺子馄饨</text>
+  <text x="52" y="106" font-size="17" fill="#ffffff" stroke="#000" stroke-width="0.8" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">饺子馄饨锅贴一类，清爽耐吃</text>
+</svg>

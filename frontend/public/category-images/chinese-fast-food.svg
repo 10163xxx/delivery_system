@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a261e"/>
+      <stop offset="100%" stop-color="#8e5b36"/>
+    </linearGradient>
+    <radialGradient id="plate" cx="50%" cy="48%" r="52%">
+      <stop offset="0%" stop-color="#fffdf5"/>
+      <stop offset="100%" stop-color="#ddd5c7"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect y="240" width="640" height="120" fill="#241711" opacity=".35"/>
+  <ellipse cx="320" cy="212" rx="168" ry="40" fill="#000" opacity=".22"/>
+  <circle cx="320" cy="170" r="126" fill="url(#plate)" filter="url(#shadow)"/>
+  <circle cx="320" cy="170" r="108" fill="#f5efe4"/>
+  <ellipse cx="320" cy="194" rx="88" ry="26" fill="#f0f2e0"/>
+  <g opacity=".98">
+    <path d="M250 160c20-24 50-36 78-34 18 2 38 6 54 17 14 10 24 24 31 41-33 18-83 27-128 17-22-5-43-17-56-33 4-3 14-6 21-8z" fill="#74472d"/>
+    <path d="M256 150c14-14 29-21 50-24 20-3 42 0 61 10 19 10 36 27 44 48-28 13-62 20-94 18-37-2-69-18-87-39 7-4 17-9 26-13z" fill="#3f2616"/>
+    <path d="M270 146c26-13 50-16 77-13 20 2 41 11 57 27 9 9 15 19 20 30-20 9-47 15-72 15-38 1-73-11-98-31 4-10 9-18 16-28z" fill="#a44726"/>
+    <path d="M245 186c13-12 37-17 57-15 9 1 20 4 29 9-7 12-24 21-40 25-19 5-40 2-57-6 2-5 6-9 11-13z" fill="#b86f2b"/>
+    <path d="M334 132c9-9 21-11 32-9 14 3 28 13 34 26-11 7-28 10-42 7-10-3-20-11-24-20z" fill="#c77a34"/>
+    <path d="M301 126c10 3 17 12 18 22 1 9-3 18-10 25-12-2-24-11-28-22-4-10 0-21 9-25 2-1 7-1 11 0z" fill="#f7cf78"/>
+    <path d="M349 158c13-2 27 3 35 12 7 8 9 19 8 29-14 5-31 4-43-3-10-6-17-18-16-30 4-4 10-7 16-8z" fill="#e3a64a"/>
+  </g>
+  <rect x="24" y="24" width="272" height="112" rx="24" fill="#050505" opacity=".8"/>
+  <rect x="36" y="36" width="248" height="88" rx="18" fill="#111111" opacity=".92"/>
+  <text x="52" y="76" font-size="34" font-weight="700" fill="#fff" stroke="#000" stroke-width="1.5" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">中式快餐</text>
+  <text x="52" y="108" font-size="17" fill="#ffffff" stroke="#000" stroke-width="0.8" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">现炒热菜和米饭，适合快速下单</text>
+</svg>

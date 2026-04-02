@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a2f3d"/>
+      <stop offset="100%" stop-color="#a86a86"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity=".26"/>
+    </filter>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect y="234" width="640" height="126" fill="#24131e" opacity=".3"/>
+  <ellipse cx="262" cy="218" rx="92" ry="24" fill="#000" opacity=".22"/>
+  <ellipse cx="394" cy="218" rx="92" ry="24" fill="#000" opacity=".22"/>
+  <g filter="url(#shadow)">
+    <rect x="206" y="96" width="110" height="126" rx="22" fill="#f3d8aa"/>
+    <rect x="334" y="92" width="118" height="130" rx="24" fill="#f6c2d4"/>
+  </g>
+  <rect x="218" y="110" width="86" height="96" rx="16" fill="#eec27c"/>
+  <rect x="348" y="106" width="90" height="100" rx="18" fill="#f2aac0"/>
+  <circle cx="250" cy="190" r="10" fill="#2d1b15"/>
+  <circle cx="270" cy="188" r="10" fill="#2d1b15"/>
+  <circle cx="236" cy="172" r="9" fill="#2d1b15"/>
+  <circle cx="366" cy="190" r="10" fill="#efedf1"/>
+  <circle cx="390" cy="182" r="10" fill="#efedf1"/>
+  <circle cx="414" cy="192" r="10" fill="#efedf1"/>
+  <rect x="258" y="72" width="8" height="36" rx="4" fill="#ffffff" opacity=".9"/>
+  <rect x="390" y="66" width="8" height="40" rx="4" fill="#ffffff" opacity=".9"/>
+  <rect x="24" y="24" width="272" height="112" rx="24" fill="#050505" opacity=".8"/>
+  <rect x="36" y="36" width="248" height="88" rx="18" fill="#111111" opacity=".92"/>
+  <text x="52" y="74" font-size="34" font-weight="700" fill="#fff" stroke="#000" stroke-width="1.5" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">奶茶果饮</text>
+  <text x="52" y="106" font-size="17" fill="#ffffff" stroke="#000" stroke-width="0.8" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">奶茶果饮集中，适合单点补饮品</text>
+</svg>

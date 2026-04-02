@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+CACHE_DIR="${SBT_CACHE_DIR:-$PROJECT_DIR/.cache}"
+SBT_LAUNCH_JAR="${SBT_LAUNCH_JAR:-/mnt/c/Program Files (x86)/sbt/bin/sbt-launch.jar}"
+COURSIER_CACHE_DIR="${COURSIER_CACHE:-$CACHE_DIR/coursier}"
+SBT_BOOT_DIR="${SBT_BOOT_DIR:-$CACHE_DIR/sbt-boot}"
+SBT_GLOBAL_BASE="${SBT_GLOBAL_BASE:-$CACHE_DIR/sbt-home}"
+SBT_IVY_HOME="${SBT_IVY_HOME:-$CACHE_DIR/ivy2}"
+XDG_CACHE_DIR="${XDG_CACHE_HOME:-$CACHE_DIR/xdg}"
+HOME_DIR="${HOME:-$CACHE_DIR/home}"
+
+if [[ ! -f "$SBT_LAUNCH_JAR" ]]; then
+  echo "Missing sbt launcher jar: $SBT_LAUNCH_JAR" >&2
+  echo "Set SBT_LAUNCH_JAR to your local sbt-launch.jar path." >&2
+  exit 1
+fi
+
+mkdir -p \
+  "$COURSIER_CACHE_DIR" \
+  "$SBT_BOOT_DIR" \
+  "$SBT_GLOBAL_BASE" \
+  "$SBT_IVY_HOME" \
+  "$XDG_CACHE_DIR" \
+  "$HOME_DIR"
+
+exec env \
+  COURSIER_CACHE="$COURSIER_CACHE_DIR" \
+  XDG_CACHE_HOME="$XDG_CACHE_DIR" \
+  HOME="$HOME_DIR" \
+  java \
+  -Dsbt.boot.directory="$SBT_BOOT_DIR" \
+  -Dsbt.global.base="$SBT_GLOBAL_BASE" \
+  -Dsbt.ivy.home="$SBT_IVY_HOME" \
+  -Divy.home="$SBT_IVY_HOME" \
+  -jar "$SBT_LAUNCH_JAR" \
+  "$@"

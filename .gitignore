@@ -1,0 +1,9 @@
+backend/data/*.json
+frontend/node_modules/
+frontend/dist/
+backend/target/
+backend/project/target/
+backend/.cache/
+backend/.bsp/
+backend/.coursier/
+.idea/

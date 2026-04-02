@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#30472c"/>
+      <stop offset="100%" stop-color="#658b51"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity=".26"/>
+    </filter>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect y="236" width="640" height="124" fill="#162114" opacity=".28"/>
+  <ellipse cx="322" cy="214" rx="170" ry="40" fill="#000" opacity=".22"/>
+  <circle cx="322" cy="166" r="122" fill="#f6f6f3" filter="url(#shadow)"/>
+  <circle cx="322" cy="166" r="110" fill="#f0f2e9"/>
+  <circle cx="322" cy="166" r="96" fill="#d8ecc7"/>
+  <g opacity=".98">
+    <ellipse cx="274" cy="150" rx="34" ry="18" fill="#7fb75c" transform="rotate(-18 274 150)"/>
+    <ellipse cx="340" cy="138" rx="36" ry="19" fill="#73a74c" transform="rotate(16 340 138)"/>
+    <ellipse cx="374" cy="188" rx="30" ry="16" fill="#5f9340" transform="rotate(-12 374 188)"/>
+    <ellipse cx="286" cy="192" rx="38" ry="20" fill="#6aa14a" transform="rotate(14 286 192)"/>
+    <circle cx="333" cy="170" r="18" fill="#f0ca5a"/>
+    <circle cx="302" cy="143" r="16" fill="#ef5f47"/>
+    <circle cx="370" cy="151" r="15" fill="#f27b40"/>
+    <circle cx="266" cy="177" r="13" fill="#f1d77a"/>
+    <circle cx="351" cy="203" r="14" fill="#ffffff"/>
+  </g>
+  <rect x="24" y="24" width="272" height="112" rx="24" fill="#050505" opacity=".8"/>
+  <rect x="36" y="36" width="248" height="88" rx="18" fill="#111111" opacity=".92"/>
+  <text x="52" y="74" font-size="34" font-weight="700" fill="#fff" stroke="#000" stroke-width="1.5" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">轻食沙拉</text>
+  <text x="52" y="106" font-size="17" fill="#ffffff" stroke="#000" stroke-width="0.8" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">轻负担组合，适合健身和工作餐</text>
+</svg>
