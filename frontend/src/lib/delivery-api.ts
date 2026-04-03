@@ -23,6 +23,7 @@ import type {
   ReviewMerchantApplicationRequest,
   ReviewOrderRequest,
   SubmitPartialRefundRequest,
+  UpdateMenuItemStockRequest,
 } from '@/domain-types/delivery'
 
 const SESSION_STORAGE_KEY = 'delivery-session-token'
@@ -167,6 +168,19 @@ export const deliveryApi = {
     }),
   addStoreMenuItem: (storeId: string, payload: AddMenuItemRequest) =>
     request<DeliveryAppState>(`/api/delivery/stores/${storeId}/menu`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  removeStoreMenuItem: (storeId: string, menuItemId: string) =>
+    request<DeliveryAppState>(`/api/delivery/stores/${storeId}/menu/${menuItemId}/remove`, {
+      method: 'POST',
+    }),
+  updateStoreMenuItemStock: (
+    storeId: string,
+    menuItemId: string,
+    payload: UpdateMenuItemStockRequest,
+  ) =>
+    request<DeliveryAppState>(`/api/delivery/stores/${storeId}/menu/${menuItemId}/stock`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

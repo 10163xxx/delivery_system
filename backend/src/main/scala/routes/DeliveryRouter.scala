@@ -127,6 +127,21 @@ object DeliveryRouter:
           }
       }
 
+    case req @ POST -> Root / "api" / "delivery" / "stores" / storeId / "menu" / menuItemId / "remove" =>
+      withRole(req, UserRole.merchant) { user =>
+        if !DeliveryStateRepo.ownsStore(storeId, user.displayName) then Forbidden("无权修改其他商家的菜品")
+        else DeliveryStateRepo.removeMenuItem(storeId, menuItemId).flatMap(handleStateResult)
+      }
+
+    case req @ POST -> Root / "api" / "delivery" / "stores" / storeId / "menu" / menuItemId / "stock" =>
+      withRole(req, UserRole.merchant) { user =>
+        if !DeliveryStateRepo.ownsStore(storeId, user.displayName) then Forbidden("无权修改其他商家的菜品")
+        else
+          req.as[UpdateMenuItemStockRequest].flatMap { payload =>
+            DeliveryStateRepo.updateMenuItemStock(storeId, menuItemId, payload).flatMap(handleStateResult)
+          }
+      }
+
     case req @ POST -> Root / "api" / "delivery" / "orders" =>
       withRole(req, UserRole.customer) { user =>
         req.as[CreateOrderRequest].flatMap { payload =>

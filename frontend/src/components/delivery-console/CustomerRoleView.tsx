@@ -23,13 +23,15 @@ export function CustomerRoleView(props: any) {
     deliveryAddress,
     enterStore,
     formatAggregateRating,
+    formatBusinessHours,
     formatPrice,
-    formatStoreStatus,
+    formatStoreAvailability,
     formatTime,
     getCategoryMeta,
     getRemainingReviewDays,
     hasPendingRiderReview,
     hasPendingStoreReview,
+    isStoreCurrentlyOpen,
     isCheckoutExpanded,
     leaveStore,
     navigate,
@@ -59,6 +61,7 @@ export function CustomerRoleView(props: any) {
     selectedRechargeAmount,
     selectedStore,
     selectedStoreCategory,
+    selectedStoreCanOrder,
     selectedStoreHasMenu,
     selectRechargeAmount,
     setAddressDraft,
@@ -176,8 +179,9 @@ export function CustomerRoleView(props: any) {
                     <strong>{selectedStore.name}</strong>
                     <p className="meta-line">
                       {selectedStore.category} · {selectedStore.merchantName} ·{' '}
-                      {formatStoreStatus(selectedStore.status)}
+                      {formatStoreAvailability(selectedStore)}
                     </p>
+                    <p className="meta-line">营业时间 {formatBusinessHours(selectedStore.businessHours)}</p>
                   </div>
                   <div>
                     <p>店铺评分</p>
@@ -212,6 +216,12 @@ export function CustomerRoleView(props: any) {
                   </button>
                 </div>
 
+                {!isStoreCurrentlyOpen(selectedStore) ? (
+                  <div className="banner warning">
+                    当前不在营业时间内，店铺营业时间为 {formatBusinessHours(selectedStore.businessHours)}。
+                  </div>
+                ) : null}
+
                 {selectedStore.menu.length > 0 ? (
                   <div className="menu-grid">
                     {selectedStore.menu.map((item: any) => (
@@ -225,6 +235,13 @@ export function CustomerRoleView(props: any) {
                         <div>
                           <h3>{item.name}</h3>
                           <p>{item.description}</p>
+                          {item.remainingQuantity != null ? (
+                            <p className="meta-line">
+                              {item.remainingQuantity > 0
+                                ? `限量供应，剩余 ${item.remainingQuantity} 份`
+                                : '当前已售罄'}
+                            </p>
+                          ) : null}
                         </div>
                         <div className="menu-footer">
                           <strong>{formatPrice(item.priceCents)}</strong>
@@ -238,6 +255,7 @@ export function CustomerRoleView(props: any) {
                             <span>{quantities[item.id] ?? 0}</span>
                             <button
                               type="button"
+                              disabled={item.remainingQuantity != null && (quantities[item.id] ?? 0) >= item.remainingQuantity}
                               onClick={() => updateQuantity(item, (quantities[item.id] ?? 0) + 1)}
                             >
                               +
@@ -268,11 +286,17 @@ export function CustomerRoleView(props: any) {
                   </div>
                   <button
                     className="primary-button"
-                    disabled={!selectedStoreHasMenu}
+                    disabled={!selectedStoreCanOrder}
                     onClick={() => openCheckout()}
                     type="button"
                   >
-                    {selectedStoreHasMenu ? '提交订单' : '暂无菜品可下单'}
+                    {selectedStore.status === 'Revoked'
+                      ? '当前不可下单'
+                      : !isStoreCurrentlyOpen(selectedStore)
+                        ? '非营业时间'
+                        : selectedStoreHasMenu
+                          ? '提交订单'
+                          : '暂无菜品可下单'}
                   </button>
                 </div>
 
@@ -400,7 +424,7 @@ export function CustomerRoleView(props: any) {
                           className="primary-button"
                           disabled={
                             !selectedCustomer ||
-                            !selectedStoreHasMenu ||
+                            !selectedStoreCanOrder ||
                             selectedCustomer.balanceCents < cartTotal
                           }
                           onClick={() => void submitOrder()}
@@ -418,7 +442,7 @@ export function CustomerRoleView(props: any) {
                 {storeCategories.map((category: string) => {
                   const storesInCategory = visibleStores.filter((store: any) => store.category === category)
                   const openStoreCount = storesInCategory.filter(
-                    (store: any) => store.status !== 'Revoked' && store.menu.length > 0,
+                    (store: any) => isStoreCurrentlyOpen(store) && store.menu.length > 0,
                   ).length
 
                   return (
@@ -464,12 +488,12 @@ export function CustomerRoleView(props: any) {
                   </button>
                 </div>
 
-                <div className="store-grid">
+                <div className="store-grid compact-store-grid">
                   {categoryStores.map((store: any) => (
-                    <article key={store.id} className="store-card">
+                    <article key={store.id} className="store-card compact-store-card">
                       <DisplayImageSlot
                         alt={`${store.name} 展示图`}
-                        className="store-image"
+                        className="store-image compact-store-image"
                         label="餐厅展示图"
                         src={store.imageUrl}
                       />
@@ -479,34 +503,42 @@ export function CustomerRoleView(props: any) {
                           <h3>{store.name}</h3>
                         </div>
                         <span className={store.status === 'Revoked' ? 'badge warning' : 'badge success'}>
-                          {formatStoreStatus(store.status)}
+                          {formatStoreAvailability(store)}
                         </span>
                       </div>
-                      <p>{store.category}</p>
-                      <p className="meta-line">
-                        商家 {store.merchantName} · {store.menu.length} 道菜 · 预计 {store.avgPrepMinutes} 分钟出餐
-                      </p>
-                      {store.menu.length === 0 ? (
-                        <div className="banner info">当前店铺还没有上架菜品，顾客暂时无法下单。</div>
-                      ) : null}
-                      <div className="summary-bar">
+                      <div className="summary-bar compact-store-summary">
                         <div>
                           <p>店铺评分</p>
                           <strong>{formatAggregateRating(store.averageRating, store.ratingCount)}</strong>
                         </div>
                         <div>
-                          <p>营业额</p>
-                          <strong>{formatPrice(store.revenueCents)}</strong>
+                          <p>可点菜品</p>
+                          <strong>{store.menu.length} 道</strong>
+                        </div>
+                        <div>
+                          <p>出餐速度</p>
+                          <strong>{store.avgPrepMinutes} 分钟</strong>
                         </div>
                       </div>
+                      <p className="meta-line compact-store-hint">
+                        {store.status === 'Revoked'
+                          ? '当前店铺不可下单，详情进入店铺后可查看。'
+                          : !isStoreCurrentlyOpen(store)
+                            ? '当前不在营业时间内，更多营业信息进入店铺后查看。'
+                            : store.menu.length === 0
+                              ? '当前暂未上架菜品，详细信息进入店铺后查看。'
+                              : '更多营业时间、商家信息和完整菜单需进入店铺后查看。'}
+                      </p>
                       <button
                         className="primary-button"
-                        disabled={store.status === 'Revoked' || store.menu.length === 0}
+                        disabled={store.status === 'Revoked' || !isStoreCurrentlyOpen(store) || store.menu.length === 0}
                         onClick={() => enterStore(store.id)}
                         type="button"
                       >
                         {store.status === 'Revoked'
                           ? '当前不可下单'
+                          : !isStoreCurrentlyOpen(store)
+                            ? '非营业时间'
                           : store.menu.length === 0
                             ? '待上架菜品'
                             : '进入店铺'}

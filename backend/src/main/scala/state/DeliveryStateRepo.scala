@@ -4,7 +4,7 @@ import cats.effect.IO
 import objects.*
 
 import java.nio.file.Paths
-import java.time.{Duration, Instant, ZoneId}
+import java.time.{Duration, Instant, LocalTime, ZoneId}
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
@@ -269,6 +269,7 @@ object DeliveryStateRepo:
             merchantName = sanitized.merchantName,
             storeName = sanitized.storeName,
             category = sanitized.category,
+            businessHours = sanitized.businessHours,
             avgPrepMinutes = sanitized.avgPrepMinutes,
             imageUrl = sanitized.imageUrl,
             note = sanitized.note,
@@ -343,9 +344,10 @@ object DeliveryStateRepo:
           _ <- Either.cond(customer.accountStatus == AccountStatus.Active, (), "顾客账号已被封禁")
           store <- current.stores.find(_.id == request.storeId).toRight("店铺不存在")
           _ <- Either.cond(store.status != "Revoked", (), "店铺已取消营业资格")
+          timestamp = now()
+          _ <- Either.cond(isStoreOpenAt(store, timestamp), (), s"当前店铺营业时间为 ${formatBusinessHours(store.businessHours)}，暂不可下单")
           items <- buildLineItems(store, request.items)
           deliveryAddress <- sanitizeRequiredText(request.deliveryAddress, 120, "配送地址不能为空")
-          timestamp = now()
           scheduledDeliveryAt <- validateScheduledDeliveryAt(request.scheduledDeliveryAt, timestamp)
           itemSubtotalCents = items.map(item => item.unitPriceCents * item.quantity).sum
           totalPriceCents = itemSubtotalCents + DeliveryFeeCents
@@ -393,6 +395,22 @@ object DeliveryStateRepo:
           withDerivedData(
             current.copy(
               orders = order :: current.orders,
+              stores = current.stores.map(entry =>
+                if entry.id == store.id then
+                  entry.copy(
+                    menu = entry.menu.map { menuItem =>
+                      items.find(_.menuItemId == menuItem.id) match
+                        case Some(lineItem) =>
+                          menuItem.copy(
+                            remainingQuantity = menuItem.remainingQuantity.map(quantity =>
+                              Math.max(0, quantity - lineItem.quantity)
+                            )
+                          )
+                        case None => menuItem
+                    }
+                  )
+                else entry
+              ),
               customers = current.customers.map(entry =>
                 if entry.id == customer.id then entry.copy(balanceCents = entry.balanceCents - totalPriceCents)
                 else entry
@@ -418,12 +436,64 @@ object DeliveryStateRepo:
             description = sanitized.description,
             priceCents = sanitized.priceCents,
             imageUrl = sanitized.imageUrl,
+            remainingQuantity = sanitized.remainingQuantity,
           )
         yield
           withDerivedData(
             current.copy(
               stores = current.stores.map(entry =>
                 if entry.id == store.id then entry.copy(menu = entry.menu :+ nextMenuItem) else entry
+              )
+            )
+          )
+      }
+    }
+
+  def removeMenuItem(
+      storeId: String,
+      menuItemId: String,
+  ): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          store <- current.stores.find(_.id == storeId).toRight("店铺不存在")
+          _ <- store.menu.find(_.id == menuItemId).toRight("菜品不存在")
+        yield
+          withDerivedData(
+            current.copy(
+              stores = current.stores.map(entry =>
+                if entry.id == store.id then entry.copy(menu = entry.menu.filterNot(_.id == menuItemId))
+                else entry
+              )
+            )
+          )
+      }
+    }
+
+  def updateMenuItemStock(
+      storeId: String,
+      menuItemId: String,
+      request: UpdateMenuItemStockRequest,
+  ): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          store <- current.stores.find(_.id == storeId).toRight("店铺不存在")
+          _ <- store.menu.find(_.id == menuItemId).toRight("菜品不存在")
+          sanitized <- validateMenuItemStockRequest(request)
+        yield
+          withDerivedData(
+            current.copy(
+              stores = current.stores.map(entry =>
+                if entry.id == store.id then
+                  entry.copy(
+                    menu = entry.menu.map(menuItem =>
+                      if menuItem.id == menuItemId then
+                        menuItem.copy(remainingQuantity = sanitized.remainingQuantity)
+                      else menuItem
+                    )
+                  )
+                else entry
               )
             )
           )
@@ -944,11 +1014,13 @@ object DeliveryStateRepo:
       storeName <- sanitizeRequiredText(request.storeName, 40, "店铺名称不能为空")
       category <- sanitizeRequiredText(request.category, 20, "店铺大类不能为空")
       _ <- Either.cond(StoreCategories.contains(category), (), "店铺大类不合法")
+      businessHours <- validateBusinessHours(request.businessHours)
       _ <- Either.cond(request.avgPrepMinutes > 0 && request.avgPrepMinutes <= 120, (), "预计出餐时间需在 1 到 120 分钟之间")
     yield MerchantRegistrationRequest(
       merchantName = merchantName,
       storeName = storeName,
       category = category,
+      businessHours = businessHours,
       avgPrepMinutes = request.avgPrepMinutes,
       imageUrl = sanitizeOptionalText(request.imageUrl, 500),
       note = sanitizeOptionalText(request.note, 160),
@@ -961,12 +1033,27 @@ object DeliveryStateRepo:
       name <- sanitizeRequiredText(request.name, 40, "菜品名称不能为空")
       description <- sanitizeRequiredText(request.description, 160, "菜品说明不能为空")
       _ <- Either.cond(request.priceCents > 0 && request.priceCents <= 999999, (), "菜品价格需在 0.01 到 9999.99 元之间")
+      _ <- Either.cond(
+        request.remainingQuantity.forall(quantity => quantity >= 1 && quantity <= 10),
+        (),
+        "限量库存需在 1 到 10 之间",
+      )
       imageUrl <- sanitizeOptionalText(request.imageUrl, 500).toRight("请上传菜品图片或填写可访问的图片 URL")
     yield AddMenuItemRequest(
       name = name,
       description = description,
       priceCents = request.priceCents,
       imageUrl = Some(imageUrl),
+      remainingQuantity = request.remainingQuantity,
+    )
+
+  private def validateMenuItemStockRequest(
+      request: UpdateMenuItemStockRequest
+  ): Either[String, UpdateMenuItemStockRequest] =
+    Either.cond(
+      request.remainingQuantity.forall(quantity => quantity >= 0 && quantity <= 10),
+      request,
+      "剩余份数需在 0 到 10 之间，留空表示不限量",
     )
 
   private def validateReviewRequest(
@@ -1068,6 +1155,14 @@ object DeliveryStateRepo:
         for
           lineItems <- acc
           menuItem <- store.menu.find(_.id == item.menuItemId).toRight(s"菜品不存在: ${item.menuItemId}")
+          _ <- Either.cond(
+            menuItem.remainingQuantity.forall(_ >= item.quantity),
+            (),
+            menuItem.remainingQuantity match
+              case Some(0) => s"${menuItem.name} 已售罄"
+              case Some(remaining) => s"${menuItem.name} 当前仅剩 ${remaining} 份"
+              case None => s"${menuItem.name} 库存不足",
+          )
         yield lineItems :+ OrderLineItem(menuItem.id, menuItem.name, item.quantity, menuItem.priceCents, 0)
       }
     }
@@ -1489,6 +1584,7 @@ object DeliveryStateRepo:
       category = application.category,
       cuisine = application.category,
       status = "Open",
+      businessHours = application.businessHours,
       avgPrepMinutes = application.avgPrepMinutes,
       imageUrl = application.imageUrl,
       menu = List.empty,
@@ -1497,6 +1593,37 @@ object DeliveryStateRepo:
       oneStarRatingCount = 0,
       revenueCents = 0,
     )
+
+  private def validateBusinessHours(
+      businessHours: BusinessHours
+  ): Either[String, BusinessHours] =
+    for
+      openTime <- sanitizeRequiredText(businessHours.openTime, 5, "开业时间不能为空")
+      closeTime <- sanitizeRequiredText(businessHours.closeTime, 5, "打烊时间不能为空")
+      open <- parseBusinessTime(openTime).toRight("营业时间格式不正确，应为 HH:mm")
+      close <- parseBusinessTime(closeTime).toRight("营业时间格式不正确，应为 HH:mm")
+      _ <- Either.cond(open.isBefore(close), (), "打烊时间需晚于开业时间")
+    yield BusinessHours(
+      openTime = open.toString,
+      closeTime = close.toString,
+    )
+
+  private def parseBusinessTime(value: String): Option[LocalTime] =
+    try Some(LocalTime.parse(value))
+    catch case _: Exception => None
+
+  private def formatBusinessHours(businessHours: BusinessHours): String =
+    s"${businessHours.openTime} - ${businessHours.closeTime}"
+
+  private def isStoreOpenAt(store: Store, currentTimestamp: String): Boolean =
+    (for
+      instant <- parseInstant(currentTimestamp)
+      open <- parseBusinessTime(store.businessHours.openTime)
+      close <- parseBusinessTime(store.businessHours.closeTime)
+    yield
+      val currentLocalTime = instant.atZone(DeliveryScheduleZone).toLocalTime
+      !currentLocalTime.isBefore(open) && currentLocalTime.isBefore(close)
+    ).getOrElse(false)
 
   private def latestApprovedEligibilityReviewTimes(
       reviews: List[EligibilityReview],

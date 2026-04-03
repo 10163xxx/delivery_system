@@ -67,6 +67,12 @@ export interface MenuItem {
   description: string
   priceCents: number
   imageUrl?: string
+  remainingQuantity?: number
+}
+
+export interface BusinessHours {
+  openTime: string
+  closeTime: string
 }
 
 export interface Store {
@@ -76,6 +82,7 @@ export interface Store {
   category: StoreCategory
   cuisine: string
   status: 'Open' | 'Busy' | 'Revoked'
+  businessHours: BusinessHours
   avgPrepMinutes: number
   imageUrl?: string
   menu: MenuItem[]
@@ -107,6 +114,7 @@ export interface MerchantApplication {
   merchantName: string
   storeName: string
   category: StoreCategory
+  businessHours: BusinessHours
   avgPrepMinutes: number
   imageUrl?: string
   note?: string
@@ -283,6 +291,7 @@ export interface MerchantRegistrationRequest {
   merchantName: string
   storeName: string
   category: StoreCategory
+  businessHours: BusinessHours
   avgPrepMinutes: number
   imageUrl?: string
   note?: string
@@ -293,6 +302,11 @@ export interface AddMenuItemRequest {
   description: string
   priceCents: number
   imageUrl?: string
+  remainingQuantity?: number
+}
+
+export interface UpdateMenuItemStockRequest {
+  remainingQuantity?: number
 }
 
 export interface ImageUploadResponse {

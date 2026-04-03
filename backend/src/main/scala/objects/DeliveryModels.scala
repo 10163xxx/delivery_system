@@ -151,10 +151,35 @@ final case class MenuItem(
     description: String,
     priceCents: Int,
     imageUrl: Option[String],
+    remainingQuantity: Option[Int],
 )
 object MenuItem:
   given Encoder[MenuItem] = deriveEncoder
-  given Decoder[MenuItem] = deriveDecoder
+  given Decoder[MenuItem] = Decoder.instance { cursor =>
+    for
+      id <- cursor.get[String]("id")
+      name <- cursor.get[String]("name")
+      description <- cursor.get[String]("description")
+      priceCents <- cursor.get[Int]("priceCents")
+      imageUrl <- cursor.get[Option[String]]("imageUrl")
+      remainingQuantity <- cursor.getOrElse[Option[Int]]("remainingQuantity")(None)
+    yield MenuItem(
+      id = id,
+      name = name,
+      description = description,
+      priceCents = priceCents,
+      imageUrl = imageUrl,
+      remainingQuantity = remainingQuantity,
+    )
+  }
+
+final case class BusinessHours(
+    openTime: String,
+    closeTime: String,
+)
+object BusinessHours:
+  given Encoder[BusinessHours] = deriveEncoder
+  given Decoder[BusinessHours] = deriveDecoder
 
 final case class Store(
     id: String,
@@ -163,6 +188,7 @@ final case class Store(
     category: String,
     cuisine: String,
     status: String,
+    businessHours: BusinessHours,
     avgPrepMinutes: Int,
     imageUrl: Option[String],
     menu: List[MenuItem],
@@ -173,7 +199,39 @@ final case class Store(
 )
 object Store:
   given Encoder[Store] = deriveEncoder
-  given Decoder[Store] = deriveDecoder
+  given Decoder[Store] = Decoder.instance { cursor =>
+    for
+      id <- cursor.get[String]("id")
+      merchantName <- cursor.get[String]("merchantName")
+      name <- cursor.get[String]("name")
+      category <- cursor.get[String]("category")
+      cuisine <- cursor.get[String]("cuisine")
+      status <- cursor.get[String]("status")
+      businessHours <- cursor.getOrElse[BusinessHours]("businessHours")(BusinessHours("09:00", "21:00"))
+      avgPrepMinutes <- cursor.get[Int]("avgPrepMinutes")
+      imageUrl <- cursor.get[Option[String]]("imageUrl")
+      menu <- cursor.getOrElse[List[MenuItem]]("menu")(List.empty)
+      averageRating <- cursor.getOrElse[Double]("averageRating")(0.0)
+      ratingCount <- cursor.getOrElse[Int]("ratingCount")(0)
+      oneStarRatingCount <- cursor.getOrElse[Int]("oneStarRatingCount")(0)
+      revenueCents <- cursor.getOrElse[Int]("revenueCents")(0)
+    yield Store(
+      id = id,
+      merchantName = merchantName,
+      name = name,
+      category = category,
+      cuisine = cuisine,
+      status = status,
+      businessHours = businessHours,
+      avgPrepMinutes = avgPrepMinutes,
+      imageUrl = imageUrl,
+      menu = menu,
+      averageRating = averageRating,
+      ratingCount = ratingCount,
+      oneStarRatingCount = oneStarRatingCount,
+      revenueCents = revenueCents,
+    )
+  }
 
 final case class Rider(
     id: String,
@@ -252,6 +310,7 @@ final case class MerchantApplication(
     merchantName: String,
     storeName: String,
     category: String,
+    businessHours: BusinessHours,
     avgPrepMinutes: Int,
     imageUrl: Option[String],
     note: Option[String],
@@ -262,7 +321,35 @@ final case class MerchantApplication(
 )
 object MerchantApplication:
   given Encoder[MerchantApplication] = deriveEncoder
-  given Decoder[MerchantApplication] = deriveDecoder
+  given Decoder[MerchantApplication] = Decoder.instance { cursor =>
+    for
+      id <- cursor.get[String]("id")
+      merchantName <- cursor.get[String]("merchantName")
+      storeName <- cursor.get[String]("storeName")
+      category <- cursor.get[String]("category")
+      businessHours <- cursor.getOrElse[BusinessHours]("businessHours")(BusinessHours("09:00", "21:00"))
+      avgPrepMinutes <- cursor.get[Int]("avgPrepMinutes")
+      imageUrl <- cursor.get[Option[String]]("imageUrl")
+      note <- cursor.get[Option[String]]("note")
+      status <- cursor.get[MerchantApplicationStatus]("status")
+      reviewNote <- cursor.get[Option[String]]("reviewNote")
+      submittedAt <- cursor.get[String]("submittedAt")
+      reviewedAt <- cursor.get[Option[String]]("reviewedAt")
+    yield MerchantApplication(
+      id = id,
+      merchantName = merchantName,
+      storeName = storeName,
+      category = category,
+      businessHours = businessHours,
+      avgPrepMinutes = avgPrepMinutes,
+      imageUrl = imageUrl,
+      note = note,
+      status = status,
+      reviewNote = reviewNote,
+      submittedAt = submittedAt,
+      reviewedAt = reviewedAt,
+    )
+  }
 
 final case class OrderItemInput(menuItemId: String, quantity: Int)
 object OrderItemInput:
@@ -315,6 +402,7 @@ final case class MerchantRegistrationRequest(
     merchantName: String,
     storeName: String,
     category: String,
+    businessHours: BusinessHours,
     avgPrepMinutes: Int,
     imageUrl: Option[String],
     note: Option[String],
@@ -328,10 +416,18 @@ final case class AddMenuItemRequest(
     description: String,
     priceCents: Int,
     imageUrl: Option[String],
+    remainingQuantity: Option[Int],
 )
 object AddMenuItemRequest:
   given Encoder[AddMenuItemRequest] = deriveEncoder
   given Decoder[AddMenuItemRequest] = deriveDecoder
+
+final case class UpdateMenuItemStockRequest(
+    remainingQuantity: Option[Int],
+)
+object UpdateMenuItemStockRequest:
+  given Encoder[UpdateMenuItemStockRequest] = deriveEncoder
+  given Decoder[UpdateMenuItemStockRequest] = deriveDecoder
 
 final case class ImageUploadResponse(url: String)
 object ImageUploadResponse:

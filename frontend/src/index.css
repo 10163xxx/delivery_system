@@ -397,6 +397,17 @@ button {
   top: 16px;
 }
 
+.build-mark {
+  display: inline-flex;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 236, 188, 0.9);
+  color: #6f4a12;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .role-pill,
 .primary-button,
 .secondary-button,
@@ -653,6 +664,17 @@ textarea {
   gap: 16px;
 }
 
+.compact-store-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.compact-store-card {
+  gap: 12px;
+  padding: 14px;
+  align-content: start;
+}
+
 .display-image-slot {
   width: 100%;
   object-fit: cover;
@@ -678,6 +700,12 @@ textarea {
 
 .store-image {
   aspect-ratio: 16 / 9;
+}
+
+.compact-store-image {
+  aspect-ratio: 16 / 7;
+  max-height: 132px;
+  border-radius: 18px;
 }
 
 .category-card {
@@ -755,10 +783,128 @@ textarea {
   background: linear-gradient(135deg, rgba(254, 239, 206, 0.9), rgba(229, 241, 226, 0.9));
 }
 
+.compact-store-summary {
+  margin-top: 0;
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+.compact-store-summary p {
+  font-size: 0.78rem;
+}
+
+.compact-store-summary strong {
+  font-size: 0.96rem;
+}
+
+.compact-store-hint {
+  min-height: 2.8em;
+  font-size: 0.9rem;
+}
+
 .merchant-menu-section {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px dashed rgba(73, 63, 49, 0.18);
+}
+
+.merchant-store-list {
+  display: grid;
+  gap: 18px;
+}
+
+.merchant-store-module {
+  display: grid;
+  width: 100%;
+  padding: 14px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 242, 0.96), rgba(252, 247, 239, 0.96)),
+    #fff;
+}
+
+.merchant-store-module__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.merchant-store-module__summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.merchant-store-module__summary-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(241, 236, 226, 0.92);
+  color: #5b4d37;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.merchant-store-module__frame {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid rgba(56, 64, 50, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.merchant-store-module__heading {
+  display: grid;
+  gap: 8px;
+}
+
+.merchant-store-module__layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.merchant-store-sidebar,
+.merchant-store-content {
+  display: grid;
+  gap: 14px;
+}
+
+.merchant-section-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(56, 64, 50, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 252, 248, 0.92);
+}
+
+.merchant-store-single-bar {
+  margin-bottom: 2px;
+}
+
+.merchant-metric-list {
+  display: grid;
+  gap: 10px;
+}
+
+.merchant-metric-list > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(244, 237, 223, 0.76);
+}
+
+.merchant-module-actions {
+  align-items: stretch;
 }
 
 .merchant-menu-header {
@@ -771,6 +917,33 @@ textarea {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.merchant-menu-item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.merchant-menu-remove-button {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+}
+
+.merchant-menu-stock-button {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+}
+
+.merchant-menu-item-actions input {
+  width: 110px;
+  min-width: 110px;
+  padding: 8px 10px;
+  border-radius: 12px;
 }
 
 .merchant-menu-composer {
@@ -799,6 +972,10 @@ textarea {
 
 .merchant-menu-grid {
   margin-top: 16px;
+}
+
+.merchant-orders-header {
+  margin-bottom: 4px;
 }
 
 .badge {
@@ -1195,6 +1372,16 @@ textarea {
   .form-grid,
   .metrics-grid {
     grid-template-columns: 1fr;
+  }
+
+  .merchant-store-module__hero,
+  .merchant-store-module__layout {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .merchant-store-module__hero-actions {
+    justify-content: flex-start;
   }
 
   .merchant-menu-actions,

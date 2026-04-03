@@ -5,6 +5,8 @@
 - `frontend`: `Vite + React + TypeScript`
 - `backend`: `Scala 3 + sbt + http4s`
 
+当前配送业务只支持真实 Scala 后端，不再提供独立的 mock 后端脚本。
+
 ## 一键初始化
 
 在仓库根目录执行：

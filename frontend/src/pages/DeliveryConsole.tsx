@@ -4,6 +4,7 @@ import type {
   AddCustomerAddressRequest,
   AddMenuItemRequest,
   AuthSession,
+  BusinessHours,
   CreateOrderRequest,
   DeliveryAppState,
   MenuItem,
@@ -39,6 +40,8 @@ type MerchantDraft = {
   merchantName: string
   storeName: string
   category: StoreCategory | ''
+  openTime: string
+  closeTime: string
   avgPrepMinutes: number
   imageUrl: string
   uploadedImageName: string
@@ -54,6 +57,7 @@ type MenuItemDraft = {
   name: string
   description: string
   priceYuan: string
+  remainingQuantity: string
   imageUrl: string
   uploadedImageName: string
 }
@@ -81,8 +85,8 @@ type CustomerAddressDraft = {
 
 type CustomerAddressField = 'label' | 'address'
 
-type MerchantFormField = 'merchantName' | 'storeName' | 'category' | 'imageUrl'
-type MenuItemFormField = 'name' | 'description' | 'priceYuan' | 'imageUrl'
+type MerchantFormField = 'merchantName' | 'storeName' | 'category' | 'openTime' | 'closeTime' | 'imageUrl'
+type MenuItemFormField = 'name' | 'description' | 'priceYuan' | 'remainingQuantity' | 'imageUrl'
 
 type HeaderAction = 'refresh' | 'logout' | 'clearOrders' | null
 
@@ -94,6 +98,7 @@ const LOGOUT_TRANSITION_MS = 1000
 const REVIEW_WINDOW_DAYS = 10
 const DELIVERY_FEE_CENTS = 1000
 const MIN_SCHEDULE_LEAD_MINUTES = 30
+const UI_BUILD_MARK = 'BUILD 2026-04-03 20:41 stock-fix'
 const STORE_CATEGORIES: StoreCategory[] = [
   '中式快餐',
   '盖饭简餐',
@@ -158,6 +163,8 @@ function createInitialMerchantDraft(merchantName = ''): MerchantDraft {
     merchantName,
     storeName: '',
     category: '',
+    openTime: '09:00',
+    closeTime: '21:00',
     avgPrepMinutes: 20,
     imageUrl: '',
     uploadedImageName: '',
@@ -178,6 +185,7 @@ function createInitialMenuItemDraft(): MenuItemDraft {
     name: '',
     description: '',
     priceYuan: '',
+    remainingQuantity: '',
     imageUrl: '',
     uploadedImageName: '',
   }
@@ -203,6 +211,10 @@ function buildMerchantRegistrationPayload(
     merchantName,
     storeName,
     category: category as MerchantRegistrationRequest['category'],
+    businessHours: {
+      openTime: draft.openTime,
+      closeTime: draft.closeTime,
+    },
     avgPrepMinutes: Math.max(1, Math.min(120, Math.round(draft.avgPrepMinutes))),
     imageUrl: imageUrl || undefined,
     note: note || undefined,
@@ -214,12 +226,20 @@ function buildMenuItemPayload(draft: MenuItemDraft): AddMenuItemRequest {
   const description = normalizeTextInput(draft.description, 160)
   const imageUrl = draft.imageUrl.trim()
   const price = Number(draft.priceYuan.trim())
+  const remainingQuantity = draft.remainingQuantity.trim()
+  const parsedRemainingQuantity = Number(remainingQuantity)
 
   return {
     name,
     description,
     priceCents: Number.isFinite(price) ? Math.round(price * 100) : 0,
     imageUrl: imageUrl || undefined,
+    remainingQuantity:
+      remainingQuantity === ''
+        ? undefined
+        : Number.isInteger(parsedRemainingQuantity)
+          ? parsedRemainingQuantity
+          : undefined,
   }
 }
 
@@ -228,11 +248,17 @@ function validateMerchantDraft(draft: MerchantDraft): Partial<Record<MerchantFor
   const storeName = normalizeTextInput(draft.storeName, 40)
   const category = normalizeTextInput(draft.category, 20)
   const imageUrl = draft.imageUrl.trim()
+  const businessHoursError = validateBusinessHours({
+    openTime: draft.openTime,
+    closeTime: draft.closeTime,
+  })
 
   return {
     merchantName: merchantName ? undefined : '请填写商家名称',
     storeName: storeName ? undefined : '请填写店铺名称',
     category: category ? undefined : '请选择店铺大类',
+    openTime: businessHoursError,
+    closeTime: businessHoursError,
     imageUrl: imageUrl ? undefined : '请上传店铺展示图或填写可访问的图片 URL',
   }
 }
@@ -242,6 +268,13 @@ function validateMenuItemDraft(
 ): Partial<Record<MenuItemFormField, string>> {
   const payload = buildMenuItemPayload(draft)
   const price = Number(draft.priceYuan.trim())
+  const remainingQuantityText = draft.remainingQuantity.trim()
+  const parsedRemainingQuantity = Number(remainingQuantityText)
+  const hasValidRemainingQuantity =
+    remainingQuantityText === '' ||
+    (Number.isInteger(parsedRemainingQuantity) &&
+      parsedRemainingQuantity >= 1 &&
+      parsedRemainingQuantity <= 10)
 
   return {
     name: payload.name ? undefined : '请填写菜品名称',
@@ -250,6 +283,7 @@ function validateMenuItemDraft(
       Number.isFinite(price) && payload.priceCents > 0 && payload.priceCents <= 999999
         ? undefined
         : '请填写 0.01 到 9999.99 元之间的价格',
+    remainingQuantity: hasValidRemainingQuantity ? undefined : '限量库存可留空，或填写 1 到 10 的整数',
     imageUrl: payload.imageUrl ? undefined : '请上传菜品图片或填写可访问的图片 URL',
   }
 }
@@ -269,6 +303,47 @@ function getMerchantFieldClassName(hasError: boolean, className = '') {
 
 function padDateTimePart(value: number) {
   return String(value).padStart(2, '0')
+}
+
+function isValidBusinessTime(value: string) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value)
+}
+
+function businessTimeToMinutes(value: string) {
+  if (!isValidBusinessTime(value)) return Number.NaN
+  const [hours, minutes] = value.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+function validateBusinessHours(businessHours: BusinessHours) {
+  if (!isValidBusinessTime(businessHours.openTime) || !isValidBusinessTime(businessHours.closeTime)) {
+    return '请填写有效的营业时间'
+  }
+
+  if (businessTimeToMinutes(businessHours.openTime) >= businessTimeToMinutes(businessHours.closeTime)) {
+    return '打烊时间需晚于开业时间'
+  }
+
+  return undefined
+}
+
+function formatBusinessHours(businessHours: BusinessHours) {
+  return `${businessHours.openTime} - ${businessHours.closeTime}`
+}
+
+function isStoreCurrentlyOpen(store: Store, currentTime = new Date()) {
+  if (store.status === 'Revoked') {
+    return false
+  }
+
+  const minutes = currentTime.getHours() * 60 + currentTime.getMinutes()
+  const openMinutes = businessTimeToMinutes(store.businessHours.openTime)
+  const closeMinutes = businessTimeToMinutes(store.businessHours.closeTime)
+  if (!Number.isFinite(openMinutes) || !Number.isFinite(closeMinutes)) {
+    return false
+  }
+
+  return minutes >= openMinutes && minutes < closeMinutes
 }
 
 function toDateTimeLocalValue(date: Date) {
@@ -587,6 +662,14 @@ function formatStoreStatus(status: Store['status']) {
   }
 }
 
+function formatStoreAvailability(store: Store) {
+  if (store.status === 'Revoked') {
+    return formatStoreStatus(store.status)
+  }
+
+  return isStoreCurrentlyOpen(store) ? formatStoreStatus(store.status) : '休息中'
+}
+
 function isOrderReviewed(order: OrderSummary) {
   return order.storeRating != null && (order.riderId ? order.riderRating != null : true)
 }
@@ -817,6 +900,10 @@ export default function DeliveryConsole() {
         ? store.merchantName === session.user.displayName
         : true,
     ) ?? []
+  const selectedMerchantStoreId =
+    session?.user.role === 'merchant' && merchantWorkspaceView === 'console'
+      ? searchParams.get('store') ?? ''
+      : ''
   const selectedRider = state?.riders.find((rider) => rider.id === selectedRiderId)
   const riderOrders =
     state?.orders.filter((order) =>
@@ -858,6 +945,7 @@ export default function DeliveryConsole() {
       ) ?? []
   const storeCategories = STORE_CATEGORIES
   const categoryStores = visibleStores.filter((store) => store.category === selectedStoreCategory)
+  const selectedStoreIsOpen = selectedStore ? isStoreCurrentlyOpen(selectedStore) : false
 
   useEffect(() => {
     if (!selectedCustomer) return
@@ -1023,14 +1111,32 @@ export default function DeliveryConsole() {
   }
 
   function updateQuantity(menuItem: MenuItem, nextValue: number) {
+    const nextQuantity = Math.max(0, nextValue)
+    const remainingQuantity = menuItem.remainingQuantity
+    const hasStockLimit = remainingQuantity != null
+    const cappedQuantity =
+      !hasStockLimit
+        ? nextQuantity
+        : Math.min(nextQuantity, Math.max(remainingQuantity, 0))
+
     setQuantities((current) => ({
       ...current,
-      [menuItem.id]: Math.max(0, nextValue),
+      [menuItem.id]: cappedQuantity,
     }))
+
+    if (hasStockLimit && nextQuantity > remainingQuantity) {
+      setError(`${menuItem.name} 当前仅剩 ${remainingQuantity} 份`)
+    } else {
+      setError(null)
+    }
   }
 
   async function submitOrder() {
     if (!selectedStore || !selectedCustomer) return
+    if (!selectedStoreIsOpen) {
+      setError(`当前店铺营业时间为 ${formatBusinessHours(selectedStore.businessHours)}，暂不可下单`)
+      return
+    }
 
     const latestDeliveryWindow = getTodayDeliveryWindow()
     let nextScheduledDeliveryTime = scheduledDeliveryTime || latestDeliveryWindow.minimumValue
@@ -1190,6 +1296,10 @@ export default function DeliveryConsole() {
 
   function openCheckout() {
     if (!selectedStore || !selectedCustomer) return
+    if (!selectedStoreIsOpen) {
+      setError(`当前店铺营业时间为 ${formatBusinessHours(selectedStore.businessHours)}，暂不可下单`)
+      return
+    }
     const selectedItems = selectedStore.menu.filter((item) => (quantities[item.id] ?? 0) > 0)
     if (selectedItems.length === 0) {
       setError('请至少选择一份菜品')
@@ -1214,13 +1324,13 @@ export default function DeliveryConsole() {
     const payload = buildMerchantRegistrationPayload(merchantDraft)
     const nextErrors = validateMerchantDraft(merchantDraft)
     const firstInvalidField = (
-      ['merchantName', 'storeName', 'category', 'imageUrl'] as MerchantFormField[]
+      ['merchantName', 'storeName', 'category', 'openTime', 'closeTime', 'imageUrl'] as MerchantFormField[]
     ).find((field) => nextErrors[field])
 
     setMerchantFormErrors(nextErrors)
 
     if (firstInvalidField) {
-      setError('请完整填写商家、店铺和所属大类信息')
+      setError('请完整填写商家信息、店铺大类、营业时间和展示图')
       document
         .getElementById(getMerchantFieldId(firstInvalidField))
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -1318,7 +1428,7 @@ export default function DeliveryConsole() {
     const payload = buildMenuItemPayload(draft)
     const nextErrors = validateMenuItemDraft(draft)
     const firstInvalidField = (
-      ['name', 'description', 'priceYuan', 'imageUrl'] as MenuItemFormField[]
+      ['name', 'description', 'priceYuan', 'remainingQuantity', 'imageUrl'] as MenuItemFormField[]
     ).find((field) => nextErrors[field])
 
     setMenuItemFormErrors((current) => ({
@@ -1327,7 +1437,7 @@ export default function DeliveryConsole() {
     }))
 
     if (firstInvalidField) {
-      setError('请完整填写菜品名称、说明、价格和图片')
+      setError('请完整填写菜品名称、说明、价格、限量库存和图片')
       document
         .getElementById(getMenuItemFieldId(storeId, firstInvalidField))
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -1541,7 +1651,11 @@ export default function DeliveryConsole() {
       )
     : 0
   const cartTotal = cartSubtotal > 0 ? cartSubtotal + DELIVERY_FEE_CENTS : 0
-  const selectedStoreHasMenu = Boolean(selectedStore && selectedStore.menu.length > 0)
+  const selectedStoreHasMenu = Boolean(
+    selectedStore &&
+      selectedStore.menu.some((item) => item.remainingQuantity == null || item.remainingQuantity > 0),
+  )
+  const selectedStoreCanOrder = Boolean(selectedStore && selectedStoreHasMenu && selectedStoreIsOpen)
   const remainingBalanceAfterCheckout =
     selectedCustomer && cartTotal > 0 ? selectedCustomer.balanceCents - cartTotal : null
   const todayDeliveryWindow = getTodayDeliveryWindow()
@@ -1582,6 +1696,7 @@ export default function DeliveryConsole() {
             <p className="eyebrow">Current Session</p>
             <strong>{currentDisplayName}</strong>
             <span>{roleLabels[role]}</span>
+            <span className="build-mark">{UI_BUILD_MARK}</span>
           </div>
           <button
             className={`secondary-button action-feedback-button${isRefreshing ? ' is-pending' : ''}`}
@@ -1638,13 +1753,16 @@ export default function DeliveryConsole() {
               deliveryAddress={deliveryAddress}
               enterStore={enterStore}
               formatAggregateRating={formatAggregateRating}
+              formatBusinessHours={formatBusinessHours}
               formatPrice={formatPrice}
+              formatStoreAvailability={formatStoreAvailability}
               formatStoreStatus={formatStoreStatus}
               formatTime={formatTime}
               getCategoryMeta={getCategoryMeta}
               getRemainingReviewDays={getRemainingReviewDays}
               hasPendingRiderReview={hasPendingRiderReview}
               hasPendingStoreReview={hasPendingStoreReview}
+              isStoreCurrentlyOpen={isStoreCurrentlyOpen}
               isCheckoutExpanded={isCheckoutExpanded}
               leaveStore={leaveStore}
               navigate={navigate}
@@ -1675,6 +1793,7 @@ export default function DeliveryConsole() {
               scheduledDeliveryError={scheduledDeliveryError}
               selectedStore={selectedStore}
               selectedStoreCategory={selectedStoreCategory}
+              selectedStoreCanOrder={selectedStoreCanOrder}
               selectedStoreHasMenu={selectedStoreHasMenu}
               selectRechargeAmount={selectRechargeAmount}
               setAddressDraft={setAddressDraft}
@@ -1724,6 +1843,7 @@ export default function DeliveryConsole() {
               getMenuItemFieldId={getMenuItemFieldId}
               getMerchantFieldClassName={getMerchantFieldClassName}
               getMerchantFieldId={getMerchantFieldId}
+              formatBusinessHours={formatBusinessHours}
               isMenuComposerExpanded={isMenuComposerExpanded}
               isMenuItemImageUploading={isMenuItemImageUploading}
               isMerchantImageUploading={isMerchantImageUploading}
@@ -1734,6 +1854,7 @@ export default function DeliveryConsole() {
               merchantFormErrors={merchantFormErrors}
               merchantPendingApplications={merchantPendingApplications}
               merchantReviewedApplications={merchantReviewedApplications}
+              selectedMerchantStoreId={selectedMerchantStoreId}
               merchantStores={merchantStores}
               merchantWorkspaceView={merchantWorkspaceView}
               navigate={navigate}
