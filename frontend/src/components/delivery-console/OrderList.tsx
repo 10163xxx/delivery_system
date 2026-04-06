@@ -117,6 +117,9 @@ export function OrderList({
             {order.riderReviewExtraNote ? (
               <p className="meta-line">骑手补充：{order.riderReviewExtraNote}</p>
             ) : null}
+            {order.merchantRejectReason ? (
+              <p className="meta-line">拒单理由：{order.merchantRejectReason}</p>
+            ) : null}
             {footer ? <div>{footer(order)}</div> : null}
           </article>
         ))}

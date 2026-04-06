@@ -6,6 +6,7 @@ export type OrderStatus =
   | 'ReadyForPickup'
   | 'Delivering'
   | 'Completed'
+  | 'Cancelled'
   | 'Escalated'
 
 export type TicketKind =
@@ -102,11 +103,50 @@ export interface Rider {
   ratingCount: number
   oneStarRatingCount: number
   earningsCents: number
+  payoutAccount?: MerchantPayoutAccount
+  withdrawnCents: number
+  availableToWithdrawCents: number
+  withdrawalHistory: MerchantWithdrawal[]
 }
 
 export interface AdminProfile {
   id: string
   name: string
+}
+
+export interface MerchantWithdrawal {
+  id: string
+  amountCents: number
+  accountLabel: string
+  requestedAt: string
+}
+
+export type MerchantPayoutAccountType = 'alipay' | 'bank'
+
+export interface MerchantPayoutAccount {
+  accountType: MerchantPayoutAccountType
+  bankName?: string
+  accountNumber: string
+  accountHolder: string
+}
+
+export interface MerchantProfile {
+  id: string
+  merchantName: string
+  contactPhone: string
+  payoutAccount?: MerchantPayoutAccount
+  settledIncomeCents: number
+  withdrawnCents: number
+  availableToWithdrawCents: number
+  withdrawalHistory: MerchantWithdrawal[]
+}
+
+export interface UpdateRiderProfileRequest {
+  payoutAccount: MerchantPayoutAccount
+}
+
+export interface WithdrawRiderIncomeRequest {
+  amountCents: number
 }
 
 export interface MerchantApplication {
@@ -170,6 +210,7 @@ export interface OrderSummary {
   storeReviewExtraNote?: string
   riderReviewComment?: string
   riderReviewExtraNote?: string
+  merchantRejectReason?: string
   reviewStatus: ReviewStatus
   reviewRevokedReason?: string
   reviewRevokedAt?: string
@@ -238,6 +279,7 @@ export interface SystemMetrics {
 export interface DeliveryAppState {
   customers: Customer[]
   stores: Store[]
+  merchantProfiles: MerchantProfile[]
   riders: Rider[]
   admins: AdminProfile[]
   merchantApplications: MerchantApplication[]
@@ -283,8 +325,21 @@ export interface RechargeBalanceRequest {
   amountCents: number
 }
 
+export interface UpdateMerchantProfileRequest {
+  contactPhone: string
+  payoutAccount: MerchantPayoutAccount
+}
+
+export interface WithdrawMerchantIncomeRequest {
+  amountCents: number
+}
+
 export interface AssignRiderRequest {
   riderId: string
+}
+
+export interface RejectOrderRequest {
+  reason: string
 }
 
 export interface MerchantRegistrationRequest {
@@ -307,6 +362,11 @@ export interface AddMenuItemRequest {
 
 export interface UpdateMenuItemStockRequest {
   remainingQuantity?: number
+}
+
+export interface UpdateStoreOperationalRequest {
+  businessHours: BusinessHours
+  avgPrepMinutes: number
 }
 
 export interface ImageUploadResponse {

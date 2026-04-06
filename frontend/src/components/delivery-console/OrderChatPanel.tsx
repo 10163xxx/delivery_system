@@ -5,6 +5,7 @@ type OrderChatPanelProps = {
   currentRole: Role
   currentDisplayName: string
   draft: string
+  errorText?: string
   disabled?: boolean
   disabledReason?: string
   formatTime: (value: string) => string
@@ -24,6 +25,7 @@ export function OrderChatPanel({
   currentRole,
   currentDisplayName,
   draft,
+  errorText,
   disabled = false,
   disabledReason,
   formatTime,
@@ -71,6 +73,7 @@ export function OrderChatPanel({
       {disabledReason ? <p className="meta-line">{disabledReason}</p> : null}
       <div className="order-chat-composer">
         <input
+          className={errorText ? 'field-error' : undefined}
           disabled={disabled}
           placeholder="输入消息，例如请放门口、餐已备好、我已到店门口"
           value={draft}
@@ -85,6 +88,7 @@ export function OrderChatPanel({
           发送
         </button>
       </div>
+      {errorText ? <small className="field-error-text">{errorText}</small> : null}
     </section>
   )
 }

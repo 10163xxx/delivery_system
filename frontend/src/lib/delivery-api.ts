@@ -10,6 +10,7 @@ import type {
   LoginRequest,
   MerchantRegistrationRequest,
   RechargeBalanceRequest,
+  RejectOrderRequest,
   RemoveCustomerAddressRequest,
   RegisterRequest,
   ResolveEligibilityReviewRequest,
@@ -18,12 +19,17 @@ import type {
   ResolveTicketRequest,
   SendOrderChatMessageRequest,
   SetDefaultCustomerAddressRequest,
+  UpdateMerchantProfileRequest,
+  UpdateRiderProfileRequest,
   UpdateCustomerProfileRequest,
   ReviewAppealRequest,
   ReviewMerchantApplicationRequest,
   ReviewOrderRequest,
   SubmitPartialRefundRequest,
+  WithdrawMerchantIncomeRequest,
+  WithdrawRiderIncomeRequest,
   UpdateMenuItemStockRequest,
+  UpdateStoreOperationalRequest,
 } from '@/domain-types/delivery'
 
 const SESSION_STORAGE_KEY = 'delivery-session-token'
@@ -161,6 +167,26 @@ export const deliveryApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  updateMerchantProfile: (payload: UpdateMerchantProfileRequest) =>
+    request<DeliveryAppState>('/api/delivery/merchant-profile', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateRiderProfile: (riderId: string, payload: UpdateRiderProfileRequest) =>
+    request<DeliveryAppState>(`/api/delivery/riders/${riderId}/profile`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  withdrawMerchantIncome: (payload: WithdrawMerchantIncomeRequest) =>
+    request<DeliveryAppState>('/api/delivery/merchant-profile/withdraw', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  withdrawRiderIncome: (riderId: string, payload: WithdrawRiderIncomeRequest) =>
+    request<DeliveryAppState>(`/api/delivery/riders/${riderId}/withdraw`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
   submitMerchantApplication: (payload: MerchantRegistrationRequest) =>
     request<DeliveryAppState>('/api/delivery/merchant-applications', {
       method: 'POST',
@@ -181,6 +207,14 @@ export const deliveryApi = {
     payload: UpdateMenuItemStockRequest,
   ) =>
     request<DeliveryAppState>(`/api/delivery/stores/${storeId}/menu/${menuItemId}/stock`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateStoreOperationalInfo: (
+    storeId: string,
+    payload: UpdateStoreOperationalRequest,
+  ) =>
+    request<DeliveryAppState>(`/api/delivery/stores/${storeId}/operations`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -244,6 +278,11 @@ export const deliveryApi = {
   acceptOrder: (orderId: string) =>
     request<DeliveryAppState>(`/api/delivery/orders/${orderId}/accept`, {
       method: 'POST',
+    }),
+  rejectOrder: (orderId: string, payload: RejectOrderRequest) =>
+    request<DeliveryAppState>(`/api/delivery/orders/${orderId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
   readyOrder: (orderId: string) =>
     request<DeliveryAppState>(`/api/delivery/orders/${orderId}/ready`, {

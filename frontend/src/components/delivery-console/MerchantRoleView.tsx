@@ -28,11 +28,20 @@ export function MerchantRoleView(props: any) {
     merchantDraft,
     merchantFormErrors,
     merchantPendingApplications,
+    merchantProfile,
+    merchantProfileDraft,
+    merchantProfileFormErrors,
     merchantReviewedApplications,
     merchantStores,
+    merchantWithdrawAmount,
+    merchantWithdrawError,
     merchantWorkspaceView,
+    BANK_OPTIONS,
+    enterMerchantStore,
+    leaveMerchantStore,
     navigate,
     orderChatDrafts,
+    orderChatErrors,
     partialRefundResolutionDrafts,
     role,
     resolvePartialRefundRequest,
@@ -45,8 +54,14 @@ export function MerchantRoleView(props: any) {
     setMerchantAppealDrafts,
     setMerchantDraft,
     setMerchantFormErrors,
+    setMerchantProfileDraft,
+    setMerchantProfileFormErrors,
+    setMerchantWithdrawFieldError,
+    setMerchantWithdrawAmount,
     setOrderChatDrafts,
+    setOrderChatErrors,
     setPartialRefundResolutionDrafts,
+    saveMerchantProfile,
     state,
     statusLabels,
     STORE_CATEGORIES,
@@ -55,11 +70,18 @@ export function MerchantRoleView(props: any) {
     submitStoreMenuItem,
     uploadMerchantImage,
     uploadStoreMenuImage,
+    withdrawMerchantIncome,
   } = props
 
   const activeMerchantStore = merchantStores.find((store: any) => store.id === selectedMerchantStoreId)
   const storesToRender = activeMerchantStore ? [activeMerchantStore] : merchantStores
   const [menuItemStockDrafts, setMenuItemStockDrafts] = useState<Record<string, string>>({})
+  const [orderRejectDrafts, setOrderRejectDrafts] = useState<Record<string, string>>({})
+  const [orderRejectErrors, setOrderRejectErrors] = useState<Record<string, string>>({})
+  const [storeOperationDrafts, setStoreOperationDrafts] = useState<Record<string, { openTime: string; closeTime: string; avgPrepMinutes: string }>>({})
+  const [storeOperationErrors, setStoreOperationErrors] = useState<
+    Record<string, { openTime?: string; closeTime?: string; avgPrepMinutes?: string }>
+  >({})
 
   useEffect(() => {
     const validItemIds = new Set(
@@ -86,8 +108,72 @@ export function MerchantRoleView(props: any) {
     })
   }, [storesToRender])
 
+  useEffect(() => {
+    setStoreOperationDrafts((current) => {
+      const nextDrafts: Record<string, { openTime: string; closeTime: string; avgPrepMinutes: string }> = {}
+
+      storesToRender.forEach((store: any) => {
+        nextDrafts[store.id] = current[store.id] ?? {
+          openTime: store.businessHours.openTime,
+          closeTime: store.businessHours.closeTime,
+          avgPrepMinutes: String(store.avgPrepMinutes),
+        }
+      })
+
+      return nextDrafts
+    })
+  }, [storesToRender])
+
   function getMenuItemStockDraft(item: any) {
     return menuItemStockDrafts[item.id] ?? (item.remainingQuantity == null ? '' : String(item.remainingQuantity))
+  }
+
+  function getOrderRejectDraft(orderId: string) {
+    return orderRejectDrafts[orderId] ?? ''
+  }
+
+  function getOrderRejectError(orderId: string) {
+    return orderRejectErrors[orderId] ?? ''
+  }
+
+  function getStoreOperationDraft(store: any) {
+    return (
+      storeOperationDrafts[store.id] ?? {
+        openTime: store.businessHours.openTime,
+        closeTime: store.businessHours.closeTime,
+        avgPrepMinutes: String(store.avgPrepMinutes),
+      }
+    )
+  }
+
+  function isValidBusinessTime(value: string) {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value)
+  }
+
+  function businessTimeToMinutes(value: string) {
+    if (!isValidBusinessTime(value)) return Number.NaN
+    const [hours, minutes] = value.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+
+  function validateStoreOperationDraft(store: any) {
+    const draft = getStoreOperationDraft(store)
+    const avgPrepMinutes = Number(draft.avgPrepMinutes.trim())
+    const businessHoursError =
+      !isValidBusinessTime(draft.openTime) || !isValidBusinessTime(draft.closeTime)
+        ? '请填写有效的营业时间'
+        : businessTimeToMinutes(draft.openTime) >= businessTimeToMinutes(draft.closeTime)
+          ? '打烊时间需晚于开业时间'
+          : undefined
+
+    return {
+      openTime: businessHoursError,
+      closeTime: businessHoursError,
+      avgPrepMinutes:
+        Number.isInteger(avgPrepMinutes) && avgPrepMinutes >= 1 && avgPrepMinutes <= 120
+          ? undefined
+          : '预计出餐时间需在 1 到 120 分钟之间',
+    }
   }
 
   function getMenuItemStockError(value: string) {
@@ -122,6 +208,61 @@ export function MerchantRoleView(props: any) {
     }))
   }
 
+  async function submitOrderReject(orderId: string) {
+    const reason = getOrderRejectDraft(orderId).replace(/\s+/g, ' ').trim().slice(0, 160)
+    if (!reason) {
+      setOrderRejectErrors((current) => ({
+        ...current,
+        [orderId]: '请填写拒单理由',
+      }))
+      return
+    }
+
+    setOrderRejectErrors((current) => {
+      const next = { ...current }
+      delete next[orderId]
+      return next
+    })
+
+    const success = await runAction(() => deliveryApi.rejectOrder(orderId, { reason }))
+    if (!success) return
+
+    setOrderRejectDrafts((current) => ({
+      ...current,
+      [orderId]: '',
+    }))
+  }
+
+  async function submitStoreOperationalInfo(store: any) {
+    const draft = getStoreOperationDraft(store)
+    const errors = validateStoreOperationDraft(store)
+    if (errors.openTime || errors.closeTime || errors.avgPrepMinutes) {
+      setStoreOperationErrors((current) => ({
+        ...current,
+        [store.id]: errors,
+      }))
+      return
+    }
+
+    const success = await runAction(() =>
+      deliveryApi.updateStoreOperationalInfo(store.id, {
+        businessHours: {
+          openTime: draft.openTime,
+          closeTime: draft.closeTime,
+        },
+        avgPrepMinutes: Number(draft.avgPrepMinutes.trim()),
+      }),
+    )
+
+    if (!success) return
+
+    setStoreOperationErrors((current) => {
+      const next = { ...current }
+      delete next[store.id]
+      return next
+    })
+  }
+
   async function clearMenuItemStockLimit(storeId: string, item: any) {
     const success = await runAction(() =>
       deliveryApi.updateStoreMenuItemStock(storeId, item.id, {
@@ -142,7 +283,13 @@ export function MerchantRoleView(props: any) {
       <div className="summary-bar">
         <div>
           <p>商家工作台</p>
-          <strong>{merchantWorkspaceView === 'application' ? '店家申请' : '控制台'}</strong>
+          <strong>
+            {merchantWorkspaceView === 'application'
+              ? '店家申请'
+              : merchantWorkspaceView === 'profile'
+                ? '个人信息'
+                : '控制台'}
+          </strong>
         </div>
         <div className="action-row">
           <button
@@ -158,6 +305,13 @@ export function MerchantRoleView(props: any) {
             type="button"
           >
             控制台
+          </button>
+          <button
+            className={merchantWorkspaceView === 'profile' ? 'primary-button' : 'secondary-button'}
+            onClick={() => navigate('/merchant/profile')}
+            type="button"
+          >
+            个人信息
           </button>
         </div>
       </div>
@@ -422,6 +576,220 @@ export function MerchantRoleView(props: any) {
             </>
           )}
         </Panel>
+      ) : merchantWorkspaceView === 'profile' ? (
+        <Panel title="商家个人信息" description="维护提现信息，查看累计收入、已提现金额和可提现余额。">
+          <div className="metrics-grid">
+            <div className="metric-card">
+              <span>累计收入</span>
+              <strong>{formatPrice(merchantProfile?.settledIncomeCents ?? 0)}</strong>
+            </div>
+            <div className="metric-card">
+              <span>已提现</span>
+              <strong>{formatPrice(merchantProfile?.withdrawnCents ?? 0)}</strong>
+            </div>
+            <div className="metric-card">
+              <span>可提现余额</span>
+              <strong>{formatPrice(merchantProfile?.availableToWithdrawCents ?? 0)}</strong>
+            </div>
+            <div className="metric-card">
+              <span>店铺数</span>
+              <strong>{merchantStores.length}</strong>
+            </div>
+          </div>
+
+          <div className="merchant-store-module__layout">
+            <aside className="merchant-store-sidebar">
+              <section className="merchant-section-card">
+                <p className="ticket-kind">基础信息</p>
+                <div className="merchant-metric-list">
+                  <div>
+                    <p>商家名称</p>
+                    <strong>{merchantProfile?.merchantName ?? '未配置'}</strong>
+                  </div>
+                  <div>
+                    <p>入驻申请</p>
+                    <strong>{merchantPendingApplications.length + merchantReviewedApplications.length} 条</strong>
+                  </div>
+                  <div>
+                    <p>已通过店铺</p>
+                    <strong>{merchantStores.length} 家</strong>
+                  </div>
+                </div>
+              </section>
+            </aside>
+
+            <div className="merchant-store-content">
+              <section className="merchant-section-card">
+                <div className="ticket-header">
+                  <div>
+                    <p className="ticket-kind">账户资料</p>
+                    <h3>提现账户与联系信息</h3>
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <label>
+                    <span>联系电话</span>
+                    <input
+                      className={merchantProfileFormErrors.contactPhone ? 'field-error' : undefined}
+                      placeholder="例如 13800138000"
+                      value={merchantProfileDraft.contactPhone}
+                      onChange={(event) => {
+                        setMerchantProfileDraft((current: any) => ({
+                          ...current,
+                          contactPhone: event.target.value,
+                        }))
+                        setMerchantProfileFormErrors((current: any) => ({ ...current, contactPhone: undefined }))
+                      }}
+                    />
+                    {merchantProfileFormErrors.contactPhone ? <small className="field-error-text">{merchantProfileFormErrors.contactPhone}</small> : null}
+                  </label>
+                  <label>
+                    <span>提现方式</span>
+                    <select
+                      value={merchantProfileDraft.payoutAccountType}
+                      onChange={(event) => {
+                        setMerchantProfileDraft((current: any) => ({
+                          ...current,
+                          payoutAccountType: event.target.value,
+                          bankName: event.target.value === 'bank' ? current.bankName : '',
+                        }))
+                        setMerchantProfileFormErrors((current: any) => ({
+                          ...current,
+                          bankName: undefined,
+                          accountNumber: undefined,
+                          accountHolder: undefined,
+                        }))
+                      }}
+                    >
+                      <option value="alipay">支付宝</option>
+                      <option value="bank">银行卡</option>
+                    </select>
+                  </label>
+                  {merchantProfileDraft.payoutAccountType === 'bank' ? (
+                    <label>
+                      <span>开户银行</span>
+                      <select
+                        className={merchantProfileFormErrors.bankName ? 'field-error' : undefined}
+                        value={merchantProfileDraft.bankName}
+                        onChange={(event) => {
+                          setMerchantProfileDraft((current: any) => ({
+                            ...current,
+                            bankName: event.target.value,
+                          }))
+                          setMerchantProfileFormErrors((current: any) => ({ ...current, bankName: undefined }))
+                        }}
+                      >
+                        <option value="">请选择银行</option>
+                        {BANK_OPTIONS.map((bank: string) => (
+                          <option key={bank} value={bank}>
+                            {bank}
+                          </option>
+                        ))}
+                      </select>
+                      {merchantProfileFormErrors.bankName ? <small className="field-error-text">{merchantProfileFormErrors.bankName}</small> : null}
+                    </label>
+                  ) : null}
+                  <label>
+                    <span>{merchantProfileDraft.payoutAccountType === 'bank' ? '银行卡号' : '支付宝账号'}</span>
+                    <input
+                      className={merchantProfileFormErrors.accountNumber ? 'field-error' : undefined}
+                      placeholder={merchantProfileDraft.payoutAccountType === 'bank' ? '输入银行卡号' : '输入支付宝账号'}
+                      value={merchantProfileDraft.accountNumber}
+                      onChange={(event) => {
+                        setMerchantProfileDraft((current: any) => ({
+                          ...current,
+                          accountNumber: event.target.value,
+                        }))
+                        setMerchantProfileFormErrors((current: any) => ({ ...current, accountNumber: undefined }))
+                      }}
+                    />
+                    {merchantProfileFormErrors.accountNumber ? <small className="field-error-text">{merchantProfileFormErrors.accountNumber}</small> : null}
+                  </label>
+                  <label>
+                    <span>{merchantProfileDraft.payoutAccountType === 'bank' ? '持卡人姓名' : '账户姓名'}</span>
+                    <input
+                      className={merchantProfileFormErrors.accountHolder ? 'field-error' : undefined}
+                      placeholder="输入姓名"
+                      value={merchantProfileDraft.accountHolder}
+                      onChange={(event) => {
+                        setMerchantProfileDraft((current: any) => ({
+                          ...current,
+                          accountHolder: event.target.value,
+                        }))
+                        setMerchantProfileFormErrors((current: any) => ({ ...current, accountHolder: undefined }))
+                      }}
+                    />
+                    {merchantProfileFormErrors.accountHolder ? <small className="field-error-text">{merchantProfileFormErrors.accountHolder}</small> : null}
+                  </label>
+                </div>
+                <div className="summary-bar">
+                  <div>
+                    <p>当前到账账户</p>
+                    <strong>
+                      {merchantProfile?.payoutAccount
+                        ? merchantProfile.payoutAccount.accountType === 'bank'
+                          ? `${merchantProfile.payoutAccount.bankName ?? '银行卡'} ${merchantProfile.payoutAccount.accountHolder} / ${merchantProfile.payoutAccount.accountNumber}`
+                          : `支付宝 ${merchantProfile.payoutAccount.accountHolder} / ${merchantProfile.payoutAccount.accountNumber}`
+                        : '尚未设置'}
+                    </strong>
+                  </div>
+                  <button className="primary-button" onClick={() => void saveMerchantProfile()} type="button">
+                    保存资料
+                  </button>
+                </div>
+              </section>
+
+              <section className="merchant-section-card">
+                <div className="ticket-header">
+                  <div>
+                    <p className="ticket-kind">收入提现</p>
+                    <h3>发起提现</h3>
+                  </div>
+                  <span className="badge">可提 {formatPrice(merchantProfile?.availableToWithdrawCents ?? 0)}</span>
+                </div>
+                <div className="action-row">
+                  <input
+                    inputMode="decimal"
+                    placeholder="输入提现金额，例如 200"
+                    value={merchantWithdrawAmount}
+                    onChange={(event) => {
+                      setMerchantWithdrawAmount(event.target.value)
+                      setMerchantWithdrawFieldError(null)
+                    }}
+                  />
+                  <button
+                    className="primary-button"
+                    disabled={Boolean(merchantWithdrawError) || (merchantProfile?.availableToWithdrawCents ?? 0) <= 0}
+                    onClick={() => void withdrawMerchantIncome()}
+                    type="button"
+                  >
+                    申请提现
+                  </button>
+                </div>
+                {merchantWithdrawError ? <small className="field-error-text">{merchantWithdrawError}</small> : null}
+                <div className="ticket-grid">
+                  {merchantProfile?.withdrawalHistory?.length ? (
+                    merchantProfile.withdrawalHistory.map((entry: any) => (
+                      <article key={entry.id} className="ticket-card">
+                        <div className="ticket-header">
+                          <div>
+                            <p className="ticket-kind">提现记录</p>
+                            <h3>{formatPrice(entry.amountCents)}</h3>
+                          </div>
+                          <span className="badge success">已提交</span>
+                        </div>
+                        <p className="meta-line">到账账户 {entry.accountLabel}</p>
+                        <p className="meta-line">申请时间 {formatTime(entry.requestedAt)}</p>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="empty-card">当前还没有提现记录。</div>
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+        </Panel>
       ) : (
         <Panel title="商家控制台" description="仅已审核通过的店铺可接单和推进出餐状态。">
           {merchantStores.length > 0 ? (
@@ -432,7 +800,7 @@ export function MerchantRoleView(props: any) {
                     <p>当前店铺</p>
                     <strong>{activeMerchantStore.name}</strong>
                   </div>
-                  <button className="secondary-button" onClick={() => navigate('/merchant/console')} type="button">
+                  <button className="secondary-button" onClick={() => leaveMerchantStore()} type="button">
                     返回全部店铺
                   </button>
                 </div>
@@ -463,7 +831,7 @@ export function MerchantRoleView(props: any) {
                           <span className="badge">{storeOrders.length} 笔订单</span>
                           <button
                             className="merchant-store-module__summary-toggle"
-                            onClick={() => navigate(`/merchant/console?store=${store.id}`)}
+                            onClick={() => enterMerchantStore(store.id)}
                             type="button"
                           >
                             进入店铺
@@ -514,6 +882,93 @@ export function MerchantRoleView(props: any) {
                                 <p>预计出餐</p>
                                 <strong>{store.avgPrepMinutes} 分钟</strong>
                               </div>
+                            </div>
+                          </div>
+
+                          <div className="merchant-section-card">
+                            <p className="ticket-kind">营业设置</p>
+                            <div className="form-grid">
+                              <label>
+                                <span>开业时间</span>
+                                <input
+                                  className={storeOperationErrors[store.id]?.openTime ? 'field-error' : undefined}
+                                  type="time"
+                                  value={getStoreOperationDraft(store).openTime}
+                                  onChange={(event) => {
+                                    const value = event.target.value
+                                    setStoreOperationDrafts((current) => ({
+                                      ...current,
+                                      [store.id]: { ...getStoreOperationDraft(store), openTime: value },
+                                    }))
+                                    setStoreOperationErrors((current) => ({
+                                      ...current,
+                                      [store.id]: { ...(current[store.id] ?? {}), openTime: undefined, closeTime: undefined },
+                                    }))
+                                  }}
+                                />
+                                {storeOperationErrors[store.id]?.openTime ? (
+                                  <small className="field-error-text">{storeOperationErrors[store.id].openTime}</small>
+                                ) : null}
+                              </label>
+                              <label>
+                                <span>打烊时间</span>
+                                <input
+                                  className={storeOperationErrors[store.id]?.closeTime ? 'field-error' : undefined}
+                                  type="time"
+                                  value={getStoreOperationDraft(store).closeTime}
+                                  onChange={(event) => {
+                                    const value = event.target.value
+                                    setStoreOperationDrafts((current) => ({
+                                      ...current,
+                                      [store.id]: { ...getStoreOperationDraft(store), closeTime: value },
+                                    }))
+                                    setStoreOperationErrors((current) => ({
+                                      ...current,
+                                      [store.id]: { ...(current[store.id] ?? {}), openTime: undefined, closeTime: undefined },
+                                    }))
+                                  }}
+                                />
+                                {storeOperationErrors[store.id]?.closeTime ? (
+                                  <small className="field-error-text">{storeOperationErrors[store.id].closeTime}</small>
+                                ) : null}
+                              </label>
+                              <label className="full">
+                                <span>预计出餐时间</span>
+                                <input
+                                  className={storeOperationErrors[store.id]?.avgPrepMinutes ? 'field-error' : undefined}
+                                  inputMode="numeric"
+                                  max={120}
+                                  min={1}
+                                  value={getStoreOperationDraft(store).avgPrepMinutes}
+                                  onChange={(event) => {
+                                    const value = event.target.value
+                                    setStoreOperationDrafts((current) => ({
+                                      ...current,
+                                      [store.id]: { ...getStoreOperationDraft(store), avgPrepMinutes: value },
+                                    }))
+                                    setStoreOperationErrors((current) => ({
+                                      ...current,
+                                      [store.id]: { ...(current[store.id] ?? {}), avgPrepMinutes: undefined },
+                                    }))
+                                  }}
+                                />
+                                {storeOperationErrors[store.id]?.avgPrepMinutes ? (
+                                  <small className="field-error-text">{storeOperationErrors[store.id].avgPrepMinutes}</small>
+                                ) : (
+                                  <small className="field-hint">填写 1 到 120 的整数，单位为分钟。</small>
+                                )}
+                              </label>
+                            </div>
+                            <div className="summary-bar">
+                              <div>
+                                <p>当前设置</p>
+                                <strong>
+                                  {getStoreOperationDraft(store).openTime} - {getStoreOperationDraft(store).closeTime} · {getStoreOperationDraft(store).avgPrepMinutes} 分钟
+                                </strong>
+                              </div>
+                              <button className="primary-button" onClick={() => void submitStoreOperationalInfo(store)} type="button">
+                                保存营业设置
+                              </button>
                             </div>
                           </div>
 
@@ -909,9 +1364,42 @@ export function MerchantRoleView(props: any) {
                                     ) : null}
                                     <div className="action-row">
                                       {order.status === 'PendingMerchantAcceptance' ? (
-                                        <button className="primary-button" onClick={() => void runAction(() => deliveryApi.acceptOrder(order.id))} type="button">
-                                          接单
-                                        </button>
+                                        <>
+                                          <button className="primary-button" onClick={() => void runAction(() => deliveryApi.acceptOrder(order.id))} type="button">
+                                            接单
+                                          </button>
+                                          <input
+                                            className={getOrderRejectError(order.id) ? 'field-error' : undefined}
+                                            maxLength={160}
+                                            placeholder="拒单理由（必填）"
+                                            value={getOrderRejectDraft(order.id)}
+                                            onChange={(event) => {
+                                              const value = event.target.value
+                                              setOrderRejectDrafts((current) => ({
+                                                ...current,
+                                                [order.id]: value,
+                                              }))
+                                              if (value.trim()) {
+                                                setOrderRejectErrors((current) => {
+                                                  if (!current[order.id]) return current
+                                                  const next = { ...current }
+                                                  delete next[order.id]
+                                                  return next
+                                                })
+                                              }
+                                            }}
+                                          />
+                                          <button
+                                            className="secondary-button"
+                                            onClick={() => void submitOrderReject(order.id)}
+                                            type="button"
+                                          >
+                                            拒绝接单
+                                          </button>
+                                          {getOrderRejectError(order.id) ? (
+                                            <small className="field-error-text">{getOrderRejectError(order.id)}</small>
+                                          ) : null}
+                                        </>
                                       ) : null}
                                       {order.status === 'Preparing' ? (
                                         <button className="secondary-button" onClick={() => void runAction(() => deliveryApi.readyOrder(order.id))} type="button">
@@ -952,6 +1440,7 @@ export function MerchantRoleView(props: any) {
                                       currentDisplayName={store.merchantName}
                                       currentRole="merchant"
                                       draft={orderChatDrafts[order.id] ?? ''}
+                                      errorText={orderChatErrors[order.id]}
                                       disabled={false}
                                       disabledReason={
                                         order.riderId
@@ -961,10 +1450,18 @@ export function MerchantRoleView(props: any) {
                                       formatTime={formatTime}
                                       order={order}
                                       onChangeDraft={(value) =>
-                                        setOrderChatDrafts((current: Record<string, string>) => ({
-                                          ...current,
-                                          [order.id]: value,
-                                        }))
+                                        {
+                                          setOrderChatDrafts((current: Record<string, string>) => ({
+                                            ...current,
+                                            [order.id]: value,
+                                          }))
+                                          setOrderChatErrors((current: Record<string, string>) => {
+                                            if (!current[order.id]) return current
+                                            const next = { ...current }
+                                            delete next[order.id]
+                                            return next
+                                          })
+                                        }
                                       }
                                       onSubmit={() => void submitOrderChatMessage(order.id)}
                                     />

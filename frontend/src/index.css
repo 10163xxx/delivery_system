@@ -397,17 +397,6 @@ button {
   top: 16px;
 }
 
-.build-mark {
-  display: inline-flex;
-  margin-top: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 236, 188, 0.9);
-  color: #6f4a12;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
 .role-pill,
 .primary-button,
 .secondary-button,

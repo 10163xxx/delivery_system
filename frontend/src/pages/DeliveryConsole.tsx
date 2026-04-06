@@ -8,6 +8,8 @@ import type {
   CreateOrderRequest,
   DeliveryAppState,
   MenuItem,
+  MerchantPayoutAccountType,
+  MerchantProfile,
   MerchantRegistrationRequest,
   OrderSummary,
   RechargeBalanceRequest,
@@ -20,7 +22,9 @@ import type {
   SubmitPartialRefundRequest,
   StoreCategory,
   Store,
+  UpdateMerchantProfileRequest,
   UpdateCustomerProfileRequest,
+  WithdrawMerchantIncomeRequest,
 } from '@/domain-types/delivery'
 import AuthScreen from '@/components/AuthScreen'
 import { MetricCard } from '@/components/delivery-console/LayoutPrimitives'
@@ -75,8 +79,22 @@ type CustomerWorkspaceView =
   | 'recharge'
   | 'addresses'
   | 'coupons'
-type MerchantWorkspaceView = 'application' | 'console'
+type MerchantWorkspaceView = 'application' | 'console' | 'profile'
 type MerchantApplicationView = 'pending' | 'reviewed' | 'submit'
+type MerchantProfileDraft = {
+  contactPhone: string
+  payoutAccountType: MerchantPayoutAccountType
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+}
+type MerchantProfileFormField =
+  | 'contactPhone'
+  | 'bankName'
+  | 'accountNumber'
+  | 'accountHolder'
+
+const BANK_OPTIONS = ['中国银行', '工商银行', '建设银行', '农业银行', '招商银行', '交通银行', '邮储银行'] as const
 
 type CustomerAddressDraft = {
   label: string
@@ -95,10 +113,10 @@ const STORE_REVIEW_REASON_OPTIONS = ['出餐慢', '口味一般', '菜品与描�
 const RIDER_REVIEW_REASON_OPTIONS = ['送达太慢', '定位不准', '态度一般', '联系不及时', '服务很好'] as const
 const STATE_POLL_INTERVAL_MS = 3000
 const LOGOUT_TRANSITION_MS = 1000
+const CUSTOMER_STORE_SEARCH_HISTORY_KEY = 'customer-store-search-history'
 const REVIEW_WINDOW_DAYS = 10
 const DELIVERY_FEE_CENTS = 1000
 const MIN_SCHEDULE_LEAD_MINUTES = 30
-const UI_BUILD_MARK = 'BUILD 2026-04-03 20:41 stock-fix'
 const STORE_CATEGORIES: StoreCategory[] = [
   '中式快餐',
   '盖饭简餐',
@@ -130,6 +148,7 @@ const statusLabels: Record<OrderSummary['status'], string> = {
   ReadyForPickup: '待骑手取餐',
   Delivering: '配送中',
   Completed: '已完成',
+  Cancelled: '已取消',
   Escalated: '异常升级',
 }
 
@@ -195,6 +214,16 @@ function createInitialPartialRefundDraft(): PartialRefundDraft {
   return {
     quantity: 1,
     reason: '',
+  }
+}
+
+function createInitialMerchantProfileDraft(): MerchantProfileDraft {
+  return {
+    contactPhone: '',
+    payoutAccountType: 'alipay',
+    bankName: '',
+    accountNumber: '',
+    accountHolder: '',
   }
 }
 
@@ -513,6 +542,64 @@ function buildRechargePayload(amountYuan: number): RechargeBalanceRequest {
   }
 }
 
+function buildMerchantProfilePayload(
+  draft: MerchantProfileDraft,
+): UpdateMerchantProfileRequest {
+  return {
+    contactPhone: normalizeTextInput(draft.contactPhone, 20),
+    payoutAccount: {
+      accountType: draft.payoutAccountType,
+      bankName:
+        draft.payoutAccountType === 'bank'
+          ? normalizeTextInput(draft.bankName, 30) || undefined
+          : undefined,
+      accountNumber: normalizeTextInput(draft.accountNumber, 60),
+      accountHolder: normalizeTextInput(draft.accountHolder, 30),
+    },
+  }
+}
+
+function validateMerchantProfileDraft(
+  draft: MerchantProfileDraft,
+): Partial<Record<MerchantProfileFormField, string>> {
+  const contactPhone = normalizeTextInput(draft.contactPhone, 20)
+  const bankName = normalizeTextInput(draft.bankName, 30)
+  const accountNumber = normalizeTextInput(draft.accountNumber, 60)
+  const accountHolder = normalizeTextInput(draft.accountHolder, 30)
+
+  return {
+    contactPhone: !contactPhone
+      ? '请填写联系电话'
+      : /^[0-9+\- ]{6,20}$/.test(contactPhone)
+        ? undefined
+        : '联系电话格式不正确',
+    bankName:
+      draft.payoutAccountType === 'bank'
+        ? bankName
+          ? undefined
+          : '请选择开户银行'
+        : undefined,
+    accountNumber: accountNumber ? undefined : draft.payoutAccountType === 'bank' ? '请填写银行卡号' : '请填写支付宝账号',
+    accountHolder: accountHolder ? undefined : draft.payoutAccountType === 'bank' ? '请填写持卡人姓名' : '请填写账户姓名',
+  }
+}
+
+function buildMerchantWithdrawPayload(amountYuan: number): WithdrawMerchantIncomeRequest {
+  return {
+    amountCents: Math.round(amountYuan * 100),
+  }
+}
+
+function parseMerchantWithdrawAmount(value: string) {
+  const sanitized = value.trim().replaceAll('，', ',').replaceAll(',', '')
+  if (!sanitized) return null
+
+  const amount = Number(sanitized)
+  if (!Number.isFinite(amount)) return null
+
+  return Math.round(amount * 100) / 100
+}
+
 function parseRechargeAmount(value: string) {
   const sanitized = value.trim().replaceAll('，', ',').replaceAll(',', '')
   if (!sanitized) return null
@@ -722,8 +809,13 @@ export default function DeliveryConsole() {
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [selectedStoreCategory, setSelectedStoreCategory] = useState('')
   const [selectedStoreId, setSelectedStoreId] = useState('')
+  const [selectedMerchantStoreId, setSelectedMerchantStoreId] = useState('')
   const [selectedRiderId, setSelectedRiderId] = useState('')
+  const [customerStoreSearchDraft, setCustomerStoreSearchDraft] = useState('')
+  const [customerStoreSearch, setCustomerStoreSearch] = useState('')
+  const [customerStoreSearchHistory, setCustomerStoreSearchHistory] = useState<string[]>([])
   const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [deliveryAddressError, setDeliveryAddressError] = useState<string | null>(null)
   const [scheduledDeliveryTime, setScheduledDeliveryTime] = useState('')
   const [scheduledDeliveryError, setScheduledDeliveryError] = useState<string | null>(null)
   const [scheduledDeliveryTouched, setScheduledDeliveryTouched] = useState(false)
@@ -739,8 +831,18 @@ export default function DeliveryConsole() {
   >({})
   const [customRechargeAmount, setCustomRechargeAmount] = useState('')
   const [selectedRechargeAmount, setSelectedRechargeAmount] = useState<number | null>(null)
+  const [merchantProfileDraft, setMerchantProfileDraft] = useState<MerchantProfileDraft>(
+    createInitialMerchantProfileDraft(),
+  )
+  const [merchantProfileFormErrors, setMerchantProfileFormErrors] = useState<
+    Partial<Record<MerchantProfileFormField, string>>
+  >({})
+  const [merchantWithdrawAmount, setMerchantWithdrawAmount] = useState('')
+  const [merchantWithdrawFieldError, setMerchantWithdrawFieldError] = useState<string | null>(null)
+  const [rechargeFieldError, setRechargeFieldError] = useState<string | null>(null)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [orderChatDrafts, setOrderChatDrafts] = useState<Record<string, string>>({})
+  const [orderChatErrors, setOrderChatErrors] = useState<Record<string, string>>({})
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, ReviewDraft>>({})
   const [reviewErrors, setReviewErrors] = useState<Record<string, string>>({})
   const [partialRefundDrafts, setPartialRefundDrafts] = useState<Record<string, PartialRefundDraft>>({})
@@ -777,6 +879,7 @@ export default function DeliveryConsole() {
     Record<string, AppealResolutionDraft>
   >({})
   const lastCustomerDraftSyncIdRef = useRef<string | null>(null)
+  const lastMerchantProfileDraftSyncIdRef = useRef<string | null>(null)
   const role = session?.user.role ?? 'customer'
   const customerWorkspaceView: CustomerWorkspaceView =
     location.pathname.startsWith('/customer/review/')
@@ -793,12 +896,32 @@ export default function DeliveryConsole() {
         ? 'orders'
         : 'order'
   const merchantWorkspaceView: MerchantWorkspaceView =
-    location.pathname === '/merchant/application' ? 'application' : 'console'
+    location.pathname === '/merchant/application'
+      ? 'application'
+      : location.pathname === '/merchant/profile'
+        ? 'profile'
+        : 'console'
   const merchantApplicationView = (searchParams.get('merchantView') ??
     'submit') as MerchantApplicationView
 
   useEffect(() => {
     void restoreSession()
+  }, [])
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY)
+      if (!stored) return
+
+      const parsed = JSON.parse(stored)
+      if (Array.isArray(parsed)) {
+        setCustomerStoreSearchHistory(
+          parsed.filter((entry): entry is string => typeof entry === 'string').slice(0, 10),
+        )
+      }
+    } catch {
+      window.localStorage.removeItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY)
+    }
   }, [])
 
   useEffect(() => {
@@ -816,11 +939,13 @@ export default function DeliveryConsole() {
       if (customer) {
         setSelectedCustomerId(customer.id)
         setDeliveryAddress(customer.defaultAddress)
+        setDeliveryAddressError(null)
       }
     } else if (!selectedCustomerId && state.customers.length > 0) {
       const customer = state.customers[0]
       setSelectedCustomerId(customer.id)
       setDeliveryAddress(customer.defaultAddress)
+      setDeliveryAddressError(null)
     }
 
     if (session.user.role === 'merchant') {
@@ -900,10 +1025,16 @@ export default function DeliveryConsole() {
         ? store.merchantName === session.user.displayName
         : true,
     ) ?? []
-  const selectedMerchantStoreId =
-    session?.user.role === 'merchant' && merchantWorkspaceView === 'console'
-      ? searchParams.get('store') ?? ''
-      : ''
+  const merchantProfile: MerchantProfile | undefined =
+    state?.merchantProfiles.find(
+      (profile) => profile.merchantName === session?.user.displayName,
+    )
+  useEffect(() => {
+    if (!session || session.user.role !== 'merchant') return
+    if (!selectedMerchantStoreId) return
+    if (merchantStores.some((store) => store.id === selectedMerchantStoreId)) return
+    setSelectedMerchantStoreId('')
+  }, [merchantStores, selectedMerchantStoreId, session])
   const selectedRider = state?.riders.find((rider) => rider.id === selectedRiderId)
   const riderOrders =
     state?.orders.filter((order) =>
@@ -937,8 +1068,15 @@ export default function DeliveryConsole() {
     state?.reviewAppeals.filter((entry) => entry.status === 'Pending') ?? []
   const pendingEligibilityReviews =
     state?.eligibilityReviews.filter((entry) => entry.status === 'Pending') ?? []
+  const normalizedCustomerStoreSearch = customerStoreSearch.trim().toLowerCase()
   const visibleStores =
     state?.stores
+      .filter((store) =>
+        normalizedCustomerStoreSearch
+          ? store.name.toLowerCase().includes(normalizedCustomerStoreSearch) ||
+            store.merchantName.toLowerCase().includes(normalizedCustomerStoreSearch)
+          : true,
+      )
       .slice()
       .sort((left, right) =>
         right.averageRating - left.averageRating || right.ratingCount - left.ratingCount,
@@ -955,6 +1093,20 @@ export default function DeliveryConsole() {
   }, [selectedCustomer])
 
   useEffect(() => {
+    if (!merchantProfile) return
+    if (lastMerchantProfileDraftSyncIdRef.current === merchantProfile.id) return
+    lastMerchantProfileDraftSyncIdRef.current = merchantProfile.id
+    setMerchantProfileDraft({
+      contactPhone: merchantProfile.contactPhone,
+      payoutAccountType: merchantProfile.payoutAccount?.accountType ?? 'alipay',
+      bankName: merchantProfile.payoutAccount?.bankName ?? '',
+      accountNumber: merchantProfile.payoutAccount?.accountNumber ?? '',
+      accountHolder: merchantProfile.payoutAccount?.accountHolder ?? '',
+    })
+    setMerchantProfileFormErrors({})
+  }, [merchantProfile])
+
+  useEffect(() => {
     if (!session) return
 
     const timer = window.setInterval(() => {
@@ -963,6 +1115,41 @@ export default function DeliveryConsole() {
 
     return () => window.clearInterval(timer)
   }, [session])
+
+  useEffect(() => {
+    const keyword = customerStoreSearch.trim()
+    if (!keyword) return
+
+    setCustomerStoreSearchHistory((current) => {
+      const normalized = keyword.toLowerCase()
+      const next = [keyword, ...current.filter((entry) => entry.toLowerCase() !== normalized)].slice(0, 10)
+      window.localStorage.setItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [customerStoreSearch])
+
+  function submitCustomerStoreSearch(keyword?: string) {
+    const nextKeyword = (keyword ?? customerStoreSearchDraft).trim()
+    setCustomerStoreSearchDraft(nextKeyword)
+    setCustomerStoreSearch(nextKeyword)
+  }
+
+  function clearCustomerStoreSearchHistory() {
+    setCustomerStoreSearchHistory([])
+    window.localStorage.removeItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY)
+  }
+
+  function removeCustomerStoreSearchHistoryItem(keyword: string) {
+    setCustomerStoreSearchHistory((current) => {
+      const next = current.filter((entry) => entry !== keyword)
+      if (next.length === 0) {
+        window.localStorage.removeItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY)
+      } else {
+        window.localStorage.setItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY, JSON.stringify(next))
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     if (customerWorkspaceView !== 'review') return
@@ -1110,6 +1297,16 @@ export default function DeliveryConsole() {
     setError(null)
   }
 
+  function leaveMerchantStore() {
+    setError(null)
+    setSelectedMerchantStoreId('')
+  }
+
+  function enterMerchantStore(storeId: string) {
+    setError(null)
+    setSelectedMerchantStoreId(storeId)
+  }
+
   function updateQuantity(menuItem: MenuItem, nextValue: number) {
     const nextQuantity = Math.max(0, nextValue)
     const remainingQuantity = menuItem.remainingQuantity
@@ -1152,12 +1349,10 @@ export default function DeliveryConsole() {
         if (scheduledDeliveryTouched) {
           const message = `你选择的配送时间已失效，已顺延到当前最早可选时间 ${formatDateTimeLocalValue(nextScheduledDeliveryTime)}，请确认后再次提交`
           setScheduledDeliveryError(message)
-          setError(message)
           return
         }
       } else {
         setScheduledDeliveryError(scheduleError)
-        setError(scheduleError)
         return
       }
     }
@@ -1178,13 +1373,13 @@ export default function DeliveryConsole() {
     }
 
     if (!payload.deliveryAddress) {
-      setError('请选择配送地址')
+      setDeliveryAddressError('请选择配送地址')
       return
     }
+    setDeliveryAddressError(null)
 
     if (!payload.scheduledDeliveryAt) {
       setScheduledDeliveryError('请选择有效的配送时间')
-      setError('请选择有效的配送时间')
       return
     }
 
@@ -1206,9 +1401,14 @@ export default function DeliveryConsole() {
   async function submitOrderChatMessage(orderId: string) {
     const payload = buildOrderChatPayload(orderChatDrafts[orderId] ?? '')
     if (!payload.body) {
-      setError('消息内容不能为空')
+      setOrderChatErrors((current) => ({ ...current, [orderId]: '消息内容不能为空' }))
       return
     }
+    setOrderChatErrors((current) => {
+      const next = { ...current }
+      delete next[orderId]
+      return next
+    })
 
     const success = await runAction(() =>
       deliveryApi.sendOrderChatMessage(orderId, payload),
@@ -1250,14 +1450,12 @@ export default function DeliveryConsole() {
     if (!payload.reason) {
       const message = '请先填写退款原因，再提交申请'
       setPartialRefundErrors((current) => ({ ...current, [draftKey]: message }))
-      setError(message)
       return
     }
 
     if (payload.quantity > remainingQuantity) {
       const message = `该菜品最多还能申请退款 ${remainingQuantity} 份`
       setPartialRefundErrors((current) => ({ ...current, [draftKey]: message }))
-      setError(message)
       return
     }
 
@@ -1330,7 +1528,6 @@ export default function DeliveryConsole() {
     setMerchantFormErrors(nextErrors)
 
     if (firstInvalidField) {
-      setError('请完整填写商家信息、店铺大类、营业时间和展示图')
       document
         .getElementById(getMerchantFieldId(firstInvalidField))
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -1389,7 +1586,6 @@ export default function DeliveryConsole() {
         ...current,
         [draftKey]: message,
       }))
-      setError(message)
       return
     }
 
@@ -1437,7 +1633,6 @@ export default function DeliveryConsole() {
     }))
 
     if (firstInvalidField) {
-      setError('请完整填写菜品名称、说明、价格、限量库存和图片')
       document
         .getElementById(getMenuItemFieldId(storeId, firstInvalidField))
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -1555,7 +1750,6 @@ export default function DeliveryConsole() {
     setAddressFormErrors(nextErrors)
 
     if (nextErrors.label || nextErrors.address) {
-      setError('请完整填写地址标签和地址内容')
       return
     }
 
@@ -1593,14 +1787,15 @@ export default function DeliveryConsole() {
   async function rechargeCustomerBalance(amountYuan: number) {
     if (!selectedCustomer) return
     if (!Number.isFinite(amountYuan) || amountYuan <= 0) {
-      setError('请输入有效充值金额')
+      setRechargeFieldError('请输入有效充值金额')
       return
     }
 
     if (amountYuan > 5000) {
-      setError('单次充值金额不能超过 5000 元')
+      setRechargeFieldError('单次充值金额不能超过 5000 元')
       return
     }
+    setRechargeFieldError(null)
 
     await runAction(() =>
       deliveryApi.rechargeCustomerBalance(
@@ -1613,23 +1808,63 @@ export default function DeliveryConsole() {
     navigate('/customer/profile')
   }
 
+  async function saveMerchantProfile() {
+    const payload = buildMerchantProfilePayload(merchantProfileDraft)
+    const nextErrors = validateMerchantProfileDraft(merchantProfileDraft)
+    setMerchantProfileFormErrors(nextErrors)
+
+    if (nextErrors.contactPhone || nextErrors.bankName || nextErrors.accountNumber || nextErrors.accountHolder) {
+      return
+    }
+
+    await runAction(() => deliveryApi.updateMerchantProfile(payload))
+  }
+
+  async function withdrawMerchantIncome() {
+    if (!merchantProfile) return
+
+    const amount = parseMerchantWithdrawAmount(merchantWithdrawAmount)
+    if (amount === null || amount <= 0) {
+      setMerchantWithdrawFieldError('请输入有效提现金额')
+      return
+    }
+
+    if (amount > 50000) {
+      setMerchantWithdrawFieldError('单次提现金额不能超过 50000 元')
+      return
+    }
+
+    if (Math.round(amount * 100) > merchantProfile.availableToWithdrawCents) {
+      setMerchantWithdrawFieldError('提现金额不能超过当前可提现余额')
+      return
+    }
+    setMerchantWithdrawFieldError(null)
+
+    const success = await runAction(() =>
+      deliveryApi.withdrawMerchantIncome(buildMerchantWithdrawPayload(amount)),
+    )
+    if (!success) return
+
+    setMerchantWithdrawAmount('')
+  }
+
   function openRechargePage() {
     setCustomRechargeAmount(String(RECHARGE_PRESET_AMOUNTS[0]))
     setSelectedRechargeAmount(RECHARGE_PRESET_AMOUNTS[0])
-    setError(null)
+    setRechargeFieldError(null)
     navigate('/customer/profile/recharge')
   }
 
   function selectRechargeAmount(amount: number) {
     setSelectedRechargeAmount(amount)
     setCustomRechargeAmount(String(amount))
-    setError(null)
+    setRechargeFieldError(null)
   }
 
   async function submitRechargeFromPage() {
     const amount = parseRechargeAmount(customRechargeAmount)
     if (amount === null) {
-      setError('请输入有效充值金额')
+      setRechargeFieldError('请输入有效充值金额')
       return
     }
 
@@ -1641,8 +1876,17 @@ export default function DeliveryConsole() {
   const rechargeAmountError =
     parsedRechargeAmount !== null && parsedRechargeAmount > 5000
       ? '自定义金额不能超过 5000 元'
-      : null
+      : rechargeFieldError
   const rechargeAmountPreview = parsedRechargeAmount ?? selectedRechargeAmount
+  const parsedMerchantWithdrawAmount = parseMerchantWithdrawAmount(merchantWithdrawAmount)
+  const merchantWithdrawError =
+    parsedMerchantWithdrawAmount !== null && parsedMerchantWithdrawAmount > 50000
+      ? '单次提现金额不能超过 50000 元'
+      : parsedMerchantWithdrawAmount !== null &&
+          merchantProfile != null &&
+          Math.round(parsedMerchantWithdrawAmount * 100) > merchantProfile.availableToWithdrawCents
+        ? '提现金额不能超过当前可提现余额'
+      : merchantWithdrawFieldError
 
   const cartSubtotal = selectedStore
     ? selectedStore.menu.reduce(
@@ -1696,7 +1940,6 @@ export default function DeliveryConsole() {
             <p className="eyebrow">Current Session</p>
             <strong>{currentDisplayName}</strong>
             <span>{roleLabels[role]}</span>
-            <span className="build-mark">{UI_BUILD_MARK}</span>
           </div>
           <button
             className={`secondary-button action-feedback-button${isRefreshing ? ' is-pending' : ''}`}
@@ -1745,12 +1988,16 @@ export default function DeliveryConsole() {
               categoryStores={categoryStores}
               chooseStoreCategory={chooseStoreCategory}
               completedCustomerOrders={completedCustomerOrders}
+              customerStoreSearch={customerStoreSearch}
+              customerStoreSearchDraft={customerStoreSearchDraft}
+              customerStoreSearchHistory={customerStoreSearchHistory}
               customRechargeAmount={customRechargeAmount}
               customerNameDraft={customerNameDraft}
               customerOrders={customerOrders}
               customerWorkspaceView={customerWorkspaceView}
               DELIVERY_FEE_CENTS={DELIVERY_FEE_CENTS}
               deliveryAddress={deliveryAddress}
+              deliveryAddressError={deliveryAddressError}
               enterStore={enterStore}
               formatAggregateRating={formatAggregateRating}
               formatBusinessHours={formatBusinessHours}
@@ -1769,6 +2016,7 @@ export default function DeliveryConsole() {
               openCheckout={openCheckout}
               openRechargePage={openRechargePage}
               orderChatDrafts={orderChatDrafts}
+              orderChatErrors={orderChatErrors}
               partialRefundDrafts={partialRefundDrafts}
               partialRefundErrors={partialRefundErrors}
               parsedRechargeAmount={parsedRechargeAmount}
@@ -1799,11 +2047,15 @@ export default function DeliveryConsole() {
               setAddressDraft={setAddressDraft}
               setAddressFormErrors={setAddressFormErrors}
               setCustomRechargeAmount={setCustomRechargeAmount}
+              setCustomerStoreSearch={setCustomerStoreSearch}
+              setCustomerStoreSearchDraft={setCustomerStoreSearchDraft}
               setCustomerNameDraft={setCustomerNameDraft}
               setDeliveryAddress={setDeliveryAddress}
+              setDeliveryAddressError={setDeliveryAddressError}
               setError={setError}
               setIsCheckoutExpanded={setIsCheckoutExpanded}
               setOrderChatDrafts={setOrderChatDrafts}
+              setOrderChatErrors={setOrderChatErrors}
               setPartialRefundDrafts={setPartialRefundDrafts}
               setPartialRefundErrors={setPartialRefundErrors}
               setRemark={setRemark}
@@ -1815,6 +2067,9 @@ export default function DeliveryConsole() {
               STORE_REVIEW_REASON_OPTIONS={STORE_REVIEW_REASON_OPTIONS}
               storeCategories={storeCategories}
               suggestedDeliveryTime={todayDeliveryWindow.minimumValue}
+              clearCustomerStoreSearchHistory={clearCustomerStoreSearchHistory}
+              removeCustomerStoreSearchHistoryItem={removeCustomerStoreSearchHistoryItem}
+              submitCustomerStoreSearch={submitCustomerStoreSearch}
               submitPartialRefundRequest={submitPartialRefundRequest}
               submitOrderChatMessage={submitOrderChatMessage}
               submitOrder={submitOrder}
@@ -1853,12 +2108,21 @@ export default function DeliveryConsole() {
               merchantDraft={merchantDraft}
               merchantFormErrors={merchantFormErrors}
               merchantPendingApplications={merchantPendingApplications}
+              merchantProfile={merchantProfile}
+              merchantProfileDraft={merchantProfileDraft}
+              merchantProfileFormErrors={merchantProfileFormErrors}
               merchantReviewedApplications={merchantReviewedApplications}
               selectedMerchantStoreId={selectedMerchantStoreId}
               merchantStores={merchantStores}
+              merchantWithdrawAmount={merchantWithdrawAmount}
+              merchantWithdrawError={merchantWithdrawError}
               merchantWorkspaceView={merchantWorkspaceView}
+              BANK_OPTIONS={BANK_OPTIONS}
+              enterMerchantStore={enterMerchantStore}
+              leaveMerchantStore={leaveMerchantStore}
               navigate={navigate}
               orderChatDrafts={orderChatDrafts}
+              orderChatErrors={orderChatErrors}
               partialRefundResolutionDrafts={partialRefundResolutionDrafts}
               role={role}
               resolvePartialRefundRequest={resolvePartialRefundRequest}
@@ -1870,8 +2134,14 @@ export default function DeliveryConsole() {
               setMerchantAppealDrafts={setMerchantAppealDrafts}
               setMerchantDraft={setMerchantDraft}
               setMerchantFormErrors={setMerchantFormErrors}
+              setMerchantProfileDraft={setMerchantProfileDraft}
+              setMerchantProfileFormErrors={setMerchantProfileFormErrors}
+              setMerchantWithdrawFieldError={setMerchantWithdrawFieldError}
+              setMerchantWithdrawAmount={setMerchantWithdrawAmount}
               setOrderChatDrafts={setOrderChatDrafts}
+              setOrderChatErrors={setOrderChatErrors}
               setPartialRefundResolutionDrafts={setPartialRefundResolutionDrafts}
+              saveMerchantProfile={saveMerchantProfile}
               state={state}
               statusLabels={statusLabels}
               STORE_CATEGORIES={STORE_CATEGORIES}
@@ -1880,6 +2150,7 @@ export default function DeliveryConsole() {
               submitStoreMenuItem={submitStoreMenuItem}
               uploadMerchantImage={uploadMerchantImage}
               uploadStoreMenuImage={uploadStoreMenuImage}
+              withdrawMerchantIncome={withdrawMerchantIncome}
             />
           ) : null}
 
@@ -1887,6 +2158,7 @@ export default function DeliveryConsole() {
             <RiderRoleView
               buildEligibilityReviewPayload={buildEligibilityReviewPayload}
               buildReviewAppealPayload={buildReviewAppealPayload}
+              BANK_OPTIONS={BANK_OPTIONS}
               deliveryApi={deliveryApi}
               eligibilityReviewDrafts={eligibilityReviewDrafts}
               formatAggregateRating={formatAggregateRating}
@@ -1894,6 +2166,7 @@ export default function DeliveryConsole() {
               formatTime={formatTime}
               currentDisplayName={currentDisplayName}
               orderChatDrafts={orderChatDrafts}
+              orderChatErrors={orderChatErrors}
               riderAppealDrafts={riderAppealDrafts}
               riderOrders={riderOrders}
               role={role}
@@ -1903,6 +2176,7 @@ export default function DeliveryConsole() {
               session={session}
               setEligibilityReviewDrafts={setEligibilityReviewDrafts}
               setOrderChatDrafts={setOrderChatDrafts}
+              setOrderChatErrors={setOrderChatErrors}
               setRiderAppealDrafts={setRiderAppealDrafts}
               setSelectedRiderId={setSelectedRiderId}
               state={state}

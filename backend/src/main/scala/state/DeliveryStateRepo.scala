@@ -91,13 +91,36 @@ object DeliveryStateRepo:
                     ratingCount = 0,
                     oneStarRatingCount = 0,
                     earningsCents = 0,
+                    payoutAccount = None,
+                    withdrawnCents = 0,
+                    availableToWithdrawCents = 0,
+                    withdrawalHistory = List.empty,
                   ) :: current.riders,
               )
             )
           )
         }.map(_ => Some(riderId))
       case UserRole.merchant =>
-        Right(None)
+        val merchantProfileId = nextId("merchant")
+        updateState { current =>
+          Right(
+            withDerivedData(
+              current.copy(
+                merchantProfiles =
+                  MerchantProfile(
+                    id = merchantProfileId,
+                    merchantName = displayName,
+                    contactPhone = "",
+                    payoutAccount = None,
+                    settledIncomeCents = 0,
+                    withdrawnCents = 0,
+                    availableToWithdrawCents = 0,
+                    withdrawalHistory = List.empty,
+                  ) :: current.merchantProfiles.filterNot(_.merchantName == displayName),
+              )
+            )
+          )
+        }.map(_ => Some(merchantProfileId))
       case UserRole.admin =>
         Left("管理员账号不能自助注册")
 
@@ -127,6 +150,12 @@ object DeliveryStateRepo:
     stateRef.get().merchantApplications.exists(application =>
       application.id == applicationId && application.merchantName == merchantName
     )
+
+  def ownsMerchantProfile(merchantName: String, linkedProfileId: Option[String]): Boolean =
+    val current = stateRef.get()
+    linkedProfileId.exists(profileId =>
+      current.merchantProfiles.exists(profile => profile.id == profileId && profile.merchantName == merchantName)
+    ) || current.merchantProfiles.exists(_.merchantName == merchantName)
 
   def ownsRiderProfile(riderId: String, linkedProfileId: Option[String]): Boolean =
     linkedProfileId.contains(riderId)
@@ -257,6 +286,128 @@ object DeliveryStateRepo:
       }
     }
 
+  def updateMerchantProfile(
+      merchantName: String,
+      request: UpdateMerchantProfileRequest,
+  ): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          profile <- findOrCreateMerchantProfile(current, merchantName)
+          contactPhone <- sanitizeContactPhone(request.contactPhone)
+          payoutAccount <- sanitizeMerchantPayoutAccount(request.payoutAccount)
+        yield
+          withDerivedData(
+            current.copy(
+              merchantProfiles = replaceMerchantProfile(
+                current.merchantProfiles,
+                profile.copy(contactPhone = contactPhone, payoutAccount = Some(payoutAccount)),
+              ),
+            ),
+            now(),
+          )
+      }
+    }
+
+  def withdrawMerchantIncome(
+      merchantName: String,
+      request: WithdrawMerchantIncomeRequest,
+  ): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          profile <- findOrCreateMerchantProfile(current, merchantName)
+          amountCents <- Either.cond(
+            request.amountCents > 0 && request.amountCents <= 5000000,
+            request.amountCents,
+            "提现金额需在 0.01 到 50000 元之间",
+          )
+          payoutAccount <- profile.payoutAccount.toRight("请先完善提现账户")
+          _ <- Either.cond(profile.availableToWithdrawCents >= amountCents, (), "可提现余额不足")
+        yield
+          val timestamp = now()
+          val withdrawal = MerchantWithdrawal(
+            id = nextId("mwd"),
+            amountCents = amountCents,
+            accountLabel = payoutAccountLabel(payoutAccount),
+            requestedAt = timestamp,
+          )
+          withDerivedData(
+            current.copy(
+              merchantProfiles = replaceMerchantProfile(
+                current.merchantProfiles,
+                profile.copy(
+                  withdrawnCents = profile.withdrawnCents + amountCents,
+                  withdrawalHistory = withdrawal :: profile.withdrawalHistory,
+                ),
+              ),
+            ),
+            timestamp,
+          )
+      }
+    }
+
+  def updateRiderProfile(
+      riderId: String,
+      request: UpdateRiderProfileRequest,
+  ): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          rider <- current.riders.find(_.id == riderId).toRight("骑手不存在")
+          payoutAccount <- sanitizeMerchantPayoutAccount(request.payoutAccount)
+        yield
+          withDerivedData(
+            current.copy(
+              riders = current.riders.map(entry =>
+                if entry.id == rider.id then entry.copy(payoutAccount = Some(payoutAccount))
+                else entry
+              ),
+            ),
+            now(),
+          )
+      }
+    }
+
+  def withdrawRiderIncome(
+      riderId: String,
+      request: WithdrawRiderIncomeRequest,
+  ): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          rider <- current.riders.find(_.id == riderId).toRight("骑手不存在")
+          amountCents <- Either.cond(
+            request.amountCents > 0 && request.amountCents <= 5000000,
+            request.amountCents,
+            "提现金额需在 0.01 到 50000 元之间",
+          )
+          payoutAccount <- rider.payoutAccount.toRight("请先完善提现账户")
+          _ <- Either.cond(rider.availableToWithdrawCents >= amountCents, (), "可提现余额不足")
+        yield
+          val timestamp = now()
+          val withdrawal = MerchantWithdrawal(
+            id = nextId("rwd"),
+            amountCents = amountCents,
+            accountLabel = payoutAccountLabel(payoutAccount),
+            requestedAt = timestamp,
+          )
+          withDerivedData(
+            current.copy(
+              riders = current.riders.map(entry =>
+                if entry.id == rider.id then
+                  entry.copy(
+                    withdrawnCents = rider.withdrawnCents + amountCents,
+                    withdrawalHistory = withdrawal :: rider.withdrawalHistory,
+                  )
+                else entry
+              ),
+            ),
+            timestamp,
+          )
+      }
+    }
+
   def submitMerchantApplication(
       request: MerchantRegistrationRequest
   ): IO[Either[String, DeliveryAppState]] =
@@ -379,6 +530,7 @@ object DeliveryStateRepo:
             storeReviewExtraNote = None,
             riderReviewComment = None,
             riderReviewExtraNote = None,
+            merchantRejectReason = None,
             reviewStatus = ReviewStatus.Active,
             reviewRevokedReason = None,
             reviewRevokedAt = None,
@@ -500,8 +652,80 @@ object DeliveryStateRepo:
       }
     }
 
+  def updateStoreOperationalInfo(
+      storeId: String,
+      request: UpdateStoreOperationalRequest,
+  ): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          store <- current.stores.find(_.id == storeId).toRight("店铺不存在")
+          businessHours <- validateBusinessHours(request.businessHours)
+          _ <- Either.cond(request.avgPrepMinutes > 0 && request.avgPrepMinutes <= 120, (), "预计出餐时间需在 1 到 120 分钟之间")
+        yield
+          withDerivedData(
+            current.copy(
+              stores = current.stores.map(entry =>
+                if entry.id == store.id then
+                  entry.copy(
+                    businessHours = businessHours,
+                    avgPrepMinutes = request.avgPrepMinutes,
+                  )
+                else entry
+              )
+            )
+          )
+      }
+    }
+
   def acceptOrder(orderId: String): IO[Either[String, DeliveryAppState]] =
     transitionOrder(orderId, OrderStatus.PendingMerchantAcceptance, OrderStatus.Preparing, "商家已接单，开始备餐")
+
+  def rejectOrder(orderId: String, request: RejectOrderRequest): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          order <- current.orders.find(_.id == orderId).toRight("订单不存在")
+          _ <- Either.cond(order.status == OrderStatus.PendingMerchantAcceptance, (), "当前订单不能拒绝")
+          reason <- sanitizeRequiredText(request.reason, 160, "拒单理由不能为空")
+        yield
+          val timestamp = now()
+          val nextOrders = current.orders.map(entry =>
+            if entry.id == orderId then
+              entry.copy(
+                status = OrderStatus.Cancelled,
+                merchantRejectReason = Some(reason),
+                updatedAt = timestamp,
+                timeline = entry.timeline :+ OrderTimelineEntry(
+                  OrderStatus.Cancelled,
+                  s"商家已拒单，理由：$reason。订单金额已原路退回",
+                  timestamp,
+                ),
+              )
+            else entry
+          )
+          val nextCustomers = current.customers.map(customer =>
+            if customer.id == order.customerId then
+              customer.copy(balanceCents = customer.balanceCents + order.totalPriceCents)
+            else customer
+          )
+          val nextStores = current.stores.map(store =>
+            if store.id == order.storeId then
+              store.copy(
+                menu = store.menu.map(menuItem =>
+                  order.items.find(_.menuItemId == menuItem.id) match
+                    case Some(lineItem) =>
+                      menuItem.copy(
+                        remainingQuantity = menuItem.remainingQuantity.map(quantity => quantity + lineItem.quantity)
+                      )
+                    case None => menuItem
+                )
+              )
+            else store
+          )
+          withDerivedData(current.copy(orders = nextOrders, customers = nextCustomers, stores = nextStores))
+      }
+    }
 
   def readyOrder(orderId: String): IO[Either[String, DeliveryAppState]] =
     transitionOrder(orderId, OrderStatus.Preparing, OrderStatus.ReadyForPickup, "商家已完成备餐，等待骑手取餐")
@@ -1239,6 +1463,7 @@ object DeliveryStateRepo:
       storeReviewExtraNote = request.storeReview.flatMap(_.extraNote).orElse(order.storeReviewExtraNote),
       riderReviewComment = request.riderReview.flatMap(_.comment).orElse(order.riderReviewComment),
       riderReviewExtraNote = request.riderReview.flatMap(_.extraNote).orElse(order.riderReviewExtraNote),
+      merchantRejectReason = order.merchantRejectReason,
       reviewStatus = ReviewStatus.Active,
       updatedAt = timestamp,
       timeline = order.timeline :+ OrderTimelineEntry(
@@ -1381,6 +1606,11 @@ object DeliveryStateRepo:
         revenueByStore.getOrElse(store.id, 0),
       )
     )
+    val settledIncomeByMerchant = nextStores
+      .groupBy(_.merchantName)
+      .view
+      .mapValues(stores => stores.map(_.revenueCents).sum)
+      .toMap
     val nextRiders = state.riders.map(rider =>
       applyRatingToRider(
         rider,
@@ -1389,13 +1619,20 @@ object DeliveryStateRepo:
         state.orders.count(_.riderId.contains(rider.id)) * RiderEarningPerOrderCents,
       )
     )
-    val activeOrders = state.orders.count(order => order.status != OrderStatus.Completed)
+    val nextMerchantProfiles = mergeMerchantProfiles(state, settledIncomeByMerchant)
+    val activeOrders = state.orders.count(order =>
+      order.status == OrderStatus.PendingMerchantAcceptance ||
+        order.status == OrderStatus.Preparing ||
+        order.status == OrderStatus.ReadyForPickup ||
+        order.status == OrderStatus.Delivering
+    )
 
     state.copy(
       customers = nextCustomers,
       orders = nextOrders,
       reviewAppeals = nextAppeals,
       stores = nextStores,
+      merchantProfiles = nextMerchantProfiles,
       riders = nextRiders,
       metrics = SystemMetrics(
         totalOrders = state.orders.size,
@@ -1569,6 +1806,7 @@ object DeliveryStateRepo:
       ratingCount = ratings.size,
       oneStarRatingCount = oneStarCount,
       earningsCents = earningsCents,
+      availableToWithdrawCents = Math.max(0, earningsCents - rider.withdrawnCents),
     )
 
   private def roundAverage(ratings: List[Int]): Double =
@@ -1649,6 +1887,12 @@ object DeliveryStateRepo:
   ): List[MerchantApplication] =
     applications.map(application => if application.id == target.id then target else application)
 
+  private def replaceMerchantProfile(
+      profiles: List[MerchantProfile],
+      target: MerchantProfile,
+  ): List[MerchantProfile] =
+    profiles.map(profile => if profile.id == target.id then target else profile)
+
   private def replaceAppeal(
       appeals: List[ReviewAppeal],
       target: ReviewAppeal,
@@ -1660,6 +1904,89 @@ object DeliveryStateRepo:
       target: EligibilityReview,
   ): List[EligibilityReview] =
     reviews.map(review => if review.id == target.id then target else review)
+
+  private def findOrCreateMerchantProfile(
+      state: DeliveryAppState,
+      merchantName: String,
+  ): Either[String, MerchantProfile] =
+    sanitizeRequiredText(merchantName, 40, "商家名称不能为空").map { sanitizedName =>
+      state.merchantProfiles.find(_.merchantName == sanitizedName).getOrElse(
+        MerchantProfile(
+          id = nextId("merchant"),
+          merchantName = sanitizedName,
+          contactPhone = "",
+          payoutAccount = None,
+          settledIncomeCents = 0,
+          withdrawnCents = 0,
+          availableToWithdrawCents = 0,
+          withdrawalHistory = List.empty,
+        )
+      )
+    }
+
+  private def sanitizeContactPhone(value: String): Either[String, String] =
+    sanitizeRequiredText(value, 20, "联系电话不能为空").flatMap { phone =>
+      Either.cond(phone.matches("[0-9+\\- ]{6,20}"), phone, "联系电话格式不正确")
+    }
+
+  private def sanitizeMerchantPayoutAccount(
+      account: MerchantPayoutAccount,
+  ): Either[String, MerchantPayoutAccount] =
+    val accountType = account.accountType.trim
+    val bankName = account.bankName.map(_.trim).filter(_.nonEmpty)
+    for
+      normalizedType <- Either.cond(
+        accountType == "alipay" || accountType == "bank",
+        accountType,
+        "提现账户类型不正确",
+      )
+      accountHolder <- sanitizeRequiredText(account.accountHolder, 30, "收款人不能为空")
+      accountNumber <- sanitizeRequiredText(account.accountNumber, 60, "账号不能为空")
+      normalizedBankName <-
+        if normalizedType == "bank" then
+          sanitizeRequiredText(bankName.getOrElse(""), 30, "请选择开户银行").map(Some(_))
+        else Right(None)
+      _ <- Either.cond(normalizedType != "alipay" || accountNumber.length >= 4, (), "支付宝账号格式不正确")
+      _ <- Either.cond(normalizedType != "bank" || accountNumber.matches("[0-9 ]{8,30}"), (), "银行卡号格式不正确")
+    yield MerchantPayoutAccount(
+      accountType = normalizedType,
+      bankName = normalizedBankName,
+      accountNumber = accountNumber,
+      accountHolder = accountHolder,
+    )
+
+  private def payoutAccountLabel(account: MerchantPayoutAccount): String =
+    account.accountType match
+      case "alipay" => s"支付宝 ${account.accountHolder} / ${account.accountNumber}"
+      case "bank" => s"${account.bankName.getOrElse("银行卡")} ${account.accountHolder} / ${account.accountNumber}"
+      case _ => account.accountNumber
+
+  private def mergeMerchantProfiles(
+      state: DeliveryAppState,
+      settledIncomeByMerchant: Map[String, Int],
+  ): List[MerchantProfile] =
+    val merchantNames = (state.merchantProfiles.map(_.merchantName) ++ state.stores.map(_.merchantName)).distinct
+    merchantNames.map { merchantName =>
+      val existing = state.merchantProfiles.find(_.merchantName == merchantName)
+      val profile = existing.getOrElse(
+        MerchantProfile(
+          id = nextId("merchant"),
+          merchantName = merchantName,
+          contactPhone = "",
+          payoutAccount = None,
+          settledIncomeCents = 0,
+          withdrawnCents = 0,
+          availableToWithdrawCents = 0,
+          withdrawalHistory = List.empty,
+        )
+      )
+      val settledIncomeCents = settledIncomeByMerchant.getOrElse(merchantName, 0)
+      profile.copy(
+        settledIncomeCents = settledIncomeCents,
+        availableToWithdrawCents = Math.max(0, settledIncomeCents - profile.withdrawnCents),
+        withdrawalHistory = profile.withdrawalHistory.sortBy(_.requestedAt)(Ordering.String.reverse),
+      )
+    }
 
   private def nextId(prefix: String): String =
     s"$prefix-${UUID.randomUUID().toString.take(8)}"
@@ -1704,8 +2031,8 @@ object DeliveryStateRepo:
     )
     val stores = List.empty[Store]
     val riders = List(
-      Rider("rider-1", "陈凯", "电动车", "浦东", "Available", 0.0, 0, 0, 0),
-      Rider("rider-2", "赵晨", "摩托车", "静安", "Available", 0.0, 0, 0, 0),
+      Rider("rider-1", "陈凯", "电动车", "浦东", "Available", 0.0, 0, 0, 0, None, 0, 0, List.empty),
+      Rider("rider-2", "赵晨", "摩托车", "静安", "Available", 0.0, 0, 0, 0, None, 0, 0, List.empty),
     )
     val admins = List(AdminProfile("admin-1", "总控台管理员"))
 
@@ -1713,6 +2040,28 @@ object DeliveryStateRepo:
       DeliveryAppState(
         customers = customers,
         stores = stores,
+        merchantProfiles = List(
+          MerchantProfile(
+            "merchant-1",
+            "王师傅",
+            "13800138000",
+            Some(MerchantPayoutAccount("bank", Some("招商银行"), "6225888800004021", "王师傅")),
+            0,
+            0,
+            0,
+            List.empty,
+          ),
+          MerchantProfile(
+            "merchant-2",
+            "苏宁",
+            "13800138001",
+            Some(MerchantPayoutAccount("alipay", None, "su_store@demo", "苏宁")),
+            0,
+            0,
+            0,
+            List.empty,
+          ),
+        ),
         riders = riders,
         admins = admins,
         merchantApplications = List.empty,

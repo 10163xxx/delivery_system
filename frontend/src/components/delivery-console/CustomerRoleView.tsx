@@ -16,11 +16,15 @@ export function CustomerRoleView(props: any) {
     categoryStores,
     chooseStoreCategory,
     completedCustomerOrders,
+    customerStoreSearch,
+    customerStoreSearchDraft,
+    customerStoreSearchHistory,
     customRechargeAmount,
     customerOrders,
     customerWorkspaceView,
     DELIVERY_FEE_CENTS,
     deliveryAddress,
+    deliveryAddressError,
     enterStore,
     formatAggregateRating,
     formatBusinessHours,
@@ -38,6 +42,7 @@ export function CustomerRoleView(props: any) {
     openCheckout,
     openRechargePage,
     orderChatDrafts,
+    orderChatErrors,
     partialRefundDrafts,
     partialRefundErrors,
     parsedRechargeAmount,
@@ -67,10 +72,14 @@ export function CustomerRoleView(props: any) {
     setAddressDraft,
     setAddressFormErrors,
     setCustomRechargeAmount,
+    setCustomerStoreSearch,
+    setCustomerStoreSearchDraft,
     setDeliveryAddress,
+    setDeliveryAddressError,
     setError,
     setIsCheckoutExpanded,
     setOrderChatDrafts,
+    setOrderChatErrors,
     setPartialRefundDrafts,
     setPartialRefundErrors,
     setRemark,
@@ -82,6 +91,7 @@ export function CustomerRoleView(props: any) {
     STORE_REVIEW_REASON_OPTIONS,
     storeCategories,
     suggestedDeliveryTime,
+    submitCustomerStoreSearch,
     submitPartialRefundRequest,
     submitOrderChatMessage,
     submitOrder,
@@ -90,10 +100,14 @@ export function CustomerRoleView(props: any) {
     submitReview,
     getRemainingRefundableQuantity,
     canSubmitPartialRefund,
+    clearCustomerStoreSearchHistory,
+    removeCustomerStoreSearchHistoryItem,
     updateQuantity,
     updateReviewDraft,
     visibleStores,
   } = props
+  const hasStoreSearch = customerStoreSearch.trim().length > 0
+  const storesToBrowse = selectedStoreCategory ? categoryStores : visibleStores
 
   return (
     <section className="panel-stack">
@@ -157,9 +171,112 @@ export function CustomerRoleView(props: any) {
                   ? `当前分类为「${selectedStoreCategory}」，请选择对应餐厅。`
                   : '先选择细分餐厅大类，再进入对应餐厅选购菜品。'
             }
-          >
-            {selectedCustomer ? (
-              <div className="summary-bar">
+        >
+          {!selectedStore ? (
+            <div className="summary-bar">
+              <label style={{ flex: 1, minWidth: '280px' }}>
+                <span>搜索店家</span>
+                <input
+                  placeholder="输入店铺名或商家名"
+                  value={customerStoreSearchDraft}
+                  onChange={(event) => setCustomerStoreSearchDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      submitCustomerStoreSearch()
+                    }
+                  }}
+                />
+              </label>
+              <button
+                className="primary-button"
+                onClick={() => submitCustomerStoreSearch()}
+                type="button"
+              >
+                搜索
+              </button>
+              {customerStoreSearchDraft.trim() || customerStoreSearch.trim() ? (
+                <button
+                  className="secondary-button"
+                  onClick={() => {
+                    setCustomerStoreSearchDraft('')
+                    setCustomerStoreSearch('')
+                  }}
+                  type="button"
+                >
+                  清空搜索
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {!selectedStore && customerStoreSearchHistory.length > 0 ? (
+            <div className="summary-bar">
+              <div style={{ flex: 1 }}>
+                <p>搜索记录</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {customerStoreSearchHistory.map((keyword: string) => (
+                    <div
+                      key={keyword}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem',
+                        padding: '0.75rem 1rem',
+                        borderRadius: '18px',
+                        background: 'rgba(15, 23, 42, 0.04)',
+                        border: '1px solid rgba(15, 23, 42, 0.08)',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => submitCustomerStoreSearch(keyword)}
+                        style={{
+                          flex: 1,
+                          textAlign: 'left',
+                          border: 'none',
+                          background: 'transparent',
+                          padding: 0,
+                          font: 'inherit',
+                          color: 'inherit',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {keyword}
+                      </button>
+                      <button
+                        onClick={() => removeCustomerStoreSearchHistoryItem(keyword)}
+                        aria-label={`删除搜索记录 ${keyword}`}
+                        type="button"
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          padding: 0,
+                          fontSize: '1rem',
+                          lineHeight: 1,
+                          color: 'rgba(15, 23, 42, 0.6)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        x
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button
+                className="secondary-button"
+                onClick={() => clearCustomerStoreSearchHistory()}
+                type="button"
+              >
+                清空记录
+              </button>
+            </div>
+          ) : null}
+
+          {selectedCustomer ? (
+            <div className="summary-bar">
                 <div>
                   <p>顾客状态</p>
                   <strong>{selectedCustomer.accountStatus === 'Suspended' ? '已封号' : '正常'}</strong>
@@ -321,10 +438,19 @@ export function CustomerRoleView(props: any) {
                       <label className="full">
                         <span>配送地址</span>
                         <input
+                          className={deliveryAddressError ? 'field-error' : undefined}
                           list="customer-address-options"
                           value={deliveryAddress}
-                          onChange={(event) => setDeliveryAddress(event.target.value)}
+                          onChange={(event) => {
+                            setDeliveryAddress(event.target.value)
+                            if (deliveryAddressError) {
+                              setDeliveryAddressError(null)
+                            }
+                          }}
                         />
+                        {deliveryAddressError ? (
+                          <span className="field-error-text">{deliveryAddressError}</span>
+                        ) : null}
                         <datalist id="customer-address-options">
                           {selectedCustomer?.addresses.map((address: any) => (
                             <option
@@ -437,7 +563,7 @@ export function CustomerRoleView(props: any) {
                   </section>
                 ) : null}
               </>
-            ) : !selectedStoreCategory && storeCategories.length > 0 ? (
+            ) : !selectedStoreCategory && !hasStoreSearch && storeCategories.length > 0 ? (
               <div className="store-grid">
                 {storeCategories.map((category: string) => {
                   const storesInCategory = visibleStores.filter((store: any) => store.category === category)
@@ -470,26 +596,36 @@ export function CustomerRoleView(props: any) {
                   )
                 })}
               </div>
-            ) : categoryStores.length > 0 ? (
+            ) : storesToBrowse.length > 0 ? (
               <>
                 <div className="category-toolbar">
                   <div>
-                    <p className="ticket-kind">当前分类</p>
-                    <strong>{selectedStoreCategory}</strong>
-                    <p className="meta-line">共 {categoryStores.length} 家餐厅，请选择已有菜品的店铺进入点餐。</p>
+                    <p className="ticket-kind">
+                      {selectedStoreCategory ? '当前分类' : '搜索结果'}
+                    </p>
+                    <strong>{selectedStoreCategory || `“${customerStoreSearch.trim()}”`}</strong>
+                    <p className="meta-line">
+                      共 {storesToBrowse.length} 家餐厅，请选择已有菜品的店铺进入点餐。
+                    </p>
                   </div>
                   <button
                     className="primary-button category-back-button"
-                    onClick={() => resetStoreCategory()}
+                    onClick={() => {
+                      if (selectedStoreCategory) {
+                        resetStoreCategory()
+                      } else {
+                        setCustomerStoreSearch('')
+                      }
+                    }}
                     style={{ minWidth: '240px', minHeight: '64px', fontSize: '1.1rem' }}
                     type="button"
                   >
-                    返回全部分类
+                    {selectedStoreCategory ? '返回全部分类' : '清空搜索'}
                   </button>
                 </div>
 
                 <div className="store-grid compact-store-grid">
-                  {categoryStores.map((store: any) => (
+                  {storesToBrowse.map((store: any) => (
                     <article key={store.id} className="store-card compact-store-card">
                       <DisplayImageSlot
                         alt={`${store.name} 展示图`}
@@ -549,7 +685,9 @@ export function CustomerRoleView(props: any) {
               </>
             ) : (
               <div className="empty-card">
-                当前分类下没有可浏览的店铺。
+                {customerStoreSearch.trim()
+                  ? '没有找到匹配的店铺，请换个关键词试试。'
+                  : '当前分类下没有可浏览的店铺。'}
                 <button className="secondary-button" onClick={() => resetStoreCategory()} type="button">
                   返回分类列表
                 </button>
@@ -666,6 +804,7 @@ export function CustomerRoleView(props: any) {
                       currentDisplayName={selectedCustomer?.name ?? '顾客'}
                       currentRole="customer"
                       draft={orderChatDrafts[order.id] ?? ''}
+                      errorText={orderChatErrors[order.id]}
                       disabled={false}
                       disabledReason={
                         order.riderId
@@ -675,10 +814,18 @@ export function CustomerRoleView(props: any) {
                       formatTime={formatTime}
                       order={order}
                       onChangeDraft={(value) =>
-                        setOrderChatDrafts((current: Record<string, string>) => ({
-                          ...current,
-                          [order.id]: value,
-                        }))
+                        {
+                          setOrderChatDrafts((current: Record<string, string>) => ({
+                            ...current,
+                            [order.id]: value,
+                          }))
+                          setOrderChatErrors((current: Record<string, string>) => {
+                            if (!current[order.id]) return current
+                            const next = { ...current }
+                            delete next[order.id]
+                            return next
+                          })
+                        }
                       }
                       onSubmit={() => void submitOrderChatMessage(order.id)}
                     />
@@ -758,10 +905,11 @@ export function CustomerRoleView(props: any) {
                     </div>
                   ) : null}
                   <OrderChatPanel
-                    currentDisplayName={selectedCustomer?.name ?? '顾客'}
-                    currentRole="customer"
-                    draft={orderChatDrafts[order.id] ?? ''}
-                    disabled={false}
+                      currentDisplayName={selectedCustomer?.name ?? '顾客'}
+                      currentRole="customer"
+                      draft={orderChatDrafts[order.id] ?? ''}
+                      errorText={orderChatErrors[order.id]}
+                      disabled={false}
                     disabledReason={
                       order.riderId
                         ? undefined
@@ -770,10 +918,18 @@ export function CustomerRoleView(props: any) {
                     formatTime={formatTime}
                     order={order}
                     onChangeDraft={(value) =>
-                      setOrderChatDrafts((current: Record<string, string>) => ({
-                        ...current,
-                        [order.id]: value,
-                      }))
+                      {
+                        setOrderChatDrafts((current: Record<string, string>) => ({
+                          ...current,
+                          [order.id]: value,
+                        }))
+                        setOrderChatErrors((current: Record<string, string>) => {
+                          if (!current[order.id]) return current
+                          const next = { ...current }
+                          delete next[order.id]
+                          return next
+                        })
+                      }
                     }
                     onSubmit={() => void submitOrderChatMessage(order.id)}
                   />

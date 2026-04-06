@@ -4,7 +4,7 @@ import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.semiauto.*
 
 enum OrderStatus:
-  case PendingMerchantAcceptance, Preparing, ReadyForPickup, Delivering, Completed, Escalated
+  case PendingMerchantAcceptance, Preparing, ReadyForPickup, Delivering, Completed, Cancelled, Escalated
 
 object OrderStatus:
   given Encoder[OrderStatus] = Encoder.encodeString.contramap(_.toString)
@@ -243,6 +243,10 @@ final case class Rider(
     ratingCount: Int,
     oneStarRatingCount: Int,
     earningsCents: Int,
+    payoutAccount: Option[MerchantPayoutAccount],
+    withdrawnCents: Int,
+    availableToWithdrawCents: Int,
+    withdrawalHistory: List[MerchantWithdrawal],
 )
 object Rider:
   given Encoder[Rider] = deriveEncoder
@@ -257,6 +261,12 @@ object Rider:
       ratingCount <- cursor.get[Int]("ratingCount")
       oneStarRatingCount <- cursor.get[Int]("oneStarRatingCount")
       earningsCents <- cursor.getOrElse[Int]("earningsCents")(0)
+      payoutAccount <- cursor.get[Option[MerchantPayoutAccount]]("payoutAccount").orElse(
+        cursor.get[Option[String]]("payoutAccount").map(_.flatMap(MerchantPayoutAccount.fromLegacy))
+      )
+      withdrawnCents <- cursor.getOrElse[Int]("withdrawnCents")(0)
+      availableToWithdrawCents <- cursor.getOrElse[Int]("availableToWithdrawCents")(Math.max(0, earningsCents - withdrawnCents))
+      withdrawalHistory <- cursor.getOrElse[List[MerchantWithdrawal]]("withdrawalHistory")(List.empty)
     yield Rider(
       id = id,
       name = name,
@@ -267,6 +277,10 @@ object Rider:
       ratingCount = ratingCount,
       oneStarRatingCount = oneStarRatingCount,
       earningsCents = earningsCents,
+      payoutAccount = payoutAccount,
+      withdrawnCents = withdrawnCents,
+      availableToWithdrawCents = availableToWithdrawCents,
+      withdrawalHistory = withdrawalHistory,
     )
   }
 
@@ -274,6 +288,96 @@ final case class AdminProfile(id: String, name: String)
 object AdminProfile:
   given Encoder[AdminProfile] = deriveEncoder
   given Decoder[AdminProfile] = deriveDecoder
+
+final case class MerchantWithdrawal(
+    id: String,
+    amountCents: Int,
+    accountLabel: String,
+    requestedAt: String,
+)
+object MerchantWithdrawal:
+  given Encoder[MerchantWithdrawal] = deriveEncoder
+  given Decoder[MerchantWithdrawal] = deriveDecoder
+
+final case class MerchantPayoutAccount(
+    accountType: String,
+    bankName: Option[String],
+    accountNumber: String,
+    accountHolder: String,
+)
+object MerchantPayoutAccount:
+  given Encoder[MerchantPayoutAccount] = deriveEncoder
+  given Decoder[MerchantPayoutAccount] = Decoder.instance { cursor =>
+    for
+      accountType <- cursor.getOrElse[String]("accountType")("")
+      bankName <- cursor.get[Option[String]]("bankName")
+      accountNumber <- cursor.getOrElse[String]("accountNumber")("")
+      accountHolder <- cursor.getOrElse[String]("accountHolder")("")
+    yield MerchantPayoutAccount(
+      accountType = accountType,
+      bankName = bankName,
+      accountNumber = accountNumber,
+      accountHolder = accountHolder,
+    )
+  }
+
+  def fromLegacy(value: String): Option[MerchantPayoutAccount] =
+    val legacy = value.trim
+    if legacy.isEmpty then None
+    else if legacy.startsWith("支付宝") then
+      Some(
+        MerchantPayoutAccount(
+          accountType = "alipay",
+          bankName = None,
+          accountNumber = legacy.stripPrefix("支付宝").trim,
+          accountHolder = "",
+        )
+      )
+    else
+      Some(
+        MerchantPayoutAccount(
+          accountType = "bank",
+          bankName = legacy.split(" ").headOption.filter(_.nonEmpty),
+          accountNumber = legacy,
+          accountHolder = "",
+        )
+      )
+
+final case class MerchantProfile(
+    id: String,
+    merchantName: String,
+    contactPhone: String,
+    payoutAccount: Option[MerchantPayoutAccount],
+    settledIncomeCents: Int,
+    withdrawnCents: Int,
+    availableToWithdrawCents: Int,
+    withdrawalHistory: List[MerchantWithdrawal],
+)
+object MerchantProfile:
+  given Encoder[MerchantProfile] = deriveEncoder
+  given Decoder[MerchantProfile] = Decoder.instance { cursor =>
+    for
+      id <- cursor.get[String]("id")
+      merchantName <- cursor.get[String]("merchantName")
+      contactPhone <- cursor.getOrElse[String]("contactPhone")("")
+      payoutAccount <- cursor.get[Option[MerchantPayoutAccount]]("payoutAccount").orElse(
+        cursor.get[Option[String]]("payoutAccount").map(_.flatMap(MerchantPayoutAccount.fromLegacy))
+      )
+      settledIncomeCents <- cursor.getOrElse[Int]("settledIncomeCents")(0)
+      withdrawnCents <- cursor.getOrElse[Int]("withdrawnCents")(0)
+      availableToWithdrawCents <- cursor.getOrElse[Int]("availableToWithdrawCents")(Math.max(0, settledIncomeCents - withdrawnCents))
+      withdrawalHistory <- cursor.getOrElse[List[MerchantWithdrawal]]("withdrawalHistory")(List.empty)
+    yield MerchantProfile(
+      id = id,
+      merchantName = merchantName,
+      contactPhone = contactPhone,
+      payoutAccount = payoutAccount,
+      settledIncomeCents = settledIncomeCents,
+      withdrawnCents = withdrawnCents,
+      availableToWithdrawCents = availableToWithdrawCents,
+      withdrawalHistory = withdrawalHistory,
+    )
+  }
 
 final case class AuthUser(
     id: String,
@@ -393,10 +497,40 @@ object RechargeBalanceRequest:
   given Encoder[RechargeBalanceRequest] = deriveEncoder
   given Decoder[RechargeBalanceRequest] = deriveDecoder
 
+final case class UpdateMerchantProfileRequest(
+    contactPhone: String,
+    payoutAccount: MerchantPayoutAccount,
+)
+object UpdateMerchantProfileRequest:
+  given Encoder[UpdateMerchantProfileRequest] = deriveEncoder
+  given Decoder[UpdateMerchantProfileRequest] = deriveDecoder
+
+final case class UpdateRiderProfileRequest(
+    payoutAccount: MerchantPayoutAccount,
+)
+object UpdateRiderProfileRequest:
+  given Encoder[UpdateRiderProfileRequest] = deriveEncoder
+  given Decoder[UpdateRiderProfileRequest] = deriveDecoder
+
+final case class WithdrawMerchantIncomeRequest(amountCents: Int)
+object WithdrawMerchantIncomeRequest:
+  given Encoder[WithdrawMerchantIncomeRequest] = deriveEncoder
+  given Decoder[WithdrawMerchantIncomeRequest] = deriveDecoder
+
+final case class WithdrawRiderIncomeRequest(amountCents: Int)
+object WithdrawRiderIncomeRequest:
+  given Encoder[WithdrawRiderIncomeRequest] = deriveEncoder
+  given Decoder[WithdrawRiderIncomeRequest] = deriveDecoder
+
 final case class AssignRiderRequest(riderId: String)
 object AssignRiderRequest:
   given Encoder[AssignRiderRequest] = deriveEncoder
   given Decoder[AssignRiderRequest] = deriveDecoder
+
+final case class RejectOrderRequest(reason: String)
+object RejectOrderRequest:
+  given Encoder[RejectOrderRequest] = deriveEncoder
+  given Decoder[RejectOrderRequest] = deriveDecoder
 
 final case class MerchantRegistrationRequest(
     merchantName: String,
@@ -428,6 +562,14 @@ final case class UpdateMenuItemStockRequest(
 object UpdateMenuItemStockRequest:
   given Encoder[UpdateMenuItemStockRequest] = deriveEncoder
   given Decoder[UpdateMenuItemStockRequest] = deriveDecoder
+
+final case class UpdateStoreOperationalRequest(
+    businessHours: BusinessHours,
+    avgPrepMinutes: Int,
+)
+object UpdateStoreOperationalRequest:
+  given Encoder[UpdateStoreOperationalRequest] = deriveEncoder
+  given Decoder[UpdateStoreOperationalRequest] = deriveDecoder
 
 final case class ImageUploadResponse(url: String)
 object ImageUploadResponse:
@@ -576,6 +718,7 @@ final case class OrderSummary(
     storeReviewExtraNote: Option[String],
     riderReviewComment: Option[String],
     riderReviewExtraNote: Option[String],
+    merchantRejectReason: Option[String],
     reviewStatus: ReviewStatus,
     reviewRevokedReason: Option[String],
     reviewRevokedAt: Option[String],
@@ -611,6 +754,7 @@ object OrderSummary:
       "storeReviewExtraNote" -> Encoder.encodeOption[String].apply(order.storeReviewExtraNote),
       "riderReviewComment" -> Encoder.encodeOption[String].apply(order.riderReviewComment),
       "riderReviewExtraNote" -> Encoder.encodeOption[String].apply(order.riderReviewExtraNote),
+      "merchantRejectReason" -> Encoder.encodeOption[String].apply(order.merchantRejectReason),
       "reviewStatus" -> summon[Encoder[ReviewStatus]].apply(order.reviewStatus),
       "reviewRevokedReason" -> Encoder.encodeOption[String].apply(order.reviewRevokedReason),
       "reviewRevokedAt" -> Encoder.encodeOption[String].apply(order.reviewRevokedAt),
@@ -646,6 +790,7 @@ object OrderSummary:
       storeReviewExtraNote <- cursor.get[Option[String]]("storeReviewExtraNote")
       riderReviewComment <- cursor.get[Option[String]]("riderReviewComment")
       riderReviewExtraNote <- cursor.get[Option[String]]("riderReviewExtraNote")
+      merchantRejectReason <- cursor.get[Option[String]]("merchantRejectReason")
       reviewStatus <- cursor.get[ReviewStatus]("reviewStatus")
       reviewRevokedReason <- cursor.get[Option[String]]("reviewRevokedReason")
       reviewRevokedAt <- cursor.get[Option[String]]("reviewRevokedAt")
@@ -678,6 +823,7 @@ object OrderSummary:
       storeReviewExtraNote = storeReviewExtraNote,
       riderReviewComment = riderReviewComment,
       riderReviewExtraNote = riderReviewExtraNote,
+      merchantRejectReason = merchantRejectReason,
       reviewStatus = reviewStatus,
       reviewRevokedReason = reviewRevokedReason,
       reviewRevokedAt = reviewRevokedAt,
@@ -760,6 +906,7 @@ object SystemMetrics:
 final case class DeliveryAppState(
     customers: List[Customer],
     stores: List[Store],
+    merchantProfiles: List[MerchantProfile],
     riders: List[Rider],
     admins: List[AdminProfile],
     merchantApplications: List[MerchantApplication],
@@ -771,4 +918,30 @@ final case class DeliveryAppState(
 )
 object DeliveryAppState:
   given Encoder[DeliveryAppState] = deriveEncoder
-  given Decoder[DeliveryAppState] = deriveDecoder
+  given Decoder[DeliveryAppState] = Decoder.instance { cursor =>
+    for
+      customers <- cursor.getOrElse[List[Customer]]("customers")(List.empty)
+      stores <- cursor.getOrElse[List[Store]]("stores")(List.empty)
+      merchantProfiles <- cursor.getOrElse[List[MerchantProfile]]("merchantProfiles")(List.empty)
+      riders <- cursor.getOrElse[List[Rider]]("riders")(List.empty)
+      admins <- cursor.getOrElse[List[AdminProfile]]("admins")(List.empty)
+      merchantApplications <- cursor.getOrElse[List[MerchantApplication]]("merchantApplications")(List.empty)
+      reviewAppeals <- cursor.getOrElse[List[ReviewAppeal]]("reviewAppeals")(List.empty)
+      eligibilityReviews <- cursor.getOrElse[List[EligibilityReview]]("eligibilityReviews")(List.empty)
+      orders <- cursor.getOrElse[List[OrderSummary]]("orders")(List.empty)
+      tickets <- cursor.getOrElse[List[AdminTicket]]("tickets")(List.empty)
+      metrics <- cursor.getOrElse[SystemMetrics]("metrics")(SystemMetrics(0, 0, 0, 0.0))
+    yield DeliveryAppState(
+      customers = customers,
+      stores = stores,
+      merchantProfiles = merchantProfiles,
+      riders = riders,
+      admins = admins,
+      merchantApplications = merchantApplications,
+      reviewAppeals = reviewAppeals,
+      eligibilityReviews = eligibilityReviews,
+      orders = orders,
+      tickets = tickets,
+      metrics = metrics,
+    )
+  }

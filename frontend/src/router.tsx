@@ -58,6 +58,11 @@ const routes = [
     errorElement: <RouteErrorPage />,
   },
   {
+    path: '/merchant/profile',
+    element: <DeliveryConsole />,
+    errorElement: <RouteErrorPage />,
+  },
+  {
     path: '/merchant/*',
     element: <Navigate replace to="/merchant/console" />,
   },

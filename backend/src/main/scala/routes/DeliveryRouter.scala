@@ -72,6 +72,42 @@ object DeliveryRouter:
           }
       }
 
+    case req @ POST -> Root / "api" / "delivery" / "merchant-profile" =>
+      withRole(req, UserRole.merchant) { user =>
+        if !DeliveryStateRepo.ownsMerchantProfile(user.displayName, user.linkedProfileId) then Forbidden("无权修改其他商家资料")
+        else
+          req.as[UpdateMerchantProfileRequest].flatMap { payload =>
+            DeliveryStateRepo.updateMerchantProfile(user.displayName, payload).flatMap(handleStateResult)
+          }
+      }
+
+    case req @ POST -> Root / "api" / "delivery" / "merchant-profile" / "withdraw" =>
+      withRole(req, UserRole.merchant) { user =>
+        if !DeliveryStateRepo.ownsMerchantProfile(user.displayName, user.linkedProfileId) then Forbidden("无权发起其他商家的提现")
+        else
+          req.as[WithdrawMerchantIncomeRequest].flatMap { payload =>
+            DeliveryStateRepo.withdrawMerchantIncome(user.displayName, payload).flatMap(handleStateResult)
+          }
+      }
+
+    case req @ POST -> Root / "api" / "delivery" / "riders" / riderId / "profile" =>
+      withRole(req, UserRole.rider) { user =>
+        if !DeliveryStateRepo.ownsRiderProfile(riderId, user.linkedProfileId) then Forbidden("无权修改其他骑手资料")
+        else
+          req.as[UpdateRiderProfileRequest].flatMap { payload =>
+            DeliveryStateRepo.updateRiderProfile(riderId, payload).flatMap(handleStateResult)
+          }
+      }
+
+    case req @ POST -> Root / "api" / "delivery" / "riders" / riderId / "withdraw" =>
+      withRole(req, UserRole.rider) { user =>
+        if !DeliveryStateRepo.ownsRiderProfile(riderId, user.linkedProfileId) then Forbidden("无权发起其他骑手的提现")
+        else
+          req.as[WithdrawRiderIncomeRequest].flatMap { payload =>
+            DeliveryStateRepo.withdrawRiderIncome(riderId, payload).flatMap(handleStateResult)
+          }
+      }
+
     case req @ POST -> Root / "api" / "delivery" / "merchant-applications" =>
       withRole(req, UserRole.merchant) { user =>
         req.as[MerchantRegistrationRequest].flatMap { payload =>
@@ -142,6 +178,15 @@ object DeliveryRouter:
           }
       }
 
+    case req @ POST -> Root / "api" / "delivery" / "stores" / storeId / "operations" =>
+      withRole(req, UserRole.merchant) { user =>
+        if !DeliveryStateRepo.ownsStore(storeId, user.displayName) then Forbidden("无权修改其他商家的店铺信息")
+        else
+          req.as[UpdateStoreOperationalRequest].flatMap { payload =>
+            DeliveryStateRepo.updateStoreOperationalInfo(storeId, payload).flatMap(handleStateResult)
+          }
+      }
+
     case req @ POST -> Root / "api" / "delivery" / "orders" =>
       withRole(req, UserRole.customer) { user =>
         req.as[CreateOrderRequest].flatMap { payload =>
@@ -159,6 +204,15 @@ object DeliveryRouter:
       withRole(req, UserRole.merchant) { user =>
         if !DeliveryStateRepo.ownsOrderAsMerchant(orderId, user.displayName) then Forbidden("无权处理其他商家的订单")
         else DeliveryStateRepo.acceptOrder(orderId).flatMap(handleStateResult)
+      }
+
+    case req @ POST -> Root / "api" / "delivery" / "orders" / orderId / "reject" =>
+      withRole(req, UserRole.merchant) { user =>
+        if !DeliveryStateRepo.ownsOrderAsMerchant(orderId, user.displayName) then Forbidden("无权处理其他商家的订单")
+        else
+          req.as[RejectOrderRequest].flatMap { payload =>
+            DeliveryStateRepo.rejectOrder(orderId, payload).flatMap(handleStateResult)
+          }
       }
 
     case req @ POST -> Root / "api" / "delivery" / "orders" / orderId / "ready" =>
