@@ -21,6 +21,8 @@ object DeliveryStateRepo:
   private val MinimumScheduledLeadMinutes = 30L
   private val DeliveryFeeCents = 1000
   private val RiderEarningPerOrderCents = 500
+  private val CouponSpendStepCents = 10000
+  private val CouponValidityDays = 30L
   private val DeliveryScheduleZone = ZoneId.systemDefault()
   private val StoreCategories = List(
     "中式快餐",
@@ -32,6 +34,13 @@ object DeliveryStateRepo:
     "咖啡甜点",
     "奶茶果饮",
     "夜宵小吃",
+  )
+  private val SpendRewardCouponTemplates = List(
+    ("满30减3", 300, 3000, "累计消费奖励券，适合搭配早餐或饮品订单"),
+    ("满50减6", 600, 5000, "累计消费奖励券，适合工作日午餐使用"),
+    ("满70减8", 800, 7000, "累计消费奖励券，适合常规正餐订单"),
+    ("满100减12", 1200, 10000, "累计消费奖励券，适合多人拼单或大额订单"),
+    ("满120减15", 1500, 12000, "累计消费奖励券，单张优惠力度不超过 85 折"),
   )
 
   private val stateFile = Paths.get(sys.env.getOrElse("DELIVERY_STATE_FILE", "data/delivery-state.json"))
@@ -52,6 +61,7 @@ object DeliveryStateRepo:
     role match
       case UserRole.customer =>
         val customerId = nextId("cust")
+        val registrationCoupons = initialRegistrationCoupons(customerId, now())
         updateState { current =>
           Right(
             withDerivedData(
@@ -68,7 +78,7 @@ object DeliveryStateRepo:
                     membershipTier = MembershipTier.Standard,
                     monthlySpendCents = 0,
                     balanceCents = 0,
-                    coupons = List.empty,
+                    coupons = registrationCoupons,
                   ) :: current.customers,
               )
             )
@@ -501,7 +511,9 @@ object DeliveryStateRepo:
           deliveryAddress <- sanitizeRequiredText(request.deliveryAddress, 120, "配送地址不能为空")
           scheduledDeliveryAt <- validateScheduledDeliveryAt(request.scheduledDeliveryAt, timestamp)
           itemSubtotalCents = items.map(item => item.unitPriceCents * item.quantity).sum
-          totalPriceCents = itemSubtotalCents + DeliveryFeeCents
+          appliedCoupon <- validateOrderCoupon(customer, request.couponId, itemSubtotalCents)
+          couponDiscountCents = calculateCouponDiscount(appliedCoupon, itemSubtotalCents, DeliveryFeeCents)
+          totalPriceCents = Math.max(0, itemSubtotalCents + DeliveryFeeCents - couponDiscountCents)
           _ <- Either.cond(customer.balanceCents >= totalPriceCents, (), "账户余额不足，请先充值后再提交订单")
         yield
           val order = OrderSummary(
@@ -519,6 +531,8 @@ object DeliveryStateRepo:
             items = items,
             itemSubtotalCents = itemSubtotalCents,
             deliveryFeeCents = DeliveryFeeCents,
+            couponDiscountCents = couponDiscountCents,
+            appliedCoupon = appliedCoupon,
             totalPriceCents = totalPriceCents,
             createdAt = timestamp,
             updatedAt = timestamp,
@@ -537,7 +551,11 @@ object DeliveryStateRepo:
             timeline = List(
               OrderTimelineEntry(
                 OrderStatus.PendingMerchantAcceptance,
-                s"顾客已下单并完成余额支付，预约送达时间 ${scheduledDeliveryAt}",
+                appliedCoupon match
+                  case Some(coupon) =>
+                    f"顾客已下单并完成余额支付，使用 ${coupon.title} 抵扣 ${couponDiscountCents / 100.0}%.2f 元，预约送达时间 ${scheduledDeliveryAt}"
+                  case None =>
+                    s"顾客已下单并完成余额支付，预约送达时间 ${scheduledDeliveryAt}",
                 timestamp,
               )
             ),
@@ -564,7 +582,13 @@ object DeliveryStateRepo:
                 else entry
               ),
               customers = current.customers.map(entry =>
-                if entry.id == customer.id then entry.copy(balanceCents = entry.balanceCents - totalPriceCents)
+                if entry.id == customer.id then
+                  entry.copy(
+                    balanceCents = entry.balanceCents - totalPriceCents,
+                    coupons = appliedCoupon match
+                      case Some(coupon) => entry.coupons.filterNot(_.id == coupon.id)
+                      case None => entry.coupons,
+                  )
                 else entry
               ),
             )
@@ -996,6 +1020,55 @@ object DeliveryStateRepo:
       }
     }
 
+  def submitAfterSalesRequest(
+      orderId: String,
+      request: SubmitAfterSalesRequest,
+  ): IO[Either[String, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          order <- current.orders.find(_.id == orderId).toRight("订单不存在")
+          _ <- Either.cond(
+            !current.tickets.exists(ticket =>
+              ticket.orderId == orderId &&
+              ticket.kind == TicketKind.DeliveryIssue &&
+              ticket.status == TicketStatus.Open,
+            ),
+            (),
+            "当前订单已有待处理售后申请",
+          )
+          reason <- sanitizeRequiredText(request.reason, 160, "售后原因不能为空")
+          expectedCompensationCents <-
+            request.expectedCompensationCents match
+              case Some(value) =>
+                Either.cond(value > 0, Some(value), "赔偿金额必须大于 0")
+              case None =>
+                Either.cond(
+                  request.requestType != AfterSalesRequestType.CompensationRequest,
+                  None,
+                  "赔偿申请必须填写期望赔偿金额",
+                )
+        yield
+          val timestamp = now()
+          val summary = request.requestType match
+            case AfterSalesRequestType.ReturnRequest =>
+              s"顾客申请退货售后：$reason"
+            case AfterSalesRequestType.CompensationRequest =>
+              val amountText = expectedCompensationCents.map(cents => f"${cents / 100.0}%.2f 元").getOrElse("未填写金额")
+              s"顾客申请赔偿售后（期望 $amountText）：$reason"
+          val ticket = AdminTicket(
+            id = nextId("ticket"),
+            orderId = order.id,
+            kind = TicketKind.DeliveryIssue,
+            status = TicketStatus.Open,
+            summary = summary,
+            resolutionNote = None,
+            updatedAt = timestamp,
+          )
+          withDerivedData(current.copy(tickets = ticket :: current.tickets))
+      }
+    }
+
   def addOrderChatMessage(
       orderId: String,
       senderRole: UserRole,
@@ -1132,10 +1205,19 @@ object DeliveryStateRepo:
               val nextItemSubtotal =
                 if request.approved then entry.itemSubtotalCents - refundAmountCents else entry.itemSubtotalCents
               val nextTotalPrice =
-                if request.approved then nextItemSubtotal + entry.deliveryFeeCents else entry.totalPriceCents
+                if request.approved then
+                  Math.max(
+                    0,
+                    nextItemSubtotal + entry.deliveryFeeCents - calculateCouponDiscount(entry.appliedCoupon, nextItemSubtotal, entry.deliveryFeeCents),
+                  )
+                else entry.totalPriceCents
+              val nextCouponDiscountCents =
+                if request.approved then calculateCouponDiscount(entry.appliedCoupon, nextItemSubtotal, entry.deliveryFeeCents)
+                else entry.couponDiscountCents
               entry.copy(
                 items = nextItems,
                 itemSubtotalCents = nextItemSubtotal,
+                couponDiscountCents = nextCouponDiscountCents,
                 totalPriceCents = nextTotalPrice,
                 updatedAt = timestamp,
                 partialRefundRequests = entry.partialRefundRequests.map(existing =>
@@ -1161,27 +1243,6 @@ object DeliveryStateRepo:
               )
             else current.customers
           withDerivedData(current.copy(orders = nextOrders, customers = nextCustomers))
-      }
-    }
-
-  def clearOrders(): IO[DeliveryAppState] =
-    IO.blocking {
-      writeLock.synchronized {
-        val current = refreshState(stateRef.get(), now())
-        val resetRiders = current.riders.map(rider =>
-          if rider.availability == "OnDelivery" then rider.copy(availability = "Available") else rider
-        )
-        val cleared = withDerivedData(
-          current.copy(
-            orders = List.empty,
-            tickets = List.empty,
-            reviewAppeals = List.empty,
-            riders = resetRiders,
-          )
-        )
-        saveState(cleared)
-        stateRef.set(cleared)
-        cleared
       }
     }
 
@@ -1558,6 +1619,12 @@ object DeliveryStateRepo:
       .view
       .mapValues(orders => orders.map(_.itemSubtotalCents).sum)
       .toMap
+    val completedOrdersByCustomer = state.orders
+      .filter(_.status == OrderStatus.Completed)
+      .groupBy(_.customerId)
+      .view
+      .mapValues(_.sortBy(order => reviewEligibilityTimestamp(order)))
+      .toMap
     val monthlySpendByCustomer = state.orders
       .filter(order =>
         order.status == OrderStatus.Completed &&
@@ -1582,7 +1649,13 @@ object DeliveryStateRepo:
           else AccountStatus.Active,
         membershipTier = membershipTier,
         monthlySpendCents = monthlySpendCents,
-        coupons = couponsForCustomer(customer.id, membershipTier, currentTime),
+        coupons = couponsForCustomer(
+          customer.id,
+          membershipTier,
+          customer.coupons,
+          completedOrdersByCustomer.getOrElse(customer.id, List.empty),
+          currentTime,
+        ),
       )
     )
     val nextOrders = state.orders.map(order =>
@@ -1758,9 +1831,13 @@ object DeliveryStateRepo:
   private def couponsForCustomer(
       customerId: String,
       membershipTier: MembershipTier,
+      existingCoupons: List[Coupon],
+      completedOrders: List[OrderSummary],
       currentTime: String,
   ): List[Coupon] =
-    membershipTier match
+    val activeCoupons = existingCoupons.filterNot(coupon => isCouponExpired(coupon, currentTime))
+    val spendRewardCoupons = spendingRewardCoupons(customerId, completedOrders, currentTime)
+    val tierCoupons = membershipTier match
       case MembershipTier.Member =>
         List(
           Coupon(
@@ -1773,6 +1850,83 @@ object DeliveryStateRepo:
           )
         )
       case MembershipTier.Standard => List.empty
+
+    (activeCoupons ++ spendRewardCoupons ++ tierCoupons)
+      .groupBy(_.id)
+      .values
+      .map(_.head)
+      .toList
+      .sortBy(_.expiresAt)
+
+  private def initialRegistrationCoupons(customerId: String, currentTime: String): List[Coupon] =
+    List.tabulate(3) { index =>
+      Coupon(
+        id = s"coupon-$customerId-welcome-${index + 1}",
+        title = "新人满70减8",
+        discountCents = 800,
+        minimumSpendCents = 7000,
+        description = "新用户注册礼券，下单满 70 元可用",
+        expiresAt = Instant.parse(currentTime).plusSeconds(CouponValidityDays * 24L * 60L * 60L).toString,
+      )
+    }
+
+  private def spendingRewardCoupons(
+      customerId: String,
+      completedOrders: List[OrderSummary],
+      currentTime: String,
+  ): List[Coupon] =
+    val (_, _, coupons) = completedOrders.foldLeft((0, 0, List.empty[Coupon])) {
+      case ((accumulatedSpendCents, issuedCount, rewardCoupons), order) =>
+        val nextAccumulatedSpendCents = accumulatedSpendCents + order.totalPriceCents
+        val nextIssuedCount = nextAccumulatedSpendCents / CouponSpendStepCents
+
+        if nextIssuedCount <= issuedCount then
+          (nextAccumulatedSpendCents, issuedCount, rewardCoupons)
+        else
+          val newCoupons = (issuedCount until nextIssuedCount).toList.map { rewardIndex =>
+            val template = SpendRewardCouponTemplates(rewardIndex % SpendRewardCouponTemplates.length)
+            val issuedAt = parseInstant(reviewEligibilityTimestamp(order)).getOrElse(Instant.parse(currentTime))
+            val (title, discountCents, minimumSpendCents, description) = template
+
+            Coupon(
+              id = s"coupon-$customerId-spend-${rewardIndex + 1}",
+              title = title,
+              discountCents = discountCents,
+              minimumSpendCents = minimumSpendCents,
+              description = description,
+              expiresAt = issuedAt.plusSeconds(CouponValidityDays * 24L * 60L * 60L).toString,
+            )
+          }
+
+          (nextAccumulatedSpendCents, nextIssuedCount, rewardCoupons ++ newCoupons)
+    }
+
+    coupons.filterNot(coupon => isCouponExpired(coupon, currentTime))
+
+  private def isCouponExpired(coupon: Coupon, currentTime: String): Boolean =
+    parseInstant(coupon.expiresAt).exists(_.isBefore(Instant.parse(currentTime)))
+
+  private def validateOrderCoupon(
+      customer: Customer,
+      couponId: Option[String],
+      itemSubtotalCents: Int,
+  ): Either[String, Option[Coupon]] =
+    couponId.map(_.trim).filter(_.nonEmpty) match
+      case None => Right(None)
+      case Some(requestedCouponId) =>
+        for
+          coupon <- customer.coupons.find(_.id == requestedCouponId).toRight("优惠券不存在或已失效")
+          _ <- Either.cond(itemSubtotalCents >= coupon.minimumSpendCents, (), s"${coupon.title} 未达到使用门槛")
+        yield Some(coupon)
+
+  private def calculateCouponDiscount(
+      coupon: Option[Coupon],
+      itemSubtotalCents: Int,
+      deliveryFeeCents: Int,
+  ): Int =
+    coupon match
+      case Some(value) => Math.min(value.discountCents, Math.max(0, itemSubtotalCents + deliveryFeeCents))
+      case None => 0
 
   private def applyRatingToStore(
       store: Store,
@@ -1997,6 +2151,51 @@ object DeliveryStateRepo:
     try Some(Instant.parse(value))
     catch case _: Exception => None
 
+  private def seedMenuItem(
+      id: String,
+      name: String,
+      description: String,
+      priceCents: Int,
+      imageUrl: String,
+      remainingQuantity: Option[Int] = None,
+  ): MenuItem =
+    MenuItem(
+      id = id,
+      name = name,
+      description = description,
+      priceCents = priceCents,
+      imageUrl = Some(imageUrl),
+      remainingQuantity = remainingQuantity,
+    )
+
+  private def seedStore(
+      id: String,
+      merchantName: String,
+      name: String,
+      category: String,
+      businessHours: BusinessHours,
+      avgPrepMinutes: Int,
+      imageUrl: String,
+      menu: List[MenuItem],
+      revenueCents: Int = 0,
+  ): Store =
+    Store(
+      id = id,
+      merchantName = merchantName,
+      name = name,
+      category = category,
+      cuisine = category,
+      status = "Open",
+      businessHours = businessHours,
+      avgPrepMinutes = avgPrepMinutes,
+      imageUrl = Some(imageUrl),
+      menu = menu,
+      averageRating = 0.0,
+      ratingCount = 0,
+      oneStarRatingCount = 0,
+      revenueCents = revenueCents,
+    )
+
   private def seedState(): DeliveryAppState =
     val customers = List(
       Customer(
@@ -2029,7 +2228,202 @@ object DeliveryStateRepo:
         List.empty,
       ),
     )
-    val stores = List.empty[Store]
+    val stores = List(
+      seedStore(
+        id = "store-c27f",
+        merchantName = "王师傅",
+        name = "深夜牛肉面",
+        category = "面馆粉档",
+        businessHours = BusinessHours("09:00", "18:00"),
+        avgPrepMinutes = 18,
+        imageUrl = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
+        menu = List(
+          seedMenuItem(
+            "dish-706b550d",
+            "红油抄手",
+            "现包抄手配川味红油，夜宵很合适。",
+            1880,
+            "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-92581c7a",
+            "招牌牛肉面",
+            "大片牛腱配手擀面，汤底浓郁。",
+            2690,
+            "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1200&q=80",
+          ),
+        ),
+        revenueCents = 3760,
+      ),
+      seedStore(
+        id = "store-1d06",
+        merchantName = "王师傅",
+        name = "测试店铺152209",
+        category = "中式快餐",
+        businessHours = BusinessHours("09:00", "21:00"),
+        avgPrepMinutes = 18,
+        imageUrl = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
+        menu = List(
+          seedMenuItem(
+            "dish-0636b442",
+            "招牌鸡腿饭",
+            "现炸鸡腿配时蔬和米饭",
+            2890,
+            "https://images.unsplash.com/photo-1512058564366-18510be2db19",
+          ),
+          seedMenuItem(
+            "dish-a0c5c935",
+            "番茄肥牛面",
+            "酸甜番茄汤底配肥牛和劲道面条",
+            2390,
+            "https://images.unsplash.com/photo-1617093727343-374698b1b08d",
+          ),
+          seedMenuItem(
+            "dish-829a722f",
+            "冰柠檬茶",
+            "现萃茶底加整颗鲜柠檬",
+            890,
+            "https://images.unsplash.com/photo-1499638673689-79a0b5115d87",
+          ),
+          seedMenuItem(
+            "dish-d0f959a6",
+            "联调测试鸡排饭",
+            "现煎鸡排配椒麻酱和米饭，专门用于验证限量库存和下架功能。",
+            1990,
+            "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
+          ),
+        ),
+        revenueCents = 5780,
+      ),
+      seedStore(
+        id = "store-salad-01",
+        merchantName = "苏宁",
+        name = "轻盈能量碗",
+        category = "轻食沙拉",
+        businessHours = BusinessHours("10:00", "20:30"),
+        avgPrepMinutes = 14,
+        imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80",
+        menu = List(
+          seedMenuItem(
+            "dish-salad-01",
+            "牛油果鸡胸能量碗",
+            "鸡胸肉、牛油果、玉米和藜麦组合。",
+            3290,
+            "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-salad-02",
+            "低脂鲜虾沙拉",
+            "鲜虾搭配罗马生菜和油醋汁。",
+            3590,
+            "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-salad-03",
+            "冷萃美式",
+            "无糖冷萃，适合搭配轻食。",
+            1280,
+            "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80",
+          ),
+        ),
+      ),
+      seedStore(
+        id = "store-dumpling-01",
+        merchantName = "王师傅",
+        name = "北巷饺子馆",
+        category = "饺子馄饨",
+        businessHours = BusinessHours("10:30", "22:00"),
+        avgPrepMinutes = 20,
+        imageUrl = "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1200&q=80",
+        menu = List(
+          seedMenuItem(
+            "dish-dumpling-01",
+            "三鲜水饺",
+            "虾仁、鸡蛋、韭菜三鲜馅。",
+            2280,
+            "https://images.unsplash.com/photo-1604909052743-94e838986d24?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-dumpling-02",
+            "鲜肉小馄饨",
+            "汤头清爽，适合做午餐加餐。",
+            1680,
+            "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-dumpling-03",
+            "酸辣汤",
+            "木耳豆腐配胡椒醋香。",
+            980,
+            "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80",
+          ),
+        ),
+      ),
+      seedStore(
+        id = "store-tea-01",
+        merchantName = "苏宁",
+        name = "柠檬云朵茶铺",
+        category = "奶茶果饮",
+        businessHours = BusinessHours("11:00", "23:00"),
+        avgPrepMinutes = 10,
+        imageUrl = "https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=1200&q=80",
+        menu = List(
+          seedMenuItem(
+            "dish-tea-01",
+            "芝士葡萄冰",
+            "现打葡萄果肉配轻芝士奶盖。",
+            1980,
+            "https://images.unsplash.com/photo-1622597467836-f3285f2131b8?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-tea-02",
+            "茉莉轻乳茶",
+            "茉莉茶底搭配低糖奶香。",
+            1680,
+            "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-tea-03",
+            "手打柠檬绿茶",
+            "清爽酸甜，适合解腻。",
+            1480,
+            "https://images.unsplash.com/photo-1499638673689-79a0b5115d87?auto=format&fit=crop&w=1200&q=80",
+          ),
+        ),
+      ),
+      seedStore(
+        id = "store-dessert-01",
+        merchantName = "苏宁",
+        name = "暮色咖啡甜点",
+        category = "咖啡甜点",
+        businessHours = BusinessHours("08:30", "21:30"),
+        avgPrepMinutes = 12,
+        imageUrl = "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80",
+        menu = List(
+          seedMenuItem(
+            "dish-dessert-01",
+            "海盐拿铁",
+            "浓缩咖啡配细腻海盐奶沫。",
+            1880,
+            "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-dessert-02",
+            "巴斯克芝士蛋糕",
+            "入口绵密，带微焦香气。",
+            2280,
+            "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1200&q=80",
+          ),
+          seedMenuItem(
+            "dish-dessert-03",
+            "可可布朗尼",
+            "巧克力风味浓郁，适合下午茶。",
+            1580,
+            "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=1200&q=80",
+          ),
+        ),
+      ),
+    )
     val riders = List(
       Rider("rider-1", "陈凯", "电动车", "浦东", "Available", 0.0, 0, 0, 0, None, 0, 0, List.empty),
       Rider("rider-2", "赵晨", "摩托车", "静安", "Available", 0.0, 0, 0, 0, None, 0, 0, List.empty),

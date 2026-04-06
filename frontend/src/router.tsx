@@ -19,6 +19,11 @@ const routes = [
     errorElement: <RouteErrorPage />,
   },
   {
+    path: '/customer/orders/:orderId',
+    element: <DeliveryConsole />,
+    errorElement: <RouteErrorPage />,
+  },
+  {
     path: '/customer/review/:orderId',
     element: <DeliveryConsole />,
     errorElement: <RouteErrorPage />,

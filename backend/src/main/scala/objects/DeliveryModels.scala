@@ -21,6 +21,15 @@ object TicketKind:
     TicketKind.values.find(_.toString == value).toRight(s"Invalid TicketKind: $value")
   }
 
+enum AfterSalesRequestType:
+  case ReturnRequest, CompensationRequest
+
+object AfterSalesRequestType:
+  given Encoder[AfterSalesRequestType] = Encoder.encodeString.contramap(_.toString)
+  given Decoder[AfterSalesRequestType] = Decoder.decodeString.emap { value =>
+    AfterSalesRequestType.values.find(_.toString == value).toRight(s"Invalid AfterSalesRequestType: $value")
+  }
+
 enum TicketStatus:
   case Open, Resolved
 
@@ -466,6 +475,7 @@ final case class CreateOrderRequest(
     deliveryAddress: String,
     scheduledDeliveryAt: String,
     remark: Option[String],
+    couponId: Option[String],
     items: List[OrderItemInput],
 )
 object CreateOrderRequest:
@@ -613,6 +623,15 @@ object ResolveTicketRequest:
   given Encoder[ResolveTicketRequest] = deriveEncoder
   given Decoder[ResolveTicketRequest] = deriveDecoder
 
+final case class SubmitAfterSalesRequest(
+    requestType: AfterSalesRequestType,
+    reason: String,
+    expectedCompensationCents: Option[Int],
+)
+object SubmitAfterSalesRequest:
+  given Encoder[SubmitAfterSalesRequest] = deriveEncoder
+  given Decoder[SubmitAfterSalesRequest] = deriveDecoder
+
 final case class SendOrderChatMessageRequest(body: String)
 object SendOrderChatMessageRequest:
   given Encoder[SendOrderChatMessageRequest] = deriveEncoder
@@ -707,6 +726,8 @@ final case class OrderSummary(
     items: List[OrderLineItem],
     itemSubtotalCents: Int,
     deliveryFeeCents: Int,
+    couponDiscountCents: Int,
+    appliedCoupon: Option[Coupon],
     totalPriceCents: Int,
     createdAt: String,
     updatedAt: String,
@@ -743,6 +764,8 @@ object OrderSummary:
       "items" -> Encoder.encodeList[OrderLineItem].apply(order.items),
       "itemSubtotalCents" -> Json.fromInt(order.itemSubtotalCents),
       "deliveryFeeCents" -> Json.fromInt(order.deliveryFeeCents),
+      "couponDiscountCents" -> Json.fromInt(order.couponDiscountCents),
+      "appliedCoupon" -> Encoder.encodeOption[Coupon].apply(order.appliedCoupon),
       "totalPriceCents" -> Json.fromInt(order.totalPriceCents),
       "createdAt" -> Json.fromString(order.createdAt),
       "updatedAt" -> Json.fromString(order.updatedAt),
@@ -781,6 +804,8 @@ object OrderSummary:
       totalPriceCents <- cursor.get[Int]("totalPriceCents")
       itemSubtotalCents <- cursor.getOrElse[Int]("itemSubtotalCents")(totalPriceCents)
       deliveryFeeCents <- cursor.getOrElse[Int]("deliveryFeeCents")(0)
+      couponDiscountCents <- cursor.getOrElse[Int]("couponDiscountCents")(0)
+      appliedCoupon <- cursor.getOrElse[Option[Coupon]]("appliedCoupon")(None)
       updatedAt <- cursor.get[String]("updatedAt")
       storeRating <- cursor.get[Option[Int]]("storeRating")
       riderRating <- cursor.get[Option[Int]]("riderRating")
@@ -812,6 +837,8 @@ object OrderSummary:
       items = items,
       itemSubtotalCents = itemSubtotalCents,
       deliveryFeeCents = deliveryFeeCents,
+      couponDiscountCents = couponDiscountCents,
+      appliedCoupon = appliedCoupon,
       totalPriceCents = totalPriceCents,
       createdAt = createdAt,
       updatedAt = updatedAt,

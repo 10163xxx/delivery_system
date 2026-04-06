@@ -195,11 +195,6 @@ object DeliveryRouter:
         }
       }
 
-    case req @ POST -> Root / "api" / "delivery" / "orders" / "clear" =>
-      withRole(req, UserRole.admin) { _ =>
-        DeliveryStateRepo.clearOrders().flatMap(state => Ok(state.asJson))
-      }
-
     case req @ POST -> Root / "api" / "delivery" / "orders" / orderId / "accept" =>
       withRole(req, UserRole.merchant) { user =>
         if !DeliveryStateRepo.ownsOrderAsMerchant(orderId, user.displayName) then Forbidden("无权处理其他商家的订单")
@@ -278,6 +273,15 @@ object DeliveryRouter:
         else
           req.as[SubmitPartialRefundRequest].flatMap { payload =>
             DeliveryStateRepo.submitPartialRefundRequest(orderId, payload).flatMap(handleStateResult)
+          }
+      }
+
+    case req @ POST -> Root / "api" / "delivery" / "orders" / orderId / "after-sales" =>
+      withRole(req, UserRole.customer) { user =>
+        if !DeliveryStateRepo.ownsOrderAsCustomer(orderId, user.linkedProfileId) then Forbidden("无权提交其他顾客的售后申请")
+        else
+          req.as[SubmitAfterSalesRequest].flatMap { payload =>
+            DeliveryStateRepo.submitAfterSalesRequest(orderId, payload).flatMap(handleStateResult)
           }
       }
 

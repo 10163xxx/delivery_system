@@ -19,6 +19,7 @@ import type {
   ReviewOrderRequest,
   Role,
   SendOrderChatMessageRequest,
+  SubmitAfterSalesRequest,
   SubmitPartialRefundRequest,
   StoreCategory,
   Store,
@@ -71,9 +72,16 @@ type PartialRefundDraft = {
   reason: string
 }
 
+type AfterSalesDraft = {
+  requestType: 'ReturnRequest' | 'CompensationRequest'
+  reason: string
+  expectedCompensationYuan: string
+}
+
 type CustomerWorkspaceView =
   | 'order'
   | 'orders'
+  | 'order-detail'
   | 'profile'
   | 'review'
   | 'recharge'
@@ -106,7 +114,7 @@ type CustomerAddressField = 'label' | 'address'
 type MerchantFormField = 'merchantName' | 'storeName' | 'category' | 'openTime' | 'closeTime' | 'imageUrl'
 type MenuItemFormField = 'name' | 'description' | 'priceYuan' | 'remainingQuantity' | 'imageUrl'
 
-type HeaderAction = 'refresh' | 'logout' | 'clearOrders' | null
+type HeaderAction = 'refresh' | 'logout' | null
 
 const RECHARGE_PRESET_AMOUNTS = [50, 100, 200, 500] as const
 const STORE_REVIEW_REASON_OPTIONS = ['出餐慢', '口味一般', '菜品与描述不符', '包装破损', '体验很好'] as const
@@ -214,6 +222,14 @@ function createInitialPartialRefundDraft(): PartialRefundDraft {
   return {
     quantity: 1,
     reason: '',
+  }
+}
+
+function createInitialAfterSalesDraft(): AfterSalesDraft {
+  return {
+    requestType: 'CompensationRequest',
+    reason: '',
+    expectedCompensationYuan: '',
   }
 }
 
@@ -460,6 +476,7 @@ function buildOrderPayload(
   deliveryAddress: string,
   scheduledDeliveryTime: string,
   remark: string,
+  couponId: string,
   quantities: Record<string, number>,
 ): CreateOrderRequest {
   const items = store.menu
@@ -475,6 +492,7 @@ function buildOrderPayload(
     deliveryAddress: normalizeTextInput(deliveryAddress, 120),
     scheduledDeliveryAt: normalizeScheduledDeliveryAt(scheduledDeliveryTime),
     remark: normalizeTextInput(remark, 120) || undefined,
+    couponId: couponId || undefined,
     items,
   }
 }
@@ -522,6 +540,23 @@ function buildPartialRefundResolutionPayload(
     resolutionNote:
       normalizeTextInput(resolutionNote, 160) ||
       (approved ? '确认缺货，已退该商品' : '当前商品仍可正常出餐'),
+  }
+}
+
+function buildAfterSalesPayload(draft?: AfterSalesDraft): SubmitAfterSalesRequest {
+  const nextDraft = draft ?? createInitialAfterSalesDraft()
+  const expectedCompensationYuan = Number(nextDraft.expectedCompensationYuan)
+  const expectedCompensationCents =
+    nextDraft.requestType === 'CompensationRequest' &&
+    Number.isFinite(expectedCompensationYuan) &&
+    expectedCompensationYuan > 0
+      ? Math.round(expectedCompensationYuan * 100)
+      : undefined
+
+  return {
+    requestType: nextDraft.requestType,
+    reason: normalizeTextInput(nextDraft.reason, 160),
+    expectedCompensationCents,
   }
 }
 
@@ -821,6 +856,7 @@ export default function DeliveryConsole() {
   const [scheduledDeliveryTouched, setScheduledDeliveryTouched] = useState(false)
   const [remark, setRemark] = useState('')
   const [isCheckoutExpanded, setIsCheckoutExpanded] = useState(false)
+  const [selectedCouponId, setSelectedCouponId] = useState('')
   const [customerNameDraft, setCustomerNameDraft] = useState('')
   const [addressDraft, setAddressDraft] = useState<CustomerAddressDraft>({
     label: '',
@@ -847,6 +883,8 @@ export default function DeliveryConsole() {
   const [reviewErrors, setReviewErrors] = useState<Record<string, string>>({})
   const [partialRefundDrafts, setPartialRefundDrafts] = useState<Record<string, PartialRefundDraft>>({})
   const [partialRefundErrors, setPartialRefundErrors] = useState<Record<string, string>>({})
+  const [afterSalesDrafts, setAfterSalesDrafts] = useState<Record<string, AfterSalesDraft>>({})
+  const [afterSalesErrors, setAfterSalesErrors] = useState<Record<string, string>>({})
   const [partialRefundResolutionDrafts, setPartialRefundResolutionDrafts] = useState<Record<string, string>>({})
   const [merchantDraft, setMerchantDraft] = useState<MerchantDraft>(
     createInitialMerchantDraft(),
@@ -884,6 +922,8 @@ export default function DeliveryConsole() {
   const customerWorkspaceView: CustomerWorkspaceView =
     location.pathname.startsWith('/customer/review/')
       ? 'review'
+      : location.pathname.startsWith('/customer/orders/')
+        ? 'order-detail'
       : location.pathname === '/customer/profile/recharge'
         ? 'recharge'
       : location.pathname === '/customer/profile/coupons'
@@ -1032,9 +1072,13 @@ export default function DeliveryConsole() {
   useEffect(() => {
     if (!session || session.user.role !== 'merchant') return
     if (!selectedMerchantStoreId) return
+    if (merchantWorkspaceView !== 'console') {
+      setSelectedMerchantStoreId('')
+      return
+    }
     if (merchantStores.some((store) => store.id === selectedMerchantStoreId)) return
     setSelectedMerchantStoreId('')
-  }, [merchantStores, selectedMerchantStoreId, session])
+  }, [merchantStores, merchantWorkspaceView, selectedMerchantStoreId, session])
   const selectedRider = state?.riders.find((rider) => rider.id === selectedRiderId)
   const riderOrders =
     state?.orders.filter((order) =>
@@ -1050,6 +1094,8 @@ export default function DeliveryConsole() {
   const pendingCustomerReviewOrders = completedCustomerOrders.filter(
     (order) => canReviewOrder(order),
   )
+  const activeCustomerOrder =
+    customerOrders.find((order) => order.id === routeOrderId) ?? null
   const activeReviewOrder =
     customerOrders.find((order) => order.id === routeOrderId) ?? null
   const pendingApplications =
@@ -1159,6 +1205,14 @@ export default function DeliveryConsole() {
     navigate('/customer/orders', { replace: true })
   }, [activeReviewOrder, customerWorkspaceView, navigate])
 
+  useEffect(() => {
+    if (customerWorkspaceView !== 'order-detail') return
+    if (activeCustomerOrder) {
+      return
+    }
+    navigate('/customer/orders', { replace: true })
+  }, [activeCustomerOrder, customerWorkspaceView, navigate])
+
   async function restoreSession() {
     try {
       const nextSession = await deliveryApi.getSession()
@@ -1194,21 +1248,6 @@ export default function DeliveryConsole() {
     }
   }
 
-  async function clearOrders() {
-    setHeaderAction('clearOrders')
-    setBusy(true)
-    try {
-      const nextState = await deliveryApi.clearOrders()
-      setState(nextState)
-      setError(null)
-    } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : '清空订单失败')
-    } finally {
-      setBusy(false)
-      setHeaderAction(null)
-    }
-  }
-
   async function logout() {
     setHeaderAction('logout')
     setShowLogoutModal(true)
@@ -1229,6 +1268,29 @@ export default function DeliveryConsole() {
       setShowLogoutModal(false)
     }
   }
+
+  useEffect(() => {
+    const nextCartSubtotal = selectedStore
+      ? selectedStore.menu.reduce(
+          (sum, item) => sum + item.priceCents * (quantities[item.id] ?? 0),
+          0,
+        )
+      : 0
+
+    if (!selectedCustomer || nextCartSubtotal <= 0) {
+      if (selectedCouponId) {
+        setSelectedCouponId('')
+      }
+      return
+    }
+
+    const couponStillUsable = selectedCustomer.coupons.some(
+      (coupon) => coupon.id === selectedCouponId && nextCartSubtotal >= coupon.minimumSpendCents,
+    )
+    if (!couponStillUsable && selectedCouponId) {
+      setSelectedCouponId('')
+    }
+  }, [quantities, selectedCouponId, selectedCustomer, selectedStore])
 
   if (!session) {
     return <AuthScreen onAuthenticated={setSession} />
@@ -1364,6 +1426,7 @@ export default function DeliveryConsole() {
       deliveryAddress,
       nextScheduledDeliveryTime,
       remark,
+      selectedCoupon?.id ?? '',
       quantities,
     )
 
@@ -1383,7 +1446,7 @@ export default function DeliveryConsole() {
       return
     }
 
-    if (selectedCustomer.balanceCents < cartTotal) {
+    if (selectedCustomer.balanceCents < payableTotalCents) {
       setError('账户余额不足，请先充值后再提交订单')
       return
     }
@@ -1396,6 +1459,7 @@ export default function DeliveryConsole() {
     setScheduledDeliveryTouched(false)
     setQuantities(getInitialQuantities(selectedStore))
     setIsCheckoutExpanded(false)
+    setSelectedCouponId('')
   }
 
   async function submitOrderChatMessage(orderId: string) {
@@ -1472,6 +1536,44 @@ export default function DeliveryConsole() {
       delete next[draftKey]
       return next
     })
+  }
+
+  async function submitAfterSalesRequest(orderId: string) {
+    const order = state?.orders.find((entry) => entry.id === orderId)
+    if (!order) {
+      setError('订单不存在')
+      return
+    }
+
+    const draft = afterSalesDrafts[orderId] ?? createInitialAfterSalesDraft()
+    const payload = buildAfterSalesPayload(draft)
+
+    if (!payload.reason) {
+      setAfterSalesErrors((current) => ({ ...current, [orderId]: '请先填写售后原因' }))
+      return
+    }
+
+    if (
+      payload.requestType === 'CompensationRequest' &&
+      (!payload.expectedCompensationCents || payload.expectedCompensationCents <= 0)
+    ) {
+      setAfterSalesErrors((current) => ({ ...current, [orderId]: '请填写期望赔偿金额' }))
+      return
+    }
+
+    setAfterSalesErrors((current) => {
+      const next = { ...current }
+      delete next[orderId]
+      return next
+    })
+
+    const success = await runAction(() => deliveryApi.submitAfterSalesRequest(orderId, payload))
+    if (!success) return
+
+    setAfterSalesDrafts((current) => ({
+      ...current,
+      [orderId]: createInitialAfterSalesDraft(),
+    }))
   }
 
   async function resolvePartialRefundRequest(refundId: string, approved: boolean) {
@@ -1895,17 +1997,23 @@ export default function DeliveryConsole() {
       )
     : 0
   const cartTotal = cartSubtotal > 0 ? cartSubtotal + DELIVERY_FEE_CENTS : 0
+  const availableCheckoutCoupons =
+    selectedCustomer?.coupons.filter((coupon) => cartSubtotal >= coupon.minimumSpendCents) ?? []
+  const selectedCoupon =
+    availableCheckoutCoupons.find((coupon) => coupon.id === selectedCouponId) ?? null
+  const couponDiscountCents =
+    cartTotal > 0 && selectedCoupon ? Math.min(selectedCoupon.discountCents, cartTotal) : 0
+  const payableTotalCents = Math.max(0, cartTotal - couponDiscountCents)
   const selectedStoreHasMenu = Boolean(
     selectedStore &&
       selectedStore.menu.some((item) => item.remainingQuantity == null || item.remainingQuantity > 0),
   )
   const selectedStoreCanOrder = Boolean(selectedStore && selectedStoreHasMenu && selectedStoreIsOpen)
   const remainingBalanceAfterCheckout =
-    selectedCustomer && cartTotal > 0 ? selectedCustomer.balanceCents - cartTotal : null
+    selectedCustomer && payableTotalCents > 0 ? selectedCustomer.balanceCents - payableTotalCents : null
   const todayDeliveryWindow = getTodayDeliveryWindow()
   const isRefreshing = headerAction === 'refresh'
   const isLoggingOut = headerAction === 'logout'
-  const isClearingOrders = headerAction === 'clearOrders'
 
   return (
     <main className="delivery-app">
@@ -1950,17 +2058,6 @@ export default function DeliveryConsole() {
             <span className={`button-indicator${isRefreshing ? ' is-spinning' : ''}`} />
             {isRefreshing ? '正在刷新...' : '刷新状态'}
           </button>
-          {role === 'admin' ? (
-            <button
-              className={`secondary-button action-feedback-button${isClearingOrders ? ' is-pending' : ''}`}
-              disabled={busy}
-              onClick={() => void clearOrders()}
-              type="button"
-            >
-              <span className={`button-indicator${isClearingOrders ? ' is-spinning' : ''}`} />
-              {isClearingOrders ? '正在清空订单...' : '清空全部订单'}
-            </button>
-          ) : null}
           <button
             className={`secondary-button action-feedback-button${isLoggingOut ? ' is-pending' : ''}`}
             disabled={busy}
@@ -1979,13 +2076,18 @@ export default function DeliveryConsole() {
           {role === 'customer' && state ? (
             <CustomerRoleView
               activeReviewOrder={activeReviewOrder}
+              activeCustomerOrder={activeCustomerOrder}
+              afterSalesDrafts={afterSalesDrafts}
+              afterSalesErrors={afterSalesErrors}
               addCustomerAddress={addCustomerAddress}
               addressDraft={addressDraft}
               addressFormErrors={addressFormErrors}
               canReviewOrder={canReviewOrder}
               cartSubtotal={cartSubtotal}
               cartTotal={cartTotal}
+              availableCheckoutCoupons={availableCheckoutCoupons}
               categoryStores={categoryStores}
+              couponDiscountCents={couponDiscountCents}
               chooseStoreCategory={chooseStoreCategory}
               completedCustomerOrders={completedCustomerOrders}
               customerStoreSearch={customerStoreSearch}
@@ -2019,6 +2121,7 @@ export default function DeliveryConsole() {
               orderChatErrors={orderChatErrors}
               partialRefundDrafts={partialRefundDrafts}
               partialRefundErrors={partialRefundErrors}
+              payableTotalCents={payableTotalCents}
               parsedRechargeAmount={parsedRechargeAmount}
               pendingCustomerReviewOrders={pendingCustomerReviewOrders}
               quantities={quantities}
@@ -2037,6 +2140,8 @@ export default function DeliveryConsole() {
               RIDER_REVIEW_REASON_OPTIONS={RIDER_REVIEW_REASON_OPTIONS}
               saveCustomerName={saveCustomerName}
               selectedCustomer={selectedCustomer}
+              selectedCoupon={selectedCoupon}
+              selectedCouponId={selectedCouponId}
               selectedRechargeAmount={selectedRechargeAmount}
               scheduledDeliveryError={scheduledDeliveryError}
               selectedStore={selectedStore}
@@ -2053,7 +2158,10 @@ export default function DeliveryConsole() {
               setDeliveryAddress={setDeliveryAddress}
               setDeliveryAddressError={setDeliveryAddressError}
               setError={setError}
+              setAfterSalesDrafts={setAfterSalesDrafts}
+              setAfterSalesErrors={setAfterSalesErrors}
               setIsCheckoutExpanded={setIsCheckoutExpanded}
+              setSelectedCouponId={setSelectedCouponId}
               setOrderChatDrafts={setOrderChatDrafts}
               setOrderChatErrors={setOrderChatErrors}
               setPartialRefundDrafts={setPartialRefundDrafts}
@@ -2069,6 +2177,8 @@ export default function DeliveryConsole() {
               suggestedDeliveryTime={todayDeliveryWindow.minimumValue}
               clearCustomerStoreSearchHistory={clearCustomerStoreSearchHistory}
               removeCustomerStoreSearchHistoryItem={removeCustomerStoreSearchHistoryItem}
+              stateTickets={state.tickets}
+              submitAfterSalesRequest={submitAfterSalesRequest}
               submitCustomerStoreSearch={submitCustomerStoreSearch}
               submitPartialRefundRequest={submitPartialRefundRequest}
               submitOrderChatMessage={submitOrderChatMessage}

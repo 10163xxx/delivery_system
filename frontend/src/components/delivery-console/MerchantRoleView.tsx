@@ -278,6 +278,20 @@ export function MerchantRoleView(props: any) {
     }))
   }
 
+  function navigateMerchantWorkspace(view: 'application' | 'console' | 'profile') {
+    if (view !== 'console') {
+      leaveMerchantStore()
+    }
+
+    navigate(
+      view === 'application'
+        ? '/merchant/application?merchantView=submit'
+        : view === 'profile'
+          ? '/merchant/profile'
+          : '/merchant/console',
+    )
+  }
+
   return (
     <section className="panel-stack">
       <div className="summary-bar">
@@ -294,21 +308,21 @@ export function MerchantRoleView(props: any) {
         <div className="action-row">
           <button
             className={merchantWorkspaceView === 'application' ? 'primary-button' : 'secondary-button'}
-            onClick={() => navigate('/merchant/application')}
+            onClick={() => navigateMerchantWorkspace('application')}
             type="button"
           >
             店家申请
           </button>
           <button
             className={merchantWorkspaceView === 'console' ? 'primary-button' : 'secondary-button'}
-            onClick={() => navigate('/merchant/console')}
+            onClick={() => navigateMerchantWorkspace('console')}
             type="button"
           >
             控制台
           </button>
           <button
             className={merchantWorkspaceView === 'profile' ? 'primary-button' : 'secondary-button'}
-            onClick={() => navigate('/merchant/profile')}
+            onClick={() => navigateMerchantWorkspace('profile')}
             type="button"
           >
             个人信息

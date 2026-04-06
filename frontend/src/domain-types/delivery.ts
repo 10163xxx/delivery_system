@@ -14,6 +14,8 @@ export type TicketKind =
   | 'NegativeReview'
   | 'DeliveryIssue'
 
+export type AfterSalesRequestType = 'ReturnRequest' | 'CompensationRequest'
+
 export type TicketStatus = 'Open' | 'Resolved'
 export type MerchantApplicationStatus = 'Pending' | 'Approved' | 'Rejected'
 export type AccountStatus = 'Active' | 'Suspended'
@@ -199,6 +201,8 @@ export interface OrderSummary {
   }>
   itemSubtotalCents: number
   deliveryFeeCents: number
+  couponDiscountCents: number
+  appliedCoupon?: Coupon
   totalPriceCents: number
   createdAt: string
   updatedAt: string
@@ -301,7 +305,14 @@ export interface CreateOrderRequest {
   deliveryAddress: string
   scheduledDeliveryAt: string
   remark?: string
+  couponId?: string
   items: OrderItemInput[]
+}
+
+export interface SubmitAfterSalesRequest {
+  requestType: AfterSalesRequestType
+  reason: string
+  expectedCompensationCents?: number
 }
 
 export interface UpdateCustomerProfileRequest {

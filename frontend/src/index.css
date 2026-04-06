@@ -624,13 +624,20 @@ textarea {
 }
 
 .menu-grid,
-.order-grid,
 .ticket-grid,
 .store-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
   margin-top: 20px;
+}
+
+.order-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+  align-items: stretch;
 }
 
 .menu-card,
@@ -648,6 +655,24 @@ textarea {
   min-height: 170px;
 }
 
+.order-card {
+  width: 100%;
+  padding: 14px;
+}
+
+.order-card-summary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.order-card-brief,
+.order-card-detail {
+  margin-top: 8px;
+}
+
 .store-card {
   display: grid;
   gap: 16px;
@@ -659,9 +684,16 @@ textarea {
 }
 
 .compact-store-card {
-  gap: 12px;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 14px;
   padding: 14px;
-  align-content: start;
+  align-items: start;
+}
+
+.compact-store-content {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
 }
 
 .display-image-slot {
@@ -692,8 +724,9 @@ textarea {
 }
 
 .compact-store-image {
-  aspect-ratio: 16 / 7;
-  max-height: 132px;
+  width: 132px;
+  min-height: 132px;
+  aspect-ratio: 1 / 1;
   border-radius: 18px;
 }
 
@@ -726,7 +759,7 @@ textarea {
 .menu-card h3,
 .order-card h3,
 .ticket-card h3 {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .menu-footer,
@@ -741,6 +774,14 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.order-card .meta-line {
+  margin: 4px 0 0;
+}
+
+.order-card .secondary-button {
+  padding: 8px 12px;
 }
 
 .stepper {
@@ -776,6 +817,12 @@ textarea {
   margin-top: 0;
   padding: 12px 14px;
   gap: 10px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.compact-store-summary > div {
+  min-width: 88px;
 }
 
 .compact-store-summary p {
@@ -787,8 +834,25 @@ textarea {
 }
 
 .compact-store-hint {
+  margin: 0;
   min-height: 2.8em;
   font-size: 0.9rem;
+}
+
+.compact-store-content .ticket-header {
+  align-items: flex-start;
+}
+
+.compact-store-content .ticket-header > div {
+  min-width: 0;
+}
+
+.compact-store-content h3 {
+  margin-bottom: 0;
+}
+
+.compact-store-content .primary-button {
+  width: 100%;
 }
 
 .merchant-menu-section {
@@ -873,6 +937,41 @@ textarea {
   border: 1px solid rgba(56, 64, 50, 0.08);
   border-radius: 18px;
   background: rgba(255, 252, 248, 0.92);
+}
+
+.order-section-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(56, 64, 50, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 252, 248, 0.92);
+}
+
+.order-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-section-header h3 {
+  margin-bottom: 0;
+}
+
+.order-section-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  margin-bottom: 24px;
+}
+
+.order-section-switcher .primary-button,
+.order-section-switcher .secondary-button {
+  min-width: 176px;
+  min-height: 52px;
+  border-radius: 18px;
 }
 
 .merchant-store-single-bar {
@@ -1363,6 +1462,16 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .compact-store-card {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-store-image {
+    width: 100%;
+    min-height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
   .merchant-store-module__hero,
   .merchant-store-module__layout {
     grid-template-columns: 1fr;
@@ -1387,5 +1496,13 @@ textarea {
   .store-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .compact-store-content .ticket-header {
+    align-items: flex-start;
+  }
+
+  .order-card-summary {
+    justify-content: flex-start;
   }
 }

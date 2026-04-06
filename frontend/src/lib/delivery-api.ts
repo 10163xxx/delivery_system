@@ -19,6 +19,7 @@ import type {
   ResolveTicketRequest,
   SendOrderChatMessageRequest,
   SetDefaultCustomerAddressRequest,
+  SubmitAfterSalesRequest,
   UpdateMerchantProfileRequest,
   UpdateRiderProfileRequest,
   UpdateCustomerProfileRequest,
@@ -271,10 +272,6 @@ export const deliveryApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-  clearOrders: () =>
-    request<DeliveryAppState>('/api/delivery/orders/clear', {
-      method: 'POST',
-    }),
   acceptOrder: (orderId: string) =>
     request<DeliveryAppState>(`/api/delivery/orders/${orderId}/accept`, {
       method: 'POST',
@@ -323,6 +320,11 @@ export const deliveryApi = {
     }),
   resolveTicket: (orderId: string, payload: ResolveTicketRequest) =>
     request<DeliveryAppState>(`/api/delivery/orders/${orderId}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  submitAfterSalesRequest: (orderId: string, payload: SubmitAfterSalesRequest) =>
+    request<DeliveryAppState>(`/api/delivery/orders/${orderId}/after-sales`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
