@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-type OrderSummary = import('@/domain-types/delivery').OrderSummary
+type OrderSummary = import('@/domain').OrderSummary
 
 type OrderListProps = {
   orders: OrderSummary[]

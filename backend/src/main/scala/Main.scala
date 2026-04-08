@@ -1,6 +1,7 @@
 import cats.effect.{IO, IOApp}
 import com.comcast.ip4s.{Host, Port, host}
-import routes.ApiRouter
+import domain.shared.ServerDefaults
+import http.backendHttpApp
 import org.http4s.server.middleware.CORS
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
@@ -10,12 +11,17 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 object Main extends IOApp.Simple:
 
   private val logger = Slf4jLogger.getLogger[IO]
-  private val serverHost = Host.fromString(sys.env.getOrElse("APP_HOST", "0.0.0.0")).getOrElse(host"0.0.0.0")
-  private val serverPort = Port.fromInt(sys.env.get("APP_PORT").flatMap(_.toIntOption).getOrElse(8081)).getOrElse(Port.fromInt(8081).get)
+  private val defaultServerHost = Host.fromString(ServerDefaults.Host).getOrElse(host"0.0.0.0")
+  private val serverHost =
+    Host.fromString(sys.env.getOrElse(ServerDefaults.HostEnv, ServerDefaults.Host)).getOrElse(defaultServerHost)
+  private val serverPort =
+    Port
+      .fromInt(sys.env.get(ServerDefaults.PortEnv).flatMap(_.toIntOption).getOrElse(ServerDefaults.Port))
+      .getOrElse(Port.fromInt(ServerDefaults.Port).get)
 
   private val httpApp =
     CORS.policy.withAllowOriginAll(
-      Logger.httpApp(logHeaders = true, logBody = false)(ApiRouter.httpApp)
+      Logger.httpApp(logHeaders = true, logBody = false)(backendHttpApp)
     )
 
   private val serverResource: cats.effect.Resource[IO, Server] =
@@ -30,6 +36,6 @@ object Main extends IOApp.Simple:
 
   override def run: IO[Unit] =
     for
-      _ <- logger.info(s"Starting backend-sample on http://$serverHost:$serverPort")
+      _ <- logger.info(s"Starting ${ServerDefaults.ServiceName} on http://$serverHost:$serverPort")
       _ <- serverResource.useForever
     yield ()

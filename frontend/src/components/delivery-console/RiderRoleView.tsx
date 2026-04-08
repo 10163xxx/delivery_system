@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 import { OrderChatPanel } from '@/components/delivery-console/OrderChatPanel'
 import { OrderList } from '@/components/delivery-console/OrderList'
 import { Panel } from '@/components/delivery-console/LayoutPrimitives'
+import {
+  CURRENCY_CENTS_SCALE,
+  DELIVERY_CONSOLE_MESSAGES,
+  MAX_WITHDRAW_AMOUNT_YUAN,
+} from '@/features/delivery-console'
 
 export function RiderRoleView(props: any) {
   const {
@@ -29,7 +34,13 @@ export function RiderRoleView(props: any) {
     buildReviewAppealPayload,
     statusLabels,
     submitOrderChatMessage,
-    deliveryApi,
+    updateRiderProfile,
+    withdrawRiderIncome,
+    submitEligibilityReview,
+    assignRider,
+    pickupOrder,
+    deliverOrder,
+    submitReviewAppeal,
     BANK_OPTIONS,
   } = props
   const [profileDraft, setProfileDraft] = useState({
@@ -65,12 +76,12 @@ export function RiderRoleView(props: any) {
             ? undefined
             : '请选择开户银行'
           : undefined,
-      accountNumber: accountNumber ? undefined : '请填写收款账号',
-      accountHolder: accountHolder ? undefined : '请填写收款人姓名',
+      accountNumber: accountNumber ? undefined : DELIVERY_CONSOLE_MESSAGES.payoutAccountNumberRequired,
+      accountHolder: accountHolder ? undefined : DELIVERY_CONSOLE_MESSAGES.payoutAccountHolderRequired,
     }
 
     if (profileDraft.payoutAccountType === 'alipay' && accountNumber && accountNumber.length < 4) {
-      nextErrors.accountNumber = '支付宝账号格式不正确'
+      nextErrors.accountNumber = DELIVERY_CONSOLE_MESSAGES.alipayAccountInvalid
     }
 
     if (
@@ -78,7 +89,7 @@ export function RiderRoleView(props: any) {
       accountNumber &&
       !/^[0-9 ]{8,30}$/.test(accountNumber)
     ) {
-      nextErrors.accountNumber = '银行卡号格式不正确'
+      nextErrors.accountNumber = DELIVERY_CONSOLE_MESSAGES.bankAccountInvalid
     }
 
     setProfileErrors(nextErrors)
@@ -90,7 +101,7 @@ export function RiderRoleView(props: any) {
     if (!validateProfileDraft()) return
 
     await runAction(() =>
-      deliveryApi.updateRiderProfile(selectedRider.id, {
+      updateRiderProfile(selectedRider.id, {
         payoutAccount: {
           accountType: profileDraft.payoutAccountType,
           bankName:
@@ -116,22 +127,22 @@ export function RiderRoleView(props: any) {
     if (!selectedRider) return
     const amount = parseWithdrawAmount(withdrawAmount)
     if (amount === null || amount <= 0) {
-      setWithdrawError('请输入有效提现金额')
+      setWithdrawError(DELIVERY_CONSOLE_MESSAGES.invalidWithdrawAmount)
       return
     }
-    if (amount > 50000) {
-      setWithdrawError('单次提现金额不能超过 50000 元')
+    if (amount > MAX_WITHDRAW_AMOUNT_YUAN) {
+      setWithdrawError(DELIVERY_CONSOLE_MESSAGES.withdrawAmountTooLarge)
       return
     }
-    if (Math.round(amount * 100) > selectedRider.availableToWithdrawCents) {
-      setWithdrawError('提现金额不能超过当前可提现余额')
+    if (Math.round(amount * CURRENCY_CENTS_SCALE) > selectedRider.availableToWithdrawCents) {
+      setWithdrawError(DELIVERY_CONSOLE_MESSAGES.withdrawExceedsAvailableBalance)
       return
     }
     setWithdrawError(null)
 
     const success = await runAction(() =>
-      deliveryApi.withdrawRiderIncome(selectedRider.id, {
-        amountCents: Math.round(amount * 100),
+      withdrawRiderIncome(selectedRider.id, {
+        amountCents: Math.round(amount * CURRENCY_CENTS_SCALE),
       }),
     )
     if (!success) return
@@ -223,7 +234,7 @@ export function RiderRoleView(props: any) {
                 className="primary-button"
                 onClick={() =>
                   void runAction(() =>
-                    deliveryApi.submitEligibilityReview(
+                    submitEligibilityReview(
                       buildEligibilityReviewPayload(
                         'Rider',
                         selectedRider.id,
@@ -261,7 +272,7 @@ export function RiderRoleView(props: any) {
                         className="primary-button"
                         onClick={() =>
                           void runAction(() =>
-                            deliveryApi.assignRider(order.id, { riderId: selectedRiderId }),
+                            assignRider(order.id, { riderId: selectedRiderId }),
                           )
                         }
                         type="button"
@@ -272,7 +283,7 @@ export function RiderRoleView(props: any) {
                     {order.status === 'ReadyForPickup' && order.riderId === selectedRiderId ? (
                       <button
                         className="secondary-button"
-                        onClick={() => void runAction(() => deliveryApi.pickupOrder(order.id))}
+                        onClick={() => void runAction(() => pickupOrder(order.id))}
                         type="button"
                       >
                         已取餐
@@ -281,7 +292,7 @@ export function RiderRoleView(props: any) {
                     {order.status === 'Delivering' && order.riderId === selectedRiderId ? (
                       <button
                         className="primary-button"
-                        onClick={() => void runAction(() => deliveryApi.deliverOrder(order.id))}
+                        onClick={() => void runAction(() => deliverOrder(order.id))}
                         type="button"
                       >
                         确认送达
@@ -308,7 +319,7 @@ export function RiderRoleView(props: any) {
                             className="secondary-button"
                             onClick={() =>
                               void runAction(() =>
-                                deliveryApi.submitReviewAppeal(
+                                submitReviewAppeal(
                                   order.id,
                                   buildReviewAppealPayload('Rider', riderAppealDrafts[order.id] ?? ''),
                                 ),
@@ -445,7 +456,7 @@ export function RiderRoleView(props: any) {
                             setProfileErrors((current) => ({ ...current, bankName: undefined }))
                           }}
                         >
-                          <option value="">请选择银行</option>
+                          <option value="">{DELIVERY_CONSOLE_MESSAGES.bankOptionPlaceholder}</option>
                           {BANK_OPTIONS.map((bank: string) => (
                             <option key={bank} value={bank}>
                               {bank}

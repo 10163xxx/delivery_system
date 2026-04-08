@@ -1,4 +1,4 @@
-import type { OrderSummary, Role } from '@/domain-types/delivery'
+import type { OrderSummary, Role } from '@/domain'
 
 type OrderChatPanelProps = {
   order: OrderSummary

@@ -3,7 +3,16 @@ frontend/node_modules/
 frontend/dist/
 backend/target/
 backend/project/target/
+backend/project/project/target/
 backend/.cache/
 backend/.bsp/
 backend/.coursier/
+backend/.idea/
+backend/.ivy2/
+backend/.runtime/
+backend/.sbt-boot/
+backend/.sbt-global/
+backend/uploads/
+backend/manual-classes/
 .idea/
+.codex/

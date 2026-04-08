@@ -1,7 +1,7 @@
 package tables
 
 import cats.effect.IO
-import objects.{DemoNote, NoteBody, NoteId, NoteStatus, NoteTitle, SaveDemoNoteRequest}
+import domain.shared.{DemoNote, NoteBody, NoteId, NoteStatus, NoteTitle, SaveDemoNoteRequest}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}
@@ -9,6 +9,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}
 object NoteTable:
 
   private val logger = Slf4jLogger.getLogger[IO]
+  private val noteStatusCheckValues = NoteStatus.DatabaseValues.map(value => s"'$value'").mkString(", ")
 
   // 主要用途:
   //   初始化 demo_notes 表，作为模板项目里的 PostgreSQL 表结构样例。
@@ -17,12 +18,12 @@ object NoteTable:
   //   2. 参考这个对象新增自己的业务表
   //   3. 统一把某张表的 SQL 和操作放在一个文件里维护
   val initTableSql: String =
-    """
+    s"""
       |create table if not exists demo_notes (
       |  id uuid primary key,
       |  title varchar(120) not null,
       |  body text not null,
-      |  status varchar(32) not null check (status in ('draft', 'published')),
+      |  status varchar(32) not null check (status in ($noteStatusCheckValues)),
       |  created_at timestamptz not null
       |);
       |

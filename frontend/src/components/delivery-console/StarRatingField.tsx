@@ -1,3 +1,5 @@
+import { MAX_RATING, MIN_RATING } from '@/features/delivery-console'
+
 export function StarRatingField({
   label,
   rating,
@@ -11,10 +13,13 @@ export function StarRatingField({
     <div className="review-rating-field">
       <div className="review-rating-header">
         <span>{label}</span>
-        <strong>{rating}/5</strong>
+        <strong>{rating}/{MAX_RATING}</strong>
       </div>
       <div className="star-rating-row" role="radiogroup" aria-label={label}>
-        {[1, 2, 3, 4, 5].map((value) => (
+        {Array.from(
+          { length: MAX_RATING - MIN_RATING + 1 },
+          (_, index) => MIN_RATING + index,
+        ).map((value) => (
           <button
             key={`${label}-${value}`}
             aria-checked={rating === value}

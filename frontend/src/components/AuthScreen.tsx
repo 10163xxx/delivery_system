@@ -4,8 +4,8 @@ import type {
   AuthSession,
   LoginRequest,
   RegisterRequest,
-} from '@/domain-types/delivery'
-import { clearSessionToken, deliveryApi, saveSessionToken } from '@/lib/delivery-api'
+} from '@/domain'
+import { clearSessionToken, login, register, saveSessionToken } from '@/api'
 
 type AuthScreenProps = {
   onAuthenticated: (session: AuthSession) => void
@@ -29,6 +29,11 @@ const roleLabels: Record<RegisterRequest['role'], string> = {
   rider: '骑手',
 }
 
+const AUTH_SCREEN_MESSAGES = {
+  loginFailed: '登录失败',
+  registerFailed: '注册失败',
+} as const
+
 export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [loginDraft, setLoginDraft] = useState<LoginRequest>({
@@ -47,13 +52,13 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
     event.preventDefault()
     setBusy(true)
     try {
-      const session = await deliveryApi.login(loginDraft)
+      const session = await login(loginDraft)
       saveSessionToken(session.token)
       setError(null)
       onAuthenticated(session)
     } catch (actionError) {
       clearSessionToken()
-      setError(actionError instanceof Error ? actionError.message : '登录失败')
+      setError(actionError instanceof Error ? actionError.message : AUTH_SCREEN_MESSAGES.loginFailed)
     } finally {
       setBusy(false)
     }
@@ -63,13 +68,13 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
     event.preventDefault()
     setBusy(true)
     try {
-      const session = await deliveryApi.register(registerDraft)
+      const session = await register(registerDraft)
       saveSessionToken(session.token)
       setError(null)
       onAuthenticated(session)
     } catch (actionError) {
       clearSessionToken()
-      setError(actionError instanceof Error ? actionError.message : '注册失败')
+      setError(actionError instanceof Error ? actionError.message : AUTH_SCREEN_MESSAGES.registerFailed)
     } finally {
       setBusy(false)
     }
@@ -78,13 +83,13 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
   async function loginWithDemoAccount(username: string, password: string) {
     setBusy(true)
     try {
-      const session = await deliveryApi.login({ username, password })
+      const session = await login({ username, password })
       saveSessionToken(session.token)
       setError(null)
       onAuthenticated(session)
     } catch (actionError) {
       clearSessionToken()
-      setError(actionError instanceof Error ? actionError.message : '登录失败')
+      setError(actionError instanceof Error ? actionError.message : AUTH_SCREEN_MESSAGES.loginFailed)
     } finally {
       setBusy(false)
     }

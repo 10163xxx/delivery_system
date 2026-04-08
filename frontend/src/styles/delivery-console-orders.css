@@ -1,0 +1,171 @@
+.order-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+  align-items: stretch;
+}
+
+.order-card {
+  width: 100%;
+  padding: 14px;
+}
+
+.order-card-summary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.order-card-brief,
+.order-card-detail {
+  margin-top: 8px;
+}
+
+.order-card-top,
+.order-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-card .meta-line {
+  margin: 4px 0 0;
+}
+
+.order-card .secondary-button {
+  padding: 8px 12px;
+}
+
+.order-section-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(56, 64, 50, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 252, 248, 0.92);
+}
+
+.order-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-section-header h3 {
+  margin-bottom: 0;
+}
+
+.order-section-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  margin-bottom: 24px;
+}
+
+.order-section-switcher .primary-button,
+.order-section-switcher .secondary-button {
+  min-width: 176px;
+  min-height: 52px;
+  border-radius: 18px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #efe7d4;
+  color: #604d2f;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.badge.warning {
+  background: #fff1da;
+  color: #8a5618;
+}
+
+.badge.success {
+  background: #e6f2e6;
+  color: #265b32;
+}
+
+.order-id,
+.ticket-kind {
+  font-size: 0.84rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #92714a;
+}
+
+.line-items {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timeline {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(73, 63, 49, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timeline-item span {
+  font-weight: 600;
+}
+
+.inline-form,
+.ticket-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.refund-request-row {
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 252, 246, 0.92);
+  border: 1px solid rgba(39, 50, 40, 0.08);
+}
+
+.refund-request-row.has-error {
+  background: #fff1ed;
+  border-color: rgba(200, 76, 58, 0.38);
+  box-shadow: 0 0 0 3px rgba(200, 76, 58, 0.08);
+}
+
+.refund-error-text {
+  flex-basis: 100%;
+  margin-top: -2px;
+}
+
+.inline-form > * {
+  flex: 1;
+}
+
+@media (max-width: 720px) {
+  .order-card-top,
+  .order-card-bottom {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .order-card-summary {
+    justify-content: flex-start;
+  }
+}

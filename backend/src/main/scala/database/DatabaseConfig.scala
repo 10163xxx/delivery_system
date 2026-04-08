@@ -1,5 +1,7 @@
 package database
 
+import domain.shared.DatabaseRuntimeDefaults
+
 import java.nio.file.Paths
 
 final case class DatabaseConfig(
@@ -16,12 +18,12 @@ object DatabaseConfig:
 
   private def defaultDatabaseName: String =
     sys.env
-      .get("DB_NAME")
+      .get(DatabaseRuntimeDefaults.NameEnv)
       .orElse {
         Option(Paths.get(sys.props.getOrElse("user.dir", ".")).getFileName)
           .map(_.toString.replace('-', '_'))
       }
-      .getOrElse(DatabaseDefaults.DefaultDatabaseName)
+      .getOrElse(DatabaseRuntimeDefaults.DefaultDatabaseName)
 
   extension (config: DatabaseConfig)
     def url: String =
@@ -29,11 +31,17 @@ object DatabaseConfig:
 
   val default: DatabaseConfig =
     DatabaseConfig(
-      host = sys.env.getOrElse("DB_HOST", "127.0.0.1"),
-      port = sys.env.get("DB_PORT").flatMap(_.toIntOption).getOrElse(5432),
+      host = sys.env.getOrElse(DatabaseRuntimeDefaults.HostEnv, DatabaseRuntimeDefaults.DefaultHost),
+      port = sys.env.get(DatabaseRuntimeDefaults.PortEnv).flatMap(_.toIntOption).getOrElse(DatabaseRuntimeDefaults.DefaultPort),
       databaseName = defaultDatabaseName,
-      user = sys.env.getOrElse("DB_USER", "db"),
-      password = sys.env.getOrElse("DB_PASSWORD", "root"),
-      maxPoolSize = sys.env.get("DB_MAX_POOL_SIZE").flatMap(_.toIntOption).getOrElse(10),
-      connectionTimeoutMs = sys.env.get("DB_CONNECTION_TIMEOUT_MS").flatMap(_.toLongOption).getOrElse(3000L)
+      user = sys.env.getOrElse(DatabaseRuntimeDefaults.UserEnv, DatabaseRuntimeDefaults.DefaultUser),
+      password = sys.env.getOrElse(DatabaseRuntimeDefaults.PasswordEnv, DatabaseRuntimeDefaults.DefaultPassword),
+      maxPoolSize = sys.env
+        .get(DatabaseRuntimeDefaults.MaxPoolSizeEnv)
+        .flatMap(_.toIntOption)
+        .getOrElse(DatabaseRuntimeDefaults.DefaultMaxPoolSize),
+      connectionTimeoutMs = sys.env
+        .get(DatabaseRuntimeDefaults.ConnectionTimeoutEnv)
+        .flatMap(_.toLongOption)
+        .getOrElse(DatabaseRuntimeDefaults.DefaultConnectionTimeoutMs)
     )

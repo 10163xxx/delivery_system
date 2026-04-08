@@ -1,6 +1,7 @@
 package database
 
 import cats.effect.{IO, Resource}
+import domain.shared.DatabaseRuntimeDefaults
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
@@ -21,14 +22,14 @@ object DatabaseSession:
 
   private def createDataSource: IO[HikariDataSource] =
     IO.blocking {
-      Class.forName("org.postgresql.Driver")
+      Class.forName(DatabaseRuntimeDefaults.DriverClassName)
       val hikariConfig = HikariConfig()
       hikariConfig.setJdbcUrl(config.url)
       hikariConfig.setUsername(config.user)
       hikariConfig.setPassword(config.password)
       hikariConfig.setMaximumPoolSize(config.maxPoolSize)
       hikariConfig.setConnectionTimeout(config.connectionTimeoutMs)
-      hikariConfig.setPoolName("backend-sample-pool")
+      hikariConfig.setPoolName(DatabaseRuntimeDefaults.PoolName)
       new HikariDataSource(hikariConfig)
     }.flatTap(_ =>
       logger.info(
@@ -51,7 +52,7 @@ object DatabaseSession:
 
   private def dataSourceOrFail: IO[HikariDataSource] =
     IO.fromOption(dataSourceRef.get())(
-      new IllegalStateException("DatabaseSession is not initialized")
+      new IllegalStateException(DatabaseRuntimeDefaults.NotInitializedMessage)
     )
 
   private def pooledConnectionResource: Resource[IO, Connection] =
