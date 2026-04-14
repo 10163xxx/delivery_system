@@ -1,11 +1,13 @@
 package app.auth
 
+import domain.shared.given
+
 import app.delivery.{customerAlias, registerUserProfile}
 import cats.effect.IO
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 import domain.auth.*
-import domain.shared.{AuthDefaults, UserRole, ValidationMessages}
+import domain.shared.*
 import infra.files.{loadOrCreateJsonFile, writeJsonFile}
 
 import java.time.Instant
@@ -13,18 +15,18 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
 final case class AuthAccount(
-    id: String,
-    username: String,
-    password: String,
+    id: AuthUserId,
+    username: Username,
+    password: Password,
     role: UserRole,
-    displayName: String,
-    linkedProfileId: Option[String],
-    createdAt: String,
+    displayName: PersonName,
+    linkedProfileId: Option[EntityId],
+    createdAt: IsoDateTime,
 )
 
 final case class AuthState(
     accounts: List[AuthAccount],
-    sessions: Map[String, String],
+    sessions: Map[SessionToken, AuthUserId],
 )
 
 object AuthAccount:
@@ -36,26 +38,27 @@ object AuthState:
   given Decoder[AuthState] = deriveDecoder
 
 private val authStateFile = sys.env
-  .get(AuthDefaults.StateFileEnv)
+  .get(AuthDefaults.StateFileEnv.raw)
   .map(java.nio.file.Paths.get(_))
   .getOrElse(AuthDefaults.StateFilePath)
 private val authWriteLock = new AnyRef
 private val authStateRef = new AtomicReference[AuthState](loadAuthState())
 
-def login(request: LoginRequest): IO[Either[String, AuthSessionResponse]] =
+def login(request: LoginRequest): IO[Either[ErrorMessage, AuthSessionResponse]] =
   updateAuthState { state =>
     for
       username <- sanitizeAuthRequiredText(request.username, AuthDefaults.UsernameMaxLength, ValidationMessages.UsernameRequired)
       password <- sanitizeAuthRequiredText(request.password, AuthDefaults.PasswordMaxLength, ValidationMessages.PasswordRequired)
       account <- state.accounts.find(_.username == username).toRight(ValidationMessages.AccountNotFound)
       _ <- Either.cond(account.password == password, (), ValidationMessages.PasswordIncorrect)
+      _ <- Either.cond(account.role == request.role, (), ValidationMessages.LoginRoleMismatch)
     yield
       val token = nextAuthToken()
       val nextState = state.copy(sessions = state.sessions.updated(token, account.id))
       nextState -> toSessionResponse(account, token)
   }
 
-def register(request: RegisterRequest): IO[Either[String, AuthSessionResponse]] =
+def register(request: RegisterRequest): IO[Either[ErrorMessage, AuthSessionResponse]] =
   val validated = for
     username <- sanitizeAuthUsername(request.username)
     password <- sanitizeAuthRequiredText(request.password, AuthDefaults.PasswordMaxLength, ValidationMessages.PasswordRequired)
@@ -66,10 +69,10 @@ def register(request: RegisterRequest): IO[Either[String, AuthSessionResponse]] 
   validated match
     case Left(message) => IO.pure(Left(message))
     case Right((username, password)) =>
-      val displayName = username
+      val displayName = new PersonName(username.raw)
       registerUserProfile(request.role, displayName) match
-        case Left(message) => IO.pure(Left(message))
-        case Right(linkedProfileId) =>
+        case Left(registerError) => IO.pure(Left(registerError))
+        case Right(profileId) =>
           updateAuthState { current =>
             for
               _ <- Either.cond(
@@ -84,7 +87,7 @@ def register(request: RegisterRequest): IO[Either[String, AuthSessionResponse]] 
                 password = password,
                 role = request.role,
                 displayName = displayName,
-                linkedProfileId = linkedProfileId,
+                linkedProfileId = profileId,
                 createdAt = authNow(),
               )
               val token = nextAuthToken()
@@ -95,20 +98,20 @@ def register(request: RegisterRequest): IO[Either[String, AuthSessionResponse]] 
               nextState -> toSessionResponse(account, token)
           }
 
-def getSession(token: String): IO[Option[AuthSessionResponse]] =
+def getSession(token: SessionToken): IO[Option[AuthSessionResponse]] =
   IO.pure {
     authStateRef.get().sessions.get(token).flatMap(accountId =>
       authStateRef.get().accounts.find(_.id == accountId).map(account => toSessionResponse(account, token))
     )
   }
 
-def logout(token: String): IO[Unit] =
+def logout(token: SessionToken): IO[Unit] =
   updateAuthState[Unit] { current =>
     val nextState = current.copy(sessions = current.sessions - token)
     Right(nextState -> ())
   }.void
 
-private def toSessionResponse(account: AuthAccount, token: String): AuthSessionResponse =
+private def toSessionResponse(account: AuthAccount, token: SessionToken): AuthSessionResponse =
   val displayName =
     if account.role == UserRole.customer then
       account.linkedProfileId.map(customerAlias).getOrElse(account.displayName)
@@ -124,25 +127,26 @@ private def toSessionResponse(account: AuthAccount, token: String): AuthSessionR
     ),
   )
 
-private def sanitizeAuthUsername(value: String): Either[String, String] =
+private def sanitizeAuthUsername(value: Username): Either[ErrorMessage, Username] =
   sanitizeAuthRequiredText(value, AuthDefaults.UsernameMaxLength, ValidationMessages.UsernameRequired).flatMap { username =>
     Either.cond(
-      username.matches(AuthDefaults.UsernamePattern),
+      username.raw.matches(AuthDefaults.UsernamePattern.raw),
       username,
       ValidationMessages.UsernamePatternInvalid,
     )
   }
 
-private def sanitizeAuthRequiredText(
-    value: String,
-    maxLength: Int,
-    errorMessage: String,
-): Either[String, String] =
+private def sanitizeAuthRequiredText[T](
+    value: T,
+    maxLength: EntityCount,
+    errorMessage: ErrorMessage,
+)(using wrapped: WrappedTextType[T]): Either[ErrorMessage, T] =
   val sanitized = sanitizeAuthText(value, maxLength)
-  Either.cond(sanitized.nonEmpty, sanitized, errorMessage)
+  Either.cond(sanitized.raw.nonEmpty, wrapText(sanitized.raw), errorMessage)
 
-private def sanitizeAuthText(value: String, maxLength: Int): String =
-  value
+private def sanitizeAuthText[T](value: T, maxLength: EntityCount)(using wrapped: WrappedTextType[T]): DisplayText =
+  new DisplayText(
+    value.raw
     .trim
     .filter(character => !Character.isISOControl(character) || character == '\n' || character == '\t')
     .replace('\n', ' ')
@@ -151,14 +155,15 @@ private def sanitizeAuthText(value: String, maxLength: Int): String =
     .filter(_.nonEmpty)
     .mkString(" ")
     .take(maxLength)
+  )
 
-private def nextAuthId(prefix: String): String =
-  s"$prefix-${UUID.randomUUID().toString.take(AuthDefaults.GeneratedIdSuffixLength)}"
+private def nextAuthId(prefix: DisplayText): AuthUserId =
+  s"${prefix.raw}-${UUID.randomUUID().toString.take(AuthDefaults.GeneratedIdSuffixLength)}"
 
-private def nextAuthToken(): String =
+private def nextAuthToken(): SessionToken =
   UUID.randomUUID().toString.replace("-", "")
 
-private def authNow(): String = Instant.now().toString
+private def authNow(): IsoDateTime = new IsoDateTime(Instant.now().toString)
 
 private def loadAuthState(): AuthState =
   loadOrCreateJsonFile(authStateFile, seedAuthState())
@@ -167,8 +172,8 @@ private def saveAuthState(state: AuthState): Unit =
   writeJsonFile(authStateFile, state)
 
 private def updateAuthState[A](
-    mutate: AuthState => Either[String, (AuthState, A)]
-): IO[Either[String, A]] =
+    mutate: AuthState => Either[ErrorMessage, (AuthState, A)]
+): IO[Either[ErrorMessage, A]] =
   IO.blocking {
     authWriteLock.synchronized {
       mutate(authStateRef.get()).map { case (nextState, result) =>
@@ -183,18 +188,18 @@ private def seedAuthState(): AuthState =
   AuthState(
     accounts = List(
       AuthAccount(
-        id = "usr-admin-1",
-        username = "admin",
-        password = "admin123",
+        id = AdminDefaults.PrimaryAdminUserId,
+        username = AdminDefaults.PrimaryAdminUsername,
+        password = AdminDefaults.PrimaryAdminPassword,
         role = UserRole.admin,
-        displayName = "总控台管理员",
-        linkedProfileId = Some("admin-1"),
+        displayName = AdminDefaults.PrimaryAdminDisplayName,
+        linkedProfileId = Some(AdminDefaults.PrimaryAdminId),
         createdAt = authNow(),
       ),
       AuthAccount(
         id = "usr-cust-1",
-        username = "cust_1",
-        password = "cust123",
+        username = new Username("cust_1"),
+        password = new Password("cust123"),
         role = UserRole.customer,
         displayName = customerAlias("cust-1"),
         linkedProfileId = Some("cust-1"),
@@ -202,8 +207,8 @@ private def seedAuthState(): AuthState =
       ),
       AuthAccount(
         id = "usr-cust-2",
-        username = "cust_2",
-        password = "cust123",
+        username = new Username("cust_2"),
+        password = new Password("cust123"),
         role = UserRole.customer,
         displayName = customerAlias("cust-2"),
         linkedProfileId = Some("cust-2"),
@@ -211,37 +216,37 @@ private def seedAuthState(): AuthState =
       ),
       AuthAccount(
         id = "usr-rider-1",
-        username = "rider_1",
-        password = "rider123",
+        username = new Username("rider_1"),
+        password = new Password("rider123"),
         role = UserRole.rider,
-        displayName = "陈凯",
+        displayName = new PersonName("陈凯"),
         linkedProfileId = Some("rider-1"),
         createdAt = authNow(),
       ),
       AuthAccount(
         id = "usr-rider-2",
-        username = "rider_2",
-        password = "rider123",
+        username = new Username("rider_2"),
+        password = new Password("rider123"),
         role = UserRole.rider,
-        displayName = "赵晨",
+        displayName = new PersonName("赵晨"),
         linkedProfileId = Some("rider-2"),
         createdAt = authNow(),
       ),
       AuthAccount(
         id = "usr-merchant-1",
-        username = "merchant_wang",
-        password = "merchant123",
+        username = new Username("merchant_wang"),
+        password = new Password("merchant123"),
         role = UserRole.merchant,
-        displayName = "王师傅",
+        displayName = new PersonName("王师傅"),
         linkedProfileId = None,
         createdAt = authNow(),
       ),
       AuthAccount(
         id = "usr-merchant-2",
-        username = "merchant_su",
-        password = "merchant123",
+        username = new Username("merchant_su"),
+        password = new Password("merchant123"),
         role = UserRole.merchant,
-        displayName = "苏宁",
+        displayName = new PersonName("苏宁"),
         linkedProfileId = None,
         createdAt = authNow(),
       ),

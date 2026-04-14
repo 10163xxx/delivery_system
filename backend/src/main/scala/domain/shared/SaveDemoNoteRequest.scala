@@ -1,5 +1,7 @@
 package domain.shared
 
+import domain.shared.given
+
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

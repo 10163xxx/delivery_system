@@ -1,4 +1,8 @@
 package database
 
+import domain.shared.given
+
+import domain.shared.DatabaseName
+
 object DatabaseDefaults:
-  val DefaultDatabaseName: String = domain.shared.DatabaseRuntimeDefaults.DefaultDatabaseName
+  val DefaultDatabaseName: DatabaseName = domain.shared.DatabaseRuntimeDefaults.DefaultDatabaseName

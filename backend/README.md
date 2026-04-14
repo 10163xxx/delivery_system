@@ -5,13 +5,28 @@
 
 ## 目录结构
 
-- `src/main/scala/Main.scala`: 主程序，启动 http4s 服务
-- `src/main/scala/routes`: 路由定义与总路由分发
-- `src/main/scala/api`: `plan` 定义与具体业务实现
-- `src/main/scala/database`: 保留的数据库连接示例
-- `src/main/scala/tables`: 每张表一个文件，集中维护建表 SQL、常见 SQL 和表操作
-- `src/main/scala/objects`: 请求/响应类型定义
-- `src/main/scala/state`: 业务状态仓储与 JSON 持久化
+- `src/main/scala/Main.scala`: 主程序入口，启动 http4s 服务
+
+按职责分成 5 组：
+
+- `http`: 路由入口和鉴权辅助
+  - 包含 `auth`、`delivery`、`health`、`planner`、`support`
+- `app`: 应用服务和状态流转
+  - 包含 `delivery`、`auth`、`planner`
+- `domain`: 领域模型、请求/响应对象、共享类型
+  - 按 `auth / customer / merchant / order / review / rider / admin / shared` 分组
+- `infra`: 基础设施
+  - 当前主要是 JSON 文件持久化和上传存储
+- `database`、`tables`: 保留的数据库配置和 SQL 示例
+
+运行相关目录：
+
+- `data`: 本地 JSON 持久化文件
+- `scripts`: 构建、运行和初始化脚本
+
+可以把主链路理解成：
+
+- `http -> app -> domain/infra`
 
 ## 运行
 
@@ -33,7 +48,7 @@
 - `AUTH_STATE_FILE`
 - `DELIVERY_STATE_FILE`
 
-仓库里仍然保留了 PostgreSQL/JDBC 示例代码，便于后续切换成数据库表模型，但当前配送业务接口默认不要求 PostgreSQL 才能运行。
+仓库里仍然保留了 PostgreSQL/JDBC 示例代码，便于后续切换成数据库表模型，但当前主链路默认不要求 PostgreSQL 才能运行。
 
 ## 持久化说明
 
@@ -82,3 +97,9 @@ curl http://127.0.0.1:8081/api/delivery/state \
 - 服务启动日志
 - 每个 API 的访问日志
 - http4s 中间件输出的请求日志和响应日志
+
+## 代码约束
+
+- 保持函数简短，单个函数只做一层决策或一层状态变换。
+- 避免 OOP 式写法，不把业务流程挂在对象实例上做 `obj.fn()` 调度。
+- 后端主链路优先使用顶层函数和小型辅助函数组合；先拆查找、校验、构造、状态更新，再拼接流程。

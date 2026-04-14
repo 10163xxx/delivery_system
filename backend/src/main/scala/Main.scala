@@ -1,7 +1,8 @@
+import domain.shared.given
 import cats.effect.{IO, IOApp}
-import com.comcast.ip4s.{Host, Port, host}
+import com.comcast.ip4s.{Host, Port}
+import api.backendApiApp
 import domain.shared.ServerDefaults
-import http.backendHttpApp
 import org.http4s.server.middleware.CORS
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
@@ -11,17 +12,20 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 object Main extends IOApp.Simple:
 
   private val logger = Slf4jLogger.getLogger[IO]
-  private val defaultServerHost = Host.fromString(ServerDefaults.Host).getOrElse(host"0.0.0.0")
+  private val defaultServerHost =
+    Host
+      .fromString(ServerDefaults.Host.raw)
+      .getOrElse(throw new IllegalStateException(s"Invalid default host: ${ServerDefaults.Host.raw}"))
   private val serverHost =
-    Host.fromString(sys.env.getOrElse(ServerDefaults.HostEnv, ServerDefaults.Host)).getOrElse(defaultServerHost)
+    Host.fromString(sys.env.getOrElse(ServerDefaults.HostEnv.raw, ServerDefaults.Host.raw)).getOrElse(defaultServerHost)
   private val serverPort =
     Port
-      .fromInt(sys.env.get(ServerDefaults.PortEnv).flatMap(_.toIntOption).getOrElse(ServerDefaults.Port))
+      .fromInt(sys.env.get(ServerDefaults.PortEnv.raw).flatMap(_.toIntOption).getOrElse(ServerDefaults.Port))
       .getOrElse(Port.fromInt(ServerDefaults.Port).get)
 
   private val httpApp =
     CORS.policy.withAllowOriginAll(
-      Logger.httpApp(logHeaders = true, logBody = false)(backendHttpApp)
+      Logger.httpApp(logHeaders = true, logBody = false)(backendApiApp)
     )
 
   private val serverResource: cats.effect.Resource[IO, Server] =

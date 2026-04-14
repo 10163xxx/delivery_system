@@ -1,53 +1,64 @@
 package infra.uploads
 
+import domain.shared.given
+
 import cats.effect.IO
 import domain.merchant.ImageUploadResponse
-import domain.shared.UploadDefaults
+import domain.shared.*
 
 import java.nio.file.{Files, Path, StandardOpenOption}
 import java.util.UUID
 
-private enum SupportedImageType(val mediaType: String, val defaultExtension: String):
-  case Jpeg extends SupportedImageType("image/jpeg", "jpg")
-  case Png extends SupportedImageType("image/png", "png")
-  case Gif extends SupportedImageType("image/gif", "gif")
-  case Webp extends SupportedImageType("image/webp", "webp")
+private enum SupportedImageType(val mediaType: MediaTypeText, val defaultExtension: FileExtension):
+  case Jpeg extends SupportedImageType(UploadDefaults.JpegMediaType, UploadDefaults.JpgExtension)
+  case Png extends SupportedImageType(UploadDefaults.PngMediaType, UploadDefaults.PngExtension)
+  case Gif extends SupportedImageType(UploadDefaults.GifMediaType, UploadDefaults.GifExtension)
+  case Webp extends SupportedImageType(UploadDefaults.WebpMediaType, UploadDefaults.WebpExtension)
 
-private object SupportedImageType:
-  private val mediaTypeAliases: Map[String, SupportedImageType] = Map(
-    SupportedImageType.Jpeg.mediaType -> SupportedImageType.Jpeg,
-    "image/jpg" -> SupportedImageType.Jpeg,
-    SupportedImageType.Png.mediaType -> SupportedImageType.Png,
-    SupportedImageType.Gif.mediaType -> SupportedImageType.Gif,
-    SupportedImageType.Webp.mediaType -> SupportedImageType.Webp,
-  )
+private val supportedImageTypeAliases: Map[MediaTypeText, SupportedImageType] = Map(
+  SupportedImageType.Jpeg.mediaType -> SupportedImageType.Jpeg,
+  UploadDefaults.JpgMediaType -> SupportedImageType.Jpeg,
+  SupportedImageType.Png.mediaType -> SupportedImageType.Png,
+  SupportedImageType.Gif.mediaType -> SupportedImageType.Gif,
+  SupportedImageType.Webp.mediaType -> SupportedImageType.Webp,
+)
 
-  def fromMediaType(value: String): Option[SupportedImageType] =
-    mediaTypeAliases.get(value.toLowerCase)
+private val jpegSignature: Vector[Byte] = Vector(0xff.toByte, 0xd8.toByte, 0xff.toByte)
+private val pngSignature: Vector[Byte] =
+  Vector(0x89.toByte, 0x50.toByte, 0x4e.toByte, 0x47.toByte, 0x0d.toByte, 0x0a.toByte, 0x1a.toByte, 0x0a.toByte)
+private val gif87aSignature: Vector[Byte] = Vector(0x47.toByte, 0x49.toByte, 0x46.toByte, 0x38.toByte, 0x37.toByte, 0x61.toByte)
+private val gif89aSignature: Vector[Byte] = Vector(0x47.toByte, 0x49.toByte, 0x46.toByte, 0x38.toByte, 0x39.toByte, 0x61.toByte)
+private val webpHeaderSignature: Vector[Byte] = Vector(0x52.toByte, 0x49.toByte, 0x46.toByte, 0x46.toByte)
+private val webpFormatSignature: Vector[Byte] = Vector(0x57.toByte, 0x45.toByte, 0x42.toByte, 0x50.toByte)
+private val webpFormatOffset: EntityCount = 8
+private val noExtensionIndex: EntityCount = -1
+
+private def supportedImageTypeFromMediaType(value: MediaTypeText): Option[SupportedImageType] =
+  supportedImageTypeAliases.get(new MediaTypeText(value.raw.toLowerCase))
 
 def saveStoreImage(
-    originalFilename: Option[String],
-    mediaType: Option[String],
+    originalFilename: Option[FileNameText],
+    mediaType: Option[MediaTypeText],
     bytes: Array[Byte],
-): IO[Either[String, ImageUploadResponse]] =
+): IO[Either[ErrorMessage, ImageUploadResponse]] =
   IO.blocking {
     validateImage(mediaType, bytes).map { imageType =>
       Files.createDirectories(UploadDefaults.UploadRoot)
       val extension = resolveExtension(originalFilename, imageType)
-      val generatedName = s"${UUID.randomUUID().toString}.$extension"
-      val targetPath = UploadDefaults.UploadRoot.resolve(generatedName).normalize()
+      val generatedName = UploadDefaults.generatedFileName(new FileNameText(UUID.randomUUID().toString), extension)
+      val targetPath = UploadDefaults.UploadRoot.resolve(generatedName.raw).normalize()
       Files.write(
         targetPath,
         bytes,
         StandardOpenOption.CREATE_NEW,
         StandardOpenOption.WRITE,
       )
-      ImageUploadResponse(url = s"${UploadDefaults.PublicUrlPrefix}$generatedName")
+      ImageUploadResponse(url = UploadDefaults.publicUrlFor(generatedName))
     }
   }
 
-def resolveStoreImagePath(filename: String): Option[Path] =
-  val sanitized = filename.trim
+def resolveStoreImagePath(filename: FileNameText): Option[Path] =
+  val sanitized = filename.raw.trim
   val candidate = UploadDefaults.UploadRoot.resolve(sanitized).normalize()
   if
     sanitized.nonEmpty &&
@@ -59,9 +70,9 @@ def resolveStoreImagePath(filename: String): Option[Path] =
   else None
 
 private def validateImage(
-    mediaType: Option[String],
+    mediaType: Option[MediaTypeText],
     bytes: Array[Byte],
-): Either[String, SupportedImageType] =
+): Either[ErrorMessage, SupportedImageType] =
   for
     _ <- Either.cond(bytes.nonEmpty, (), UploadDefaults.EmptyUploadMessage)
     _ <- Either.cond(bytes.length <= UploadDefaults.MaxUploadBytes, (), UploadDefaults.OversizedUploadMessage)
@@ -69,10 +80,10 @@ private def validateImage(
   yield detectedMediaType
 
 private def detectSupportedMediaType(
-    mediaType: Option[String],
+    mediaType: Option[MediaTypeText],
     bytes: Array[Byte],
-): Either[String, SupportedImageType] =
-  val normalized = mediaType.flatMap(SupportedImageType.fromMediaType)
+): Either[ErrorMessage, SupportedImageType] =
+  val normalized = mediaType.flatMap(supportedImageTypeFromMediaType)
   if isJpeg(bytes) then Right(SupportedImageType.Jpeg)
   else if isPng(bytes) then Right(SupportedImageType.Png)
   else if isGif(bytes) then Right(SupportedImageType.Gif)
@@ -83,60 +94,45 @@ private def detectSupportedMediaType(
       case None => Left(UploadDefaults.UnsupportedImageMessage)
 
 private def resolveExtension(
-    originalFilename: Option[String],
+    originalFilename: Option[FileNameText],
     imageType: SupportedImageType,
-): String =
+): FileExtension =
   extensionFromFilename(originalFilename)
     .filter(isAllowedExtension)
     .getOrElse(imageType.defaultExtension)
 
-private def extensionFromFilename(originalFilename: Option[String]): Option[String] =
+private def extensionFromFilename(originalFilename: Option[FileNameText]): Option[FileExtension] =
   originalFilename
-    .map(_.trim)
+    .map(value => value.raw.trim)
     .filter(_.nonEmpty)
     .flatMap { filename =>
       val lastDotIndex = filename.lastIndexOf('.')
-      if lastDotIndex >= 0 && lastDotIndex < filename.length - 1 then
-        Some(filename.substring(lastDotIndex + 1).toLowerCase)
+      if lastDotIndex > noExtensionIndex && lastDotIndex < filename.length - NumericDefaults.SingleItemCount then
+        Some(new FileExtension(filename.substring(lastDotIndex + 1).toLowerCase))
       else None
     }
 
-private def isAllowedExtension(extension: String): Boolean =
+private def isAllowedExtension(extension: FileExtension): ApprovalFlag =
   UploadDefaults.AllowedExtensions.contains(extension)
 
-private def isJpeg(bytes: Array[Byte]): Boolean =
-  bytes.length >= 3 &&
-    bytes(0) == 0xff.toByte &&
-    bytes(1) == 0xd8.toByte &&
-    bytes(2) == 0xff.toByte
+private def isJpeg(bytes: Array[Byte]): ApprovalFlag =
+  hasSignature(bytes, jpegSignature)
 
-private def isPng(bytes: Array[Byte]): Boolean =
-  bytes.length >= 8 &&
-    bytes(0) == 0x89.toByte &&
-    bytes(1) == 0x50.toByte &&
-    bytes(2) == 0x4e.toByte &&
-    bytes(3) == 0x47.toByte &&
-    bytes(4) == 0x0d.toByte &&
-    bytes(5) == 0x0a.toByte &&
-    bytes(6) == 0x1a.toByte &&
-    bytes(7) == 0x0a.toByte
+private def isPng(bytes: Array[Byte]): ApprovalFlag =
+  hasSignature(bytes, pngSignature)
 
-private def isGif(bytes: Array[Byte]): Boolean =
-  bytes.length >= 6 &&
-    bytes(0) == 0x47.toByte &&
-    bytes(1) == 0x49.toByte &&
-    bytes(2) == 0x46.toByte &&
-    bytes(3) == 0x38.toByte &&
-    (bytes(4) == 0x37.toByte || bytes(4) == 0x39.toByte) &&
-    bytes(5) == 0x61.toByte
+private def isGif(bytes: Array[Byte]): ApprovalFlag =
+  hasSignature(bytes, gif87aSignature) || hasSignature(bytes, gif89aSignature)
 
-private def isWebp(bytes: Array[Byte]): Boolean =
-  bytes.length >= 12 &&
-    bytes(0) == 0x52.toByte &&
-    bytes(1) == 0x49.toByte &&
-    bytes(2) == 0x46.toByte &&
-    bytes(3) == 0x46.toByte &&
-    bytes(8) == 0x57.toByte &&
-    bytes(9) == 0x45.toByte &&
-    bytes(10) == 0x42.toByte &&
-    bytes(11) == 0x50.toByte
+private def isWebp(bytes: Array[Byte]): ApprovalFlag =
+  hasSignature(bytes, webpHeaderSignature) && hasSignature(bytes, webpFormatSignature, webpFormatOffset)
+
+private def hasSignature(
+    bytes: Array[Byte],
+    signature: Vector[Byte],
+    offset: EntityCount = NumericDefaults.ZeroCount,
+): ApprovalFlag =
+  bytes.length >= offset + signature.length &&
+    signature.zipWithIndex.forall { case (expectedByte, signatureIndex) =>
+      bytes(offset + signatureIndex) == expectedByte
+    }

@@ -1,5 +1,7 @@
 package app.delivery
 
+import domain.shared.given
+
 import cats.effect.IO
 import domain.auth.*
 import domain.customer.*
@@ -7,106 +9,151 @@ import domain.merchant.*
 import domain.rider.*
 import domain.shared.*
 
+private def findAccountCustomer(
+      current: DeliveryAppState,
+      customerId: CustomerId,
+  ): Either[ErrorMessage, Customer] =
+    current.customers.find(_.id == customerId).toRight(ValidationMessages.CustomerNotFound)
+
+private def updateCustomerEntry(
+      current: DeliveryAppState,
+      customerId: CustomerId,
+  )(
+      update: Customer => Customer
+  ): DeliveryAppState =
+    current.copy(
+      customers = current.customers.map(entry =>
+        if entry.id == customerId then update(entry) else entry
+      ),
+    )
+
+private def sanitizedCustomerAddressEntry(
+      request: AddCustomerAddressRequest
+  ): Either[ErrorMessage, AddressEntry] =
+    for
+      label <- sanitizeRequiredText(request.label, DeliveryValidationDefaults.AddressLabelMaxLength, ValidationMessages.AddressLabelRequired)
+      address <- sanitizeRequiredText(request.address, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.AddressRequired)
+    yield AddressEntry(label, address)
+
+private def sanitizedCustomerAddress(
+      address: AddressText
+  ): Either[ErrorMessage, AddressText] =
+    sanitizeRequiredText(
+      address,
+      DeliveryValidationDefaults.AddressMaxLength,
+      ValidationMessages.AddressRequired,
+    )
+
+private def validateWithdrawalAmount(
+      amountCents: CurrencyCents
+  ): Either[ErrorMessage, CurrencyCents] =
+    Either.cond(
+      amountCents > DeliveryValidationDefaults.WithdrawAmountMinCentsExclusive &&
+        amountCents <= DeliveryValidationDefaults.WithdrawAmountMaxCents,
+      amountCents,
+      ValidationMessages.WithdrawAmountInvalid,
+    )
+
+private def buildWithdrawal(
+      prefix: DisplayText,
+      amountCents: CurrencyCents,
+      payoutAccount: MerchantPayoutAccount,
+      timestamp: IsoDateTime,
+  ): MerchantWithdrawal =
+    MerchantWithdrawal(
+      id = nextId(prefix),
+      amountCents = amountCents,
+      accountLabel = payoutAccountLabel(payoutAccount),
+      requestedAt = timestamp,
+    )
+
 def updateCustomerProfile(
-      customerId: String,
+      customerId: CustomerId,
       request: UpdateCustomerProfileRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          customer <- current.customers.find(_.id == customerId).toRight(ValidationMessages.CustomerNotFound)
+          customer <- findAccountCustomer(current, customerId)
           name <- sanitizeRequiredText(request.name, DeliveryValidationDefaults.CustomerNameMaxLength, ValidationMessages.CustomerNameRequired)
         yield
           withDerivedData(
-            current.copy(
-              customers = current.customers.map(entry =>
-                if entry.id == customer.id then entry.copy(name = name) else entry
-              ),
-            ),
+            updateCustomerEntry(current, customer.id)(_.copy(name = name)),
             now(),
           )
       }
     }
 
 def addCustomerAddress(
-      customerId: String,
+      customerId: CustomerId,
       request: AddCustomerAddressRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          customer <- current.customers.find(_.id == customerId).toRight(ValidationMessages.CustomerNotFound)
-          label <- sanitizeRequiredText(request.label, DeliveryValidationDefaults.AddressLabelMaxLength, ValidationMessages.AddressLabelRequired)
-          address <- sanitizeRequiredText(request.address, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.AddressRequired)
+          customer <- findAccountCustomer(current, customerId)
+          addressEntry <- sanitizedCustomerAddressEntry(request)
         yield
-          val addressEntry = AddressEntry(label, address)
-          val nextAddresses = customer.addresses.filterNot(_.address == address) :+ addressEntry
+          val nextAddresses =
+            customer.addresses.filterNot(_.address == addressEntry.address) :+ addressEntry
           withDerivedData(
-            current.copy(
-              customers = current.customers.map(entry =>
-                if entry.id == customer.id then entry.copy(addresses = nextAddresses) else entry
-              ),
-            ),
+            updateCustomerEntry(current, customer.id)(_.copy(addresses = nextAddresses)),
             now(),
           )
       }
     }
 
 def removeCustomerAddress(
-      customerId: String,
+      customerId: CustomerId,
       request: RemoveCustomerAddressRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          customer <- current.customers.find(_.id == customerId).toRight(ValidationMessages.CustomerNotFound)
-          address <- sanitizeRequiredText(request.address, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.AddressRequired)
+          customer <- findAccountCustomer(current, customerId)
+          address <- sanitizedCustomerAddress(request.address)
           _ <- Either.cond(customer.addresses.exists(_.address == address), (), ValidationMessages.AddressNotFound)
-          _ <- Either.cond(customer.addresses.length > 1, (), ValidationMessages.AtLeastOneAddressRequired)
+          _ <- Either.cond(
+            customer.addresses.length > NumericDefaults.SingleItemCount,
+            (),
+            ValidationMessages.AtLeastOneAddressRequired,
+          )
           _ <- Either.cond(customer.defaultAddress != address, (), ValidationMessages.ChangeDefaultAddressBeforeDeleting)
         yield
           val nextAddresses = customer.addresses.filterNot(_.address == address)
           withDerivedData(
-            current.copy(
-              customers = current.customers.map(entry =>
-                if entry.id == customer.id then entry.copy(addresses = nextAddresses) else entry
-              ),
-            ),
+            updateCustomerEntry(current, customer.id)(_.copy(addresses = nextAddresses)),
             now(),
           )
       }
     }
 
 def setDefaultCustomerAddress(
-      customerId: String,
+      customerId: CustomerId,
       request: SetDefaultCustomerAddressRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          customer <- current.customers.find(_.id == customerId).toRight(ValidationMessages.CustomerNotFound)
-          address <- sanitizeRequiredText(request.address, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.AddressRequired)
+          customer <- findAccountCustomer(current, customerId)
+          address <- sanitizedCustomerAddress(request.address)
           _ <- Either.cond(customer.addresses.exists(_.address == address), (), ValidationMessages.AddressNotFound)
         yield
           withDerivedData(
-            current.copy(
-              customers = current.customers.map(entry =>
-                if entry.id == customer.id then entry.copy(defaultAddress = address) else entry
-              ),
-            ),
+            updateCustomerEntry(current, customer.id)(_.copy(defaultAddress = address)),
             now(),
           )
       }
     }
 
 def rechargeCustomerBalance(
-      customerId: String,
+      customerId: CustomerId,
       request: RechargeBalanceRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          customer <- current.customers.find(_.id == customerId).toRight(ValidationMessages.CustomerNotFound)
+          customer <- findAccountCustomer(current, customerId)
           _ <- Either.cond(customer.accountStatus == AccountStatus.Active, (), ValidationMessages.CustomerAccountSuspended)
           _ <- Either.cond(
             request.amountCents > DeliveryValidationDefaults.RechargeAmountMinCentsExclusive &&
@@ -116,11 +163,8 @@ def rechargeCustomerBalance(
           )
         yield
           withDerivedData(
-            current.copy(
-              customers = current.customers.map(entry =>
-                if entry.id == customer.id then entry.copy(balanceCents = entry.balanceCents + request.amountCents)
-                else entry
-              ),
+            updateCustomerEntry(current, customer.id)(entry =>
+              entry.copy(balanceCents = entry.balanceCents + request.amountCents)
             ),
             now(),
           )
@@ -128,9 +172,9 @@ def rechargeCustomerBalance(
     }
 
 def updateMerchantProfile(
-      merchantName: String,
+      merchantName: PersonName,
       request: UpdateMerchantProfileRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
@@ -151,29 +195,19 @@ def updateMerchantProfile(
     }
 
 def withdrawMerchantIncome(
-      merchantName: String,
+      merchantName: PersonName,
       request: WithdrawMerchantIncomeRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
           profile <- findOrCreateMerchantProfile(current, merchantName)
-          amountCents <- Either.cond(
-            request.amountCents > DeliveryValidationDefaults.WithdrawAmountMinCentsExclusive &&
-              request.amountCents <= DeliveryValidationDefaults.WithdrawAmountMaxCents,
-            request.amountCents,
-            ValidationMessages.WithdrawAmountInvalid,
-          )
+          amountCents <- validateWithdrawalAmount(request.amountCents)
           payoutAccount <- profile.payoutAccount.toRight(ValidationMessages.PayoutAccountRequired)
           _ <- Either.cond(profile.availableToWithdrawCents >= amountCents, (), ValidationMessages.WithdrawBalanceInsufficient)
         yield
           val timestamp = now()
-          val withdrawal = MerchantWithdrawal(
-            id = nextId("mwd"),
-            amountCents = amountCents,
-            accountLabel = payoutAccountLabel(payoutAccount),
-            requestedAt = timestamp,
-          )
+          val withdrawal = buildWithdrawal(new DisplayText("mwd"), amountCents, payoutAccount, timestamp)
           withDerivedData(
             current.copy(
               merchantProfiles = replaceMerchantProfile(
@@ -190,9 +224,9 @@ def withdrawMerchantIncome(
     }
 
 def updateRiderProfile(
-      riderId: String,
+      riderId: RiderId,
       request: UpdateRiderProfileRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
@@ -212,29 +246,19 @@ def updateRiderProfile(
     }
 
 def withdrawRiderIncome(
-      riderId: String,
+      riderId: RiderId,
       request: WithdrawRiderIncomeRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
           rider <- current.riders.find(_.id == riderId).toRight(ValidationMessages.RiderNotFound)
-          amountCents <- Either.cond(
-            request.amountCents > DeliveryValidationDefaults.WithdrawAmountMinCentsExclusive &&
-              request.amountCents <= DeliveryValidationDefaults.WithdrawAmountMaxCents,
-            request.amountCents,
-            ValidationMessages.WithdrawAmountInvalid,
-          )
+          amountCents <- validateWithdrawalAmount(request.amountCents)
           payoutAccount <- rider.payoutAccount.toRight(ValidationMessages.PayoutAccountRequired)
           _ <- Either.cond(rider.availableToWithdrawCents >= amountCents, (), ValidationMessages.WithdrawBalanceInsufficient)
         yield
           val timestamp = now()
-          val withdrawal = MerchantWithdrawal(
-            id = nextId("rwd"),
-            amountCents = amountCents,
-            accountLabel = payoutAccountLabel(payoutAccount),
-            requestedAt = timestamp,
-          )
+          val withdrawal = buildWithdrawal(new DisplayText("rwd"), amountCents, payoutAccount, timestamp)
           withDerivedData(
             current.copy(
               riders = current.riders.map(entry =>

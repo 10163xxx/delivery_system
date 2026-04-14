@@ -1,5 +1,7 @@
 package domain.shared
 
+import domain.shared.given
+
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 import domain.admin.{AdminProfile, AdminTicket}
@@ -10,10 +12,10 @@ import domain.review.{EligibilityReview, ReviewAppeal}
 import domain.rider.Rider
 
 final case class SystemMetrics(
-    totalOrders: Int,
-    activeOrders: Int,
-    resolvedTickets: Int,
-    averageRating: Double,
+    totalOrders: EntityCount,
+    activeOrders: EntityCount,
+    resolvedTickets: EntityCount,
+    averageRating: AverageRating,
 )
 object SystemMetrics:
   given Encoder[SystemMetrics] = deriveEncoder
@@ -46,7 +48,14 @@ object DeliveryAppState:
       eligibilityReviews <- cursor.getOrElse[List[EligibilityReview]]("eligibilityReviews")(List.empty)
       orders <- cursor.getOrElse[List[OrderSummary]]("orders")(List.empty)
       tickets <- cursor.getOrElse[List[AdminTicket]]("tickets")(List.empty)
-      metrics <- cursor.getOrElse[SystemMetrics]("metrics")(SystemMetrics(0, 0, 0, 0.0))
+      metrics <- cursor.getOrElse[SystemMetrics]("metrics")(
+        SystemMetrics(
+          NumericDefaults.ZeroCount,
+          NumericDefaults.ZeroCount,
+          NumericDefaults.ZeroCount,
+          NumericDefaults.ZeroAverageRating,
+        )
+      )
     yield DeliveryAppState(
       customers = customers,
       stores = stores,

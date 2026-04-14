@@ -1,5 +1,7 @@
 package app.delivery
 
+import domain.shared.given
+
 import domain.admin.*
 import domain.customer.*
 import domain.merchant.*
@@ -11,9 +13,35 @@ import java.time.{Duration, Instant, LocalTime}
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
+private val merchantReviewLabel = new DisplayText("商家")
+private val riderReviewLabel = new DisplayText("骑手")
+private val storeRevoked = StoreRevokedStatus
+private val riderSuspended = RiderSuspendedStatus
+private val storeOpen = StoreOpenStatus
+private val blankText = new DisplayText("")
+private val reviewDetailSeparator = new DisplayText("；")
+private val afterSalesCouponDescription = new DescriptionText("管理员处理售后申请后补发，可在有效期内下单抵扣")
+private val afterSalesReturnCouponTitle = new DisplayText("售后退货补偿券")
+private val afterSalesCompensationCouponTitle = new DisplayText("售后补偿券")
+private val emptyPhoneNumber = new PhoneNumber("")
+
+private def text(value: String): DisplayText = new DisplayText(value)
+
+private def showValue[T](value: T)(using renderer: DisplayTextRenderer[T]): DisplayText =
+  renderer.render(value)
+
+private def joinValidationText(parts: DisplayText*): DisplayText =
+  new DisplayText(parts.map(_.raw).mkString)
+
+private def joinValidationError(parts: DisplayText*): ErrorMessage =
+  new ErrorMessage(joinValidationText(parts*).raw)
+
+private def joinReviewDetails(details: List[DisplayText]): DisplayText =
+  new DisplayText(details.map(_.raw).mkString(reviewDetailSeparator.raw))
+
 private[delivery] def validateMerchantRegistration(
       request: MerchantRegistrationRequest
-  ): Either[String, MerchantRegistrationRequest] =
+  ): Either[ErrorMessage, MerchantRegistrationRequest] =
     for
       merchantName <- sanitizeRequiredText(request.merchantName, DeliveryValidationDefaults.MerchantNameMaxLength, ValidationMessages.MerchantNameRequired)
       storeName <- sanitizeRequiredText(request.storeName, DeliveryValidationDefaults.StoreNameMaxLength, ValidationMessages.StoreNameRequired)
@@ -38,7 +66,7 @@ private[delivery] def validateMerchantRegistration(
 
 private[delivery] def validateMenuItemRequest(
       request: AddMenuItemRequest
-  ): Either[String, AddMenuItemRequest] =
+  ): Either[ErrorMessage, AddMenuItemRequest] =
     for
       name <- sanitizeRequiredText(request.name, DeliveryValidationDefaults.MenuItemNameMaxLength, ValidationMessages.MenuItemNameRequired)
       description <- sanitizeRequiredText(request.description, DeliveryValidationDefaults.MenuItemDescriptionMaxLength, ValidationMessages.MenuItemDescriptionRequired)
@@ -67,7 +95,7 @@ private[delivery] def validateMenuItemRequest(
 
 private[delivery] def validateMenuItemStockRequest(
       request: UpdateMenuItemStockRequest
-  ): Either[String, UpdateMenuItemStockRequest] =
+  ): Either[ErrorMessage, UpdateMenuItemStockRequest] =
     Either.cond(
       request.remainingQuantity.forall(quantity =>
         quantity >= DeliveryValidationDefaults.MenuItemStockMin &&
@@ -77,13 +105,23 @@ private[delivery] def validateMenuItemStockRequest(
       ValidationMessages.MenuItemStockInvalid,
     )
 
+private[delivery] def validateMenuItemPriceRequest(
+      request: UpdateMenuItemPriceRequest
+  ): Either[ErrorMessage, UpdateMenuItemPriceRequest] =
+    Either.cond(
+      request.priceCents > DeliveryValidationDefaults.MenuItemPriceMinCentsExclusive &&
+        request.priceCents <= DeliveryValidationDefaults.MenuItemPriceMaxCents,
+      request,
+      ValidationMessages.MenuItemPriceInvalid,
+    )
+
 private[delivery] def validateReviewRequest(
       request: ReviewOrderRequest
-  ): Either[String, ReviewOrderRequest] =
+  ): Either[ErrorMessage, ReviewOrderRequest] =
     for
       _ <- Either.cond(request.storeReview.nonEmpty || request.riderReview.nonEmpty, (), ValidationMessages.ReviewRequired)
-      storeReview <- validateReviewSubmission(request.storeReview, "商家")
-      riderReview <- validateReviewSubmission(request.riderReview, "骑手")
+      storeReview <- validateReviewSubmission(request.storeReview, merchantReviewLabel)
+      riderReview <- validateReviewSubmission(request.riderReview, riderReviewLabel)
     yield ReviewOrderRequest(
       storeReview = storeReview,
       riderReview = riderReview,
@@ -91,8 +129,8 @@ private[delivery] def validateReviewRequest(
 
 private def validateReviewSubmission(
     review: Option[ReviewSubmission],
-    label: String,
-): Either[String, Option[ReviewSubmission]] =
+    label: DisplayText,
+): Either[ErrorMessage, Option[ReviewSubmission]] =
   review match
       case None => Right(None)
       case Some(value) =>
@@ -101,13 +139,13 @@ private def validateReviewSubmission(
             value.rating >= DeliveryValidationDefaults.ReviewRatingMin &&
               value.rating <= DeliveryValidationDefaults.ReviewRatingMax,
             (),
-            ValidationMessages.reviewRatingInvalid(label),
+            reviewRatingInvalid(label),
           )
           comment = sanitizeOptionalText(value.comment, DeliveryValidationDefaults.ReviewCommentMaxLength)
           _ <- Either.cond(
             value.rating == DeliveryValidationDefaults.ReviewRatingMax || comment.nonEmpty,
             (),
-            ValidationMessages.lowRatingCommentRequired(label),
+            lowRatingCommentRequired(label),
           )
         yield Some(
           ReviewSubmission(
@@ -120,7 +158,7 @@ private def validateReviewSubmission(
 private[delivery] def validateAppealRole(
       order: OrderSummary,
       appellantRole: AppealRole,
-  ): Either[String, Unit] =
+  ): Either[ErrorMessage, Unit] =
     appellantRole match
       case AppealRole.Merchant => Either.cond(order.storeRating.nonEmpty, (), ValidationMessages.StoreReviewAppealUnavailable)
       case AppealRole.Rider => Either.cond(order.riderId.nonEmpty && order.riderRating.nonEmpty, (), ValidationMessages.RiderReviewAppealUnavailable)
@@ -128,44 +166,62 @@ private[delivery] def validateAppealRole(
 private[delivery] def validateEligibilityTargetState(
       state: DeliveryAppState,
       request: EligibilityReviewRequest,
-  ): Either[String, Unit] =
+  ): Either[ErrorMessage, Unit] =
     request.target match
       case EligibilityReviewTarget.Store =>
         state.stores.find(_.id == request.targetId).toRight(ValidationMessages.StoreNotFound).flatMap(store =>
-          Either.cond(store.status == "Revoked", (), ValidationMessages.StoreReviewNotNeeded)
+          Either.cond(store.status == storeRevoked, (), ValidationMessages.StoreReviewNotNeeded)
         )
       case EligibilityReviewTarget.Rider =>
         state.riders.find(_.id == request.targetId).toRight(ValidationMessages.RiderNotFound).flatMap(rider =>
-          Either.cond(rider.availability == "Suspended", (), ValidationMessages.RiderReviewNotNeeded)
+          Either.cond(rider.availability == riderSuspended, (), ValidationMessages.RiderReviewNotNeeded)
         )
 
 private[delivery] def findEligibilityTargetName(
       state: DeliveryAppState,
       request: EligibilityReviewRequest,
-  ): Either[String, String] =
+  ): Either[ErrorMessage, DisplayText] =
     request.target match
       case EligibilityReviewTarget.Store =>
         state.stores.find(_.id == request.targetId).map(_.name).toRight(ValidationMessages.StoreNotFound)
       case EligibilityReviewTarget.Rider =>
-        state.riders.find(_.id == request.targetId).map(_.name).toRight(ValidationMessages.RiderNotFound)
+        state.riders.find(_.id == request.targetId).map(rider => new DisplayText(rider.name.raw)).toRight(ValidationMessages.RiderNotFound)
 
 private[delivery] def sanitizeRequiredText(
-      value: String,
-      maxLength: Int,
-      errorMessage: String,
-  ): Either[String, String] =
+      value: DisplayText,
+      maxLength: EntityCount,
+      errorMessage: ErrorMessage,
+  ): Either[ErrorMessage, DisplayText] =
     val sanitized = sanitizeText(value, maxLength)
     Either.cond(sanitized.nonEmpty, sanitized, errorMessage)
 
-private[delivery] def sanitizeOptionalText(value: Option[String], maxLength: Int): Option[String] =
+private[delivery] def sanitizeRequiredText[T](
+      value: T,
+      maxLength: EntityCount,
+      errorMessage: ErrorMessage,
+  )(using wrapped: WrappedTextType[T]): Either[ErrorMessage, T] =
+    val sanitized = sanitizeText(new DisplayText(value.raw), maxLength)
+    Either.cond(sanitized.nonEmpty, wrapText(sanitized.raw), errorMessage)
+
+private[delivery] def sanitizeOptionalText(value: Option[DisplayText], maxLength: EntityCount): Option[DisplayText] =
     value.flatMap(text =>
       sanitizeText(text, maxLength) match
-        case "" => None
+        case sanitized if sanitized.isEmpty => None
         case sanitized => Some(sanitized)
     )
 
-private def sanitizeText(value: String, maxLength: Int): String =
-  value
+private[delivery] def sanitizeOptionalText[T](value: Option[T], maxLength: EntityCount)(using
+      wrapped: WrappedTextType[T]
+  ): Option[T] =
+    value.flatMap(text =>
+      sanitizeText(new DisplayText(text.raw), maxLength) match
+        case sanitized if sanitized.isEmpty => None
+        case sanitized => Some(wrapText(sanitized.raw))
+    )
+
+private def sanitizeText(value: DisplayText, maxLength: EntityCount): DisplayText =
+  new DisplayText(
+    value.raw
       .trim
       .filter(character => !Character.isISOControl(character) || character == '\n' || character == '\t')
       .replace('\n', ' ')
@@ -174,30 +230,37 @@ private def sanitizeText(value: String, maxLength: Int): String =
       .filter(_.nonEmpty)
       .mkString(" ")
       .take(maxLength)
+  )
 
 private[delivery] def buildLineItems(
       store: Store,
       items: List[OrderItemInput],
-  ): Either[String, List[OrderLineItem]] =
-    val selected = items.filter(_.quantity > 0)
+  ): Either[ErrorMessage, List[OrderLineItem]] =
+    val selected = items.filter(_.quantity > NumericDefaults.ZeroQuantity)
     Either.cond(selected.nonEmpty, (), ValidationMessages.OrderRequiresAtLeastOneItem).flatMap { _ =>
-      selected.foldLeft[Either[String, List[OrderLineItem]]](Right(List.empty)) { (acc, item) =>
+      selected.foldLeft[Either[ErrorMessage, List[OrderLineItem]]](Right(List.empty)) { (acc, item) =>
         for
           lineItems <- acc
-          menuItem <- store.menu.find(_.id == item.menuItemId).toRight(s"菜品不存在: ${item.menuItemId}")
+          menuItem <- store.menu.find(_.id == item.menuItemId).toRight(joinValidationError(text("菜品不存在: "), showValue(item.menuItemId)))
           _ <- Either.cond(
             menuItem.remainingQuantity.forall(_ >= item.quantity),
             (),
             menuItem.remainingQuantity match
-              case Some(0) => s"${menuItem.name} 已售罄"
-              case Some(remaining) => s"${menuItem.name} 当前仅剩 ${remaining} 份"
-              case None => s"${menuItem.name} 库存不足",
+              case Some(NumericDefaults.ZeroQuantity) => joinValidationError(menuItem.name, text(" 已售罄"))
+              case Some(remaining) => joinValidationError(menuItem.name, text(" 当前仅剩 "), showValue(remaining), text(" 份"))
+              case None => joinValidationError(menuItem.name, text(" 库存不足")),
           )
-        yield lineItems :+ OrderLineItem(menuItem.id, menuItem.name, item.quantity, menuItem.priceCents, 0)
+        yield lineItems :+ OrderLineItem(
+          menuItem.id,
+          menuItem.name,
+          item.quantity,
+          menuItem.priceCents,
+          NumericDefaults.ZeroQuantity,
+        )
       }
     }
 
-private[delivery] def pendingRefundQuantity(order: OrderSummary, menuItemId: String): Int =
+private[delivery] def pendingRefundQuantity(order: OrderSummary, menuItemId: MenuItemId): Quantity =
     order.partialRefundRequests
       .filter(refund => refund.menuItemId == menuItemId && refund.status == PartialRefundStatus.Pending)
       .map(_.quantity)
@@ -206,7 +269,7 @@ private[delivery] def pendingRefundQuantity(order: OrderSummary, menuItemId: Str
 private[delivery] def reviewTicket(
       order: OrderSummary,
       request: ReviewOrderRequest,
-      timestamp: String,
+      timestamp: IsoDateTime,
   ): Option[AdminTicket] =
     val ratings = List(request.storeReview.map(_.rating), request.riderReview.map(_.rating)).flatten
     if ratings.isEmpty then None
@@ -214,13 +277,13 @@ private[delivery] def reviewTicket(
       val lowestRating = ratings.min
       val highestRating = ratings.max
       val ticketKind =
-        if lowestRating <= 2 then Some(TicketKind.NegativeReview)
-        else if highestRating >= 5 then Some(TicketKind.PositiveReview)
+        if lowestRating <= NumericDefaults.NegativeReviewThreshold then Some(TicketKind.NegativeReview)
+        else if highestRating >= NumericDefaults.PositiveReviewThreshold then Some(TicketKind.PositiveReview)
         else None
 
       ticketKind.map(kind =>
         AdminTicket(
-          id = nextId("tkt"),
+          id = nextId(new DisplayText("tkt")),
           orderId = order.id,
           kind = kind,
           status = TicketStatus.Open,
@@ -244,31 +307,31 @@ private def buildTicketSummary(
     order: OrderSummary,
     request: ReviewOrderRequest,
     kind: TicketKind,
-): String =
-  val detail = List(
+): SummaryText =
+  val detail = joinReviewDetails(List(
       request.storeReview.map(review =>
-        s"商家 ${review.rating} 星${review.comment.map(comment => s"，理由：$comment").getOrElse("")}${review.extraNote.map(note => s"，补充：$note").getOrElse("")}"
+        renderReviewDetail(merchantReviewLabel, review.rating, review.comment, review.extraNote)
       ),
       request.riderReview.map(review =>
-        s"骑手 ${review.rating} 星${review.comment.map(comment => s"，理由：$comment").getOrElse("")}${review.extraNote.map(note => s"，补充：$note").getOrElse("")}"
+        renderReviewDetail(riderReviewLabel, review.rating, review.comment, review.extraNote)
       ),
-    ).flatten.mkString("；")
+    ).flatten)
     kind match
       case TicketKind.PositiveReview =>
-        s"${order.customerName} 对 ${order.storeName} 给出好评。$detail".trim
+        renderReviewTicketSummary(ReviewTicketSummaryMessage.Positive(order.customerName, order.storeName, detail))
       case TicketKind.NegativeReview =>
-        s"${order.customerName} 提交了差评。$detail".trim
+        renderReviewTicketSummary(ReviewTicketSummaryMessage.Negative(order.customerName, detail))
       case TicketKind.DeliveryIssue =>
-        s"${order.customerName} 反馈配送异常。$detail".trim
+        renderReviewTicketSummary(ReviewTicketSummaryMessage.DeliveryIssue(order.customerName, detail))
 
 private[delivery] def applyReviewToOrder(
       order: OrderSummary,
       request: ReviewOrderRequest,
-      timestamp: String,
+      timestamp: IsoDateTime,
   ): OrderSummary =
     val noteSegments = List(
-      request.storeReview.map(review => s"商家 ${review.rating} 星"),
-      request.riderReview.map(review => s"骑手 ${review.rating} 星"),
+      request.storeReview.map(review => renderReviewRatingLabel(merchantReviewLabel, review.rating)),
+      request.riderReview.map(review => renderReviewRatingLabel(riderReviewLabel, review.rating)),
     ).flatten
     order.copy(
       storeRating = request.storeReview.map(_.rating).orElse(order.storeRating),
@@ -284,15 +347,15 @@ private[delivery] def applyReviewToOrder(
       updatedAt = timestamp,
       timeline = order.timeline :+ OrderTimelineEntry(
         OrderStatus.Completed,
-        s"顾客已提交${noteSegments.mkString("、")}评价",
+        renderOrderTimelineMessage(OrderTimelineMessage.CustomerReviewSubmitted(noteSegments)),
         timestamp,
       ),
     )
 
 private[delivery] def revokeReview(
       order: OrderSummary,
-      reason: String,
-      timestamp: String,
+      reason: ReasonText,
+      timestamp: IsoDateTime,
   ): OrderSummary =
     order.copy(
       reviewStatus = ReviewStatus.Revoked,
@@ -301,16 +364,16 @@ private[delivery] def revokeReview(
       updatedAt = timestamp,
       timeline = order.timeline :+ OrderTimelineEntry(
         OrderStatus.Completed,
-        s"评价因申诉成功被撤销：$reason",
+        renderOrderTimelineMessage(OrderTimelineMessage.ReviewRevoked(reason)),
         timestamp,
       ),
     )
 
 private[delivery] def closeTicketsForOrder(
       tickets: List[AdminTicket],
-      orderId: String,
-      resolutionNote: String,
-      timestamp: String,
+      orderId: OrderId,
+      resolutionNote: ResolutionText,
+      timestamp: IsoDateTime,
   ): List[AdminTicket] =
     tickets.map(ticket =>
       if ticket.orderId == orderId && ticket.status == TicketStatus.Open then
@@ -324,34 +387,41 @@ private[delivery] def closeTicketsForOrder(
       else ticket
     )
 
-private[delivery] def formatCurrency(amountCents: Int): String =
-    f"${amountCents / 100.0}%.2f 元"
+private[delivery] def formatCurrency(amountCents: CurrencyCents): DisplayText =
+    joinValidationText(
+      showValue(
+        BigDecimal(amountCents)
+      ./(BigDecimal(NumericDefaults.CurrencyCentsPerYuan))
+      .setScale(2, BigDecimal.RoundingMode.HALF_UP)
+      ),
+      text(" 元"),
+    )
 
 private[delivery] def buildAfterSalesCoupon(
-      customerId: String,
+      customerId: CustomerId,
       requestType: AfterSalesRequestType,
-      discountCents: Int,
-      currentTime: String,
+      discountCents: CurrencyCents,
+      currentTime: IsoDateTime,
   ): Coupon =
     val title =
       requestType match
-        case AfterSalesRequestType.ReturnRequest => "售后退货补偿券"
-        case AfterSalesRequestType.CompensationRequest => "售后补偿券"
+        case AfterSalesRequestType.ReturnRequest => afterSalesReturnCouponTitle
+        case AfterSalesRequestType.CompensationRequest => afterSalesCompensationCouponTitle
     Coupon(
-      id = s"coupon-$customerId-after-sales-${UUID.randomUUID().toString.take(8)}",
+      id = List("coupon-", customerId, "-after-sales-", UUID.randomUUID().toString.take(IdentifierDefaults.GeneratedCouponSuffixLength)).mkString,
       title = title,
       discountCents = discountCents,
-      minimumSpendCents = 0,
-      description = "管理员处理售后申请后补发，可在有效期内下单抵扣",
-      expiresAt = Instant.parse(currentTime).plusSeconds(CouponValidityDays * 24L * 60L * 60L).toString,
+      minimumSpendCents = NumericDefaults.ZeroCurrencyCents,
+      description = afterSalesCouponDescription,
+      expiresAt = new IsoDateTime(Instant.parse(currentTime.raw).plusSeconds(CouponValidityDays * TimeDefaults.SecondsPerDay).toString),
     )
 
 private[delivery] def validateScheduledDeliveryAt(
-      scheduledDeliveryAt: String,
-      orderTimestamp: String,
-  ): Either[String, String] =
+      scheduledDeliveryAt: IsoDateTime,
+      orderTimestamp: IsoDateTime,
+  ): Either[ErrorMessage, IsoDateTime] =
     parseInstant(scheduledDeliveryAt).toRight(ValidationMessages.DeliveryTimeFormatInvalid).flatMap { scheduledInstant =>
-      val orderInstant = Instant.parse(orderTimestamp)
+      val orderInstant = Instant.parse(orderTimestamp.raw)
       val earliest = ceilToMinute(orderInstant.plus(Duration.ofMinutes(MinimumScheduledLeadMinutes)))
       val orderDate = orderInstant.atZone(DeliveryScheduleZone).toLocalDate
       val scheduledDate = scheduledInstant.atZone(DeliveryScheduleZone).toLocalDate
@@ -360,7 +430,7 @@ private[delivery] def validateScheduledDeliveryAt(
         .cond(
           !scheduledInstant.isBefore(earliest),
           (),
-          ValidationMessages.deliveryTimeTooEarly(MinimumScheduledLeadMinutes),
+          deliveryTimeTooEarly(MinimumScheduledLeadMinutes),
         )
         .flatMap(_ =>
           Either.cond(
@@ -369,22 +439,22 @@ private[delivery] def validateScheduledDeliveryAt(
             ValidationMessages.DeliveryTimeTodayOnly,
           )
         )
-        .map(_ => scheduledInstant.toString)
+        .map(_ => new IsoDateTime(scheduledInstant.toString))
     }
 
 private def ceilToMinute(instant: Instant): Instant =
   val truncated = instant.truncatedTo(ChronoUnit.MINUTES)
-  if truncated == instant then instant else truncated.plus(1, ChronoUnit.MINUTES)
+  if truncated == instant then instant else truncated.plus(TimeDefaults.MinutesRoundingStep.raw.toLong, ChronoUnit.MINUTES)
 
-private[delivery] def canReviewOrder(order: OrderSummary, currentTime: String): Boolean =
+private[delivery] def canReviewOrder(order: OrderSummary, currentTime: IsoDateTime): ApprovalFlag =
     order.status == OrderStatus.Completed &&
       hasPendingReviewSection(order) &&
       isWithinRecentWindow(reviewEligibilityTimestamp(order), currentTime, ReviewWindowDays)
 
-private def hasPendingReviewSection(order: OrderSummary): Boolean =
+private def hasPendingReviewSection(order: OrderSummary): ApprovalFlag =
   order.storeRating.isEmpty || (order.riderId.nonEmpty && order.riderRating.isEmpty)
 
-private[delivery] def reviewEligibilityTimestamp(order: OrderSummary): String =
+private[delivery] def reviewEligibilityTimestamp(order: OrderSummary): IsoDateTime =
     order.timeline.reverseIterator
       .find(_.status == OrderStatus.Completed)
       .map(_.at)
@@ -392,48 +462,48 @@ private[delivery] def reviewEligibilityTimestamp(order: OrderSummary): String =
 
 private[delivery] def validateOrderCoupon(
       customer: Customer,
-      couponId: Option[String],
-      itemSubtotalCents: Int,
-  ): Either[String, Option[Coupon]] =
-    couponId.map(_.trim).filter(_.nonEmpty) match
+      couponId: Option[CouponId],
+      itemSubtotalCents: CurrencyCents,
+  ): Either[ErrorMessage, Option[Coupon]] =
+    couponId.map(value => new EntityId(value.raw.trim)).filter(_.nonEmpty) match
       case None => Right(None)
       case Some(requestedCouponId) =>
         for
-          coupon <- customer.coupons.find(_.id == requestedCouponId).toRight("优惠券不存在或已失效")
-          _ <- Either.cond(itemSubtotalCents >= coupon.minimumSpendCents, (), s"${coupon.title} 未达到使用门槛")
+          coupon <- customer.coupons.find(_.id == requestedCouponId).toRight(ValidationMessages.CouponUnavailable)
+          _ <- Either.cond(itemSubtotalCents >= coupon.minimumSpendCents, (), couponThresholdNotMet(coupon.title))
         yield Some(coupon)
 
 private[delivery] def calculateCouponDiscount(
       coupon: Option[Coupon],
-      itemSubtotalCents: Int,
-      deliveryFeeCents: Int,
-  ): Int =
+      itemSubtotalCents: CurrencyCents,
+      deliveryFeeCents: CurrencyCents,
+  ): CurrencyCents =
     coupon match
-      case Some(value) => Math.min(value.discountCents, Math.max(0, itemSubtotalCents + deliveryFeeCents))
-      case None => 0
+      case Some(value) => Math.min(value.discountCents, Math.max(NumericDefaults.ZeroCurrencyCents, itemSubtotalCents + deliveryFeeCents))
+      case None => NumericDefaults.ZeroCurrencyCents
 
 private[delivery] def createApprovedStore(application: MerchantApplication): Store =
-    val storeId = s"store-${application.id.takeRight(4)}"
+    val storeId = new EntityId(List("store-", application.id.raw.takeRight(IdentifierDefaults.ApprovedStoreIdSuffixLength)).mkString)
     Store(
       id = storeId,
       merchantName = application.merchantName,
       name = application.storeName,
       category = application.category,
-      cuisine = application.category,
-      status = "Open",
+      cuisine = new CuisineLabel(application.category.raw),
+      status = storeOpen,
       businessHours = application.businessHours,
       avgPrepMinutes = application.avgPrepMinutes,
       imageUrl = application.imageUrl,
       menu = List.empty,
-      averageRating = 0.0,
-      ratingCount = 0,
-      oneStarRatingCount = 0,
-      revenueCents = 0,
+      averageRating = NumericDefaults.ZeroAverageRating,
+      ratingCount = NumericDefaults.ZeroCount,
+      oneStarRatingCount = NumericDefaults.ZeroCount,
+      revenueCents = NumericDefaults.ZeroCurrencyCents,
     )
 
 private[delivery] def validateBusinessHours(
       businessHours: BusinessHours
-  ): Either[String, BusinessHours] =
+  ): Either[ErrorMessage, BusinessHours] =
     for
       openTime <- sanitizeRequiredText(businessHours.openTime, DeliveryValidationDefaults.OpenCloseTimeLength, ValidationMessages.OpenTimeRequired)
       closeTime <- sanitizeRequiredText(businessHours.closeTime, DeliveryValidationDefaults.OpenCloseTimeLength, ValidationMessages.CloseTimeRequired)
@@ -441,18 +511,18 @@ private[delivery] def validateBusinessHours(
       close <- parseBusinessTime(closeTime).toRight(ValidationMessages.BusinessHoursFormatInvalid)
       _ <- Either.cond(open.isBefore(close), (), ValidationMessages.BusinessHoursOrderInvalid)
     yield BusinessHours(
-      openTime = open.toString,
-      closeTime = close.toString,
+      openTime = new TimeOfDay(open.toString),
+      closeTime = new TimeOfDay(close.toString),
     )
 
-private def parseBusinessTime(value: String): Option[LocalTime] =
-  try Some(LocalTime.parse(value))
+private def parseBusinessTime(value: TimeOfDay): Option[LocalTime] =
+  try Some(LocalTime.parse(value.raw))
   catch case _: Exception => None
 
-private[delivery] def formatBusinessHours(businessHours: BusinessHours): String =
-    s"${businessHours.openTime} - ${businessHours.closeTime}"
+private[delivery] def formatBusinessHours(businessHours: BusinessHours): DisplayText =
+    joinValidationText(showValue(businessHours.openTime), text(" - "), showValue(businessHours.closeTime))
 
-private[delivery] def isStoreOpenAt(store: Store, currentTimestamp: String): Boolean =
+private[delivery] def isStoreOpenAt(store: Store, currentTimestamp: IsoDateTime): ApprovalFlag =
     (for
       instant <- parseInstant(currentTimestamp)
       open <- parseBusinessTime(store.businessHours.openTime)
@@ -488,27 +558,27 @@ private[delivery] def replaceEligibilityReview(
 
 private[delivery] def findOrCreateMerchantProfile(
       state: DeliveryAppState,
-      merchantName: String,
-  ): Either[String, MerchantProfile] =
+      merchantName: PersonName,
+  ): Either[ErrorMessage, MerchantProfile] =
     sanitizeRequiredText(merchantName, DeliveryValidationDefaults.MerchantNameMaxLength, ValidationMessages.MerchantProfileNameRequired).map { sanitizedName =>
       state.merchantProfiles.find(_.merchantName == sanitizedName).getOrElse(
         MerchantProfile(
-          id = nextId("merchant"),
+          id = nextId(MerchantIdPrefix),
           merchantName = sanitizedName,
-          contactPhone = "",
+          contactPhone = emptyPhoneNumber,
           payoutAccount = None,
-          settledIncomeCents = 0,
-          withdrawnCents = 0,
-          availableToWithdrawCents = 0,
+          settledIncomeCents = NumericDefaults.ZeroCurrencyCents,
+          withdrawnCents = NumericDefaults.ZeroCurrencyCents,
+          availableToWithdrawCents = NumericDefaults.ZeroCurrencyCents,
           withdrawalHistory = List.empty,
         )
       )
     }
 
-private[delivery] def sanitizeContactPhone(value: String): Either[String, String] =
+private[delivery] def sanitizeContactPhone(value: PhoneNumber): Either[ErrorMessage, PhoneNumber] =
     sanitizeRequiredText(value, DeliveryValidationDefaults.ContactPhoneMaxLength, ValidationMessages.ContactPhoneRequired).flatMap { phone =>
       Either.cond(
-        phone.matches(s"[0-9+\\- ]{${DeliveryValidationDefaults.ContactPhoneMinLength},${DeliveryValidationDefaults.ContactPhoneMaxLength}}"),
+        phone.raw.matches(List("[0-9+\\- ]{", DeliveryValidationDefaults.ContactPhoneMinLength, ",", DeliveryValidationDefaults.ContactPhoneMaxLength, "}").mkString),
         phone,
         ValidationMessages.ContactPhoneInvalid,
       )
@@ -516,14 +586,14 @@ private[delivery] def sanitizeContactPhone(value: String): Either[String, String
 
 private[delivery] def sanitizeMerchantPayoutAccount(
       account: MerchantPayoutAccount,
-  ): Either[String, MerchantPayoutAccount] =
-    val bankName = account.bankName.map(_.trim).filter(_.nonEmpty)
+  ): Either[ErrorMessage, MerchantPayoutAccount] =
+    val bankName = account.bankName.map(value => new BankName(value.raw.trim)).filter(_.nonEmpty)
     for
       accountHolder <- sanitizeRequiredText(account.accountHolder, DeliveryValidationDefaults.PayoutAccountHolderMaxLength, ValidationMessages.PayoutAccountHolderRequired)
       accountNumber <- sanitizeRequiredText(account.accountNumber, DeliveryValidationDefaults.PayoutAccountNumberMaxLength, ValidationMessages.PayoutAccountNumberRequired)
       normalizedBankName <-
         if account.accountType == MerchantPayoutAccountType.Bank then
-          sanitizeRequiredText(bankName.getOrElse(""), DeliveryValidationDefaults.BankNameMaxLength, ValidationMessages.BankNameRequired).map(Some(_))
+          sanitizeRequiredText(bankName.getOrElse(new BankName("")), DeliveryValidationDefaults.BankNameMaxLength, ValidationMessages.BankNameRequired).map(Some(_))
         else Right(None)
       _ <- Either.cond(
         account.accountType != MerchantPayoutAccountType.Alipay || accountNumber.length >= DeliveryValidationDefaults.AlipayAccountMinLength,
@@ -532,7 +602,7 @@ private[delivery] def sanitizeMerchantPayoutAccount(
       )
       _ <- Either.cond(
         account.accountType != MerchantPayoutAccountType.Bank ||
-          accountNumber.matches(s"[0-9 ]{${DeliveryValidationDefaults.BankAccountNumberMinLength},${DeliveryValidationDefaults.BankAccountNumberMaxLength}}"),
+          accountNumber.raw.matches(List("[0-9 ]{", DeliveryValidationDefaults.BankAccountNumberMinLength, ",", DeliveryValidationDefaults.BankAccountNumberMaxLength, "}").mkString),
         (),
         ValidationMessages.BankAccountInvalid,
       )
@@ -543,19 +613,32 @@ private[delivery] def sanitizeMerchantPayoutAccount(
       accountHolder = accountHolder,
     )
 
-private[delivery] def payoutAccountLabel(account: MerchantPayoutAccount): String =
+private[delivery] def payoutAccountLabel(account: MerchantPayoutAccount): DisplayText =
     account.accountType match
-      case MerchantPayoutAccountType.Alipay => s"${MerchantPayoutAccountType.LegacyAlipayPrefix} ${account.accountHolder} / ${account.accountNumber}"
+      case MerchantPayoutAccountType.Alipay =>
+        joinValidationText(
+          MerchantPayoutAccountType.LegacyAlipayPrefix,
+          text(" "),
+          showValue(account.accountHolder),
+          text(" / "),
+          showValue(account.accountNumber),
+        )
       case MerchantPayoutAccountType.Bank =>
-        s"${account.bankName.getOrElse(MerchantPayoutAccountType.BankLabel)} ${account.accountHolder} / ${account.accountNumber}"
+        joinValidationText(
+          showValue(account.bankName.getOrElse(new BankName(MerchantPayoutAccountType.BankLabel.raw))),
+          text(" "),
+          showValue(account.accountHolder),
+          text(" / "),
+          showValue(account.accountNumber),
+        )
 
-private[delivery] def parseInstant(value: String): Option[Instant] =
-    try Some(Instant.parse(value))
+private[delivery] def parseInstant(value: IsoDateTime): Option[Instant] =
+    try Some(Instant.parse(value.raw))
     catch case _: Exception => None
 
 private[delivery] def isWithinRecentWindow(
-      timestamp: String,
-      currentTime: String,
-      days: Long,
-  ): Boolean =
-    !Instant.parse(timestamp).isBefore(Instant.parse(currentTime).minusSeconds(days * 24L * 60L * 60L))
+      timestamp: IsoDateTime,
+      currentTime: IsoDateTime,
+      days: DurationDays,
+  ): ApprovalFlag =
+    !Instant.parse(timestamp.raw).isBefore(Instant.parse(currentTime.raw).minusSeconds(days * TimeDefaults.SecondsPerDay))

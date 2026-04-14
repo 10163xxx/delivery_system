@@ -1,46 +1,292 @@
 package app.delivery
 
+import domain.shared.given
+
 import cats.effect.IO
 import domain.admin.*
 import domain.auth.*
+import domain.customer.*
 import domain.order.*
 import domain.review.*
 import domain.shared.*
 
-def resolveAfterSalesTicket(
-      ticketId: String,
+private case class AfterSalesResolutionContext(
       request: ResolveAfterSalesRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+      ticket: AdminTicket,
+      order: OrderSummary,
+      requestType: AfterSalesRequestType,
+      resolutionMode: AfterSalesResolutionMode,
+  )
+
+private def findAfterSalesTicket(
+      current: DeliveryAppState,
+      ticketId: TicketId,
+  ): Either[ErrorMessage, AdminTicket] =
+    current.tickets.find(_.id == ticketId).toRight(ValidationMessages.AfterSalesTicketNotFound)
+
+private def requireAfterSalesTicket(ticket: AdminTicket): Either[ErrorMessage, Unit] =
+    Either.cond(ticket.kind == TicketKind.DeliveryIssue, (), ValidationMessages.TicketIsNotAfterSalesRequest)
+
+private def requireOpenAfterSalesTicket(ticket: AdminTicket): Either[ErrorMessage, Unit] =
+    Either.cond(ticket.status == TicketStatus.Open, (), ValidationMessages.AfterSalesAlreadyResolved)
+
+private def findSupportOrder(
+      current: DeliveryAppState,
+      orderId: OrderId,
+  ): Either[ErrorMessage, OrderSummary] =
+    current.orders.find(_.id == orderId).toRight(ValidationMessages.OrderNotFound)
+
+private def findSupportOrderByTicket(
+      current: DeliveryAppState,
+      ticket: AdminTicket,
+  ): Either[ErrorMessage, OrderSummary] =
+    current.orders.find(_.id == ticket.orderId).toRight(ValidationMessages.RelatedOrderNotFound)
+
+private def findRelatedCustomer(
+      current: DeliveryAppState,
+      order: OrderSummary,
+  ): Either[ErrorMessage, Customer] =
+    current.customers.find(_.id == order.customerId).toRight(ValidationMessages.RelatedCustomerNotFound)
+
+private def sanitizeSupportResolutionNote(value: ResolutionText): Either[ErrorMessage, ResolutionText] =
+    sanitizeRequiredText(
+      value,
+      DeliveryValidationDefaults.OrderReasonMaxLength,
+      ValidationMessages.ResolutionNoteRequired,
+    )
+
+private def hasPendingAfterSalesTicket(
+      current: DeliveryAppState,
+      orderId: OrderId,
+  ): ApprovalFlag =
+    current.tickets.exists(ticket =>
+      ticket.orderId == orderId &&
+        ticket.kind == TicketKind.DeliveryIssue &&
+        ticket.status == TicketStatus.Open
+    )
+
+private def sanitizeAfterSalesReason(reason: ReasonText): Either[ErrorMessage, ReasonText] =
+    sanitizeRequiredText(
+      reason,
+      DeliveryValidationDefaults.OrderReasonMaxLength,
+      ValidationMessages.AfterSalesReasonRequired,
+    )
+
+private def validateExpectedCompensation(
+      request: SubmitAfterSalesRequest
+  ): Either[ErrorMessage, Option[CurrencyCents]] =
+    request.expectedCompensationCents match
+      case Some(value) =>
+        Either.cond(
+          value > DeliveryValidationDefaults.CompensationAmountMinCentsExclusive,
+          Some(value),
+          ValidationMessages.ExpectedCompensationMustBePositive,
+        )
+      case None =>
+        Either.cond(
+          request.requestType != AfterSalesRequestType.CompensationRequest,
+          None,
+          ValidationMessages.ExpectedCompensationRequired,
+        )
+
+private def resolveAfterSalesMode(request: ResolveAfterSalesRequest): AfterSalesResolutionMode =
+    if request.approved then request.resolutionMode.getOrElse(AfterSalesResolutionMode.Balance)
+    else AfterSalesResolutionMode.Manual
+
+private def resolveCreditedAmount(
+      context: AfterSalesResolutionContext,
+  ): Either[ErrorMessage, CurrencyCents] =
+    if !context.request.approved then Right(NumericDefaults.ZeroCurrencyCents)
+    else
+      context.resolutionMode match
+        case AfterSalesResolutionMode.Manual =>
+          Right(NumericDefaults.ZeroCurrencyCents)
+        case AfterSalesResolutionMode.Balance | AfterSalesResolutionMode.Coupon =>
+          context.requestType match
+            case AfterSalesRequestType.ReturnRequest =>
+              val amount = context.request.actualCompensationCents.getOrElse(context.order.totalPriceCents)
+              Either.cond(
+                amount > DeliveryValidationDefaults.CompensationAmountMinCentsExclusive,
+                amount,
+                ValidationMessages.RefundAmountMustBePositive,
+              )
+            case AfterSalesRequestType.CompensationRequest =>
+              context.request.actualCompensationCents.orElse(context.ticket.expectedCompensationCents) match
+                case Some(value) if value > DeliveryValidationDefaults.CompensationAmountMinCentsExclusive =>
+                  Right(value)
+                case Some(_) =>
+                  Left(ValidationMessages.CompensationAmountMustBePositive)
+                case None =>
+                  Left(ValidationMessages.CompensationAmountRequired)
+
+private def buildAfterSalesOutcomeNote(
+      requestType: AfterSalesRequestType,
+      approved: ApprovalFlag,
+      resolutionMode: AfterSalesResolutionMode,
+      creditedAmount: CurrencyCents,
+      issuedCoupon: Option[Coupon],
+      resolutionNote: ResolutionText,
+  ): DisplayText =
+    if !approved then renderAfterSalesOutcomeMessage(AfterSalesOutcomeMessage.Rejected(resolutionNote))
+    else
+      resolutionMode match
+        case AfterSalesResolutionMode.Balance =>
+          requestType match
+            case AfterSalesRequestType.ReturnRequest =>
+              renderAfterSalesOutcomeMessage(
+                AfterSalesOutcomeMessage.ReturnToBalance(creditedAmount, resolutionNote)
+              )
+            case AfterSalesRequestType.CompensationRequest =>
+              renderAfterSalesOutcomeMessage(
+                AfterSalesOutcomeMessage.CompensationToBalance(creditedAmount, resolutionNote)
+              )
+        case AfterSalesResolutionMode.Coupon =>
+          val coupon = issuedCoupon.get
+          renderAfterSalesOutcomeMessage(
+            AfterSalesOutcomeMessage.CouponIssued(coupon.title, coupon.discountCents, resolutionNote)
+          )
+        case AfterSalesResolutionMode.Manual =>
+          renderAfterSalesOutcomeMessage(AfterSalesOutcomeMessage.ManualApproved(resolutionNote))
+
+private def updateAfterSalesCustomer(
+      customer: Customer,
+      approved: ApprovalFlag,
+      resolutionMode: AfterSalesResolutionMode,
+      creditedAmount: CurrencyCents,
+      issuedCoupon: Option[Coupon],
+  ): Customer =
+    resolutionMode match
+      case AfterSalesResolutionMode.Balance if approved && creditedAmount > NumericDefaults.ZeroCurrencyCents =>
+        customer.copy(balanceCents = customer.balanceCents + creditedAmount)
+      case AfterSalesResolutionMode.Coupon if approved =>
+        customer.copy(coupons = issuedCoupon.toList ++ customer.coupons)
+      case _ =>
+        customer
+
+private def buildAfterSalesTicketSummary(
+      requestType: AfterSalesRequestType,
+      reason: ReasonText,
+      expectedCompensationCents: Option[CurrencyCents],
+  ): SummaryText =
+    requestType match
+      case AfterSalesRequestType.ReturnRequest =>
+        renderAfterSalesTicketSummary(AfterSalesTicketSummaryMessage.ReturnRequest(reason))
+      case AfterSalesRequestType.CompensationRequest =>
+        renderAfterSalesTicketSummary(
+          AfterSalesTicketSummaryMessage.CompensationRequest(reason, expectedCompensationCents)
+        )
+
+private def buildAfterSalesTicket(
+      order: OrderSummary,
+      request: SubmitAfterSalesRequest,
+      reason: ReasonText,
+      expectedCompensationCents: Option[CurrencyCents],
+      timestamp: IsoDateTime,
+  ): AdminTicket =
+    AdminTicket(
+      id = nextId(new DisplayText("ticket")),
+      orderId = order.id,
+      kind = TicketKind.DeliveryIssue,
+      status = TicketStatus.Open,
+      summary = buildAfterSalesTicketSummary(request.requestType, reason, expectedCompensationCents),
+      requestType = Some(request.requestType),
+      submittedByRole = Some(UserRole.customer),
+      submittedByName = Some(order.customerName),
+      expectedCompensationCents = expectedCompensationCents,
+      actualCompensationCents = None,
+      approved = None,
+      resolutionMode = None,
+      issuedCoupon = None,
+      submittedAt = timestamp,
+      reviewedAt = None,
+      resolutionNote = None,
+      updatedAt = timestamp,
+    )
+
+private def buildOrderChatMessage(
+      senderRole: UserRole,
+      senderName: PersonName,
+      body: DisplayText,
+      timestamp: IsoDateTime,
+  ): OrderChatMessage =
+    OrderChatMessage(
+      id = nextId(new DisplayText("chat")),
+      senderRole = senderRole,
+      senderName = senderName,
+      body = body,
+      sentAt = timestamp,
+    )
+
+private def findRefundOrder(
+      current: DeliveryAppState,
+      refundId: RefundRequestId,
+  ): Either[ErrorMessage, OrderSummary] =
+    current.orders.find(_.partialRefundRequests.exists(_.id == refundId)).toRight(ValidationMessages.PartialRefundNotFound)
+
+private def requireRefundableOrder(order: OrderSummary): Either[ErrorMessage, Unit] =
+    Either.cond(
+      order.status == OrderStatus.PendingMerchantAcceptance || order.status == OrderStatus.Preparing,
+      (),
+      ValidationMessages.PartialRefundOrderStatusInvalid,
+    )
+
+private def requireResolvableRefundOrder(order: OrderSummary): Either[ErrorMessage, Unit] =
+    Either.cond(
+      order.status == OrderStatus.PendingMerchantAcceptance || order.status == OrderStatus.Preparing,
+      (),
+      ValidationMessages.PartialRefundResolveStatusInvalid,
+    )
+
+private def buildPartialRefundRequest(
+      order: OrderSummary,
+      item: OrderLineItem,
+      request: SubmitPartialRefundRequest,
+      reason: ReasonText,
+      timestamp: IsoDateTime,
+  ): OrderPartialRefundRequest =
+    OrderPartialRefundRequest(
+      id = nextId(new DisplayText("prf")),
+      orderId = order.id,
+      menuItemId = item.menuItemId,
+      itemName = item.name,
+      quantity = request.quantity,
+      reason = reason,
+      status = PartialRefundStatus.Pending,
+      resolutionNote = None,
+      submittedAt = timestamp,
+      reviewedAt = None,
+    )
+
+private def reviewPartialRefund(
+      partialRefund: OrderPartialRefundRequest,
+      approved: ApprovalFlag,
+      resolutionNote: ResolutionText,
+      timestamp: IsoDateTime,
+  ): OrderPartialRefundRequest =
+    partialRefund.copy(
+      status = if approved then PartialRefundStatus.Approved else PartialRefundStatus.Rejected,
+      resolutionNote = Some(resolutionNote),
+      reviewedAt = Some(timestamp),
+    )
+
+def resolveAfterSalesTicket(
+      ticketId: TicketId,
+      request: ResolveAfterSalesRequest,
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          ticket <- current.tickets.find(_.id == ticketId).toRight(ValidationMessages.AfterSalesTicketNotFound)
-          _ <- Either.cond(ticket.kind == TicketKind.DeliveryIssue, (), ValidationMessages.TicketIsNotAfterSalesRequest)
-          _ <- Either.cond(ticket.status == TicketStatus.Open, (), ValidationMessages.AfterSalesAlreadyResolved)
-          order <- current.orders.find(_.id == ticket.orderId).toRight(ValidationMessages.RelatedOrderNotFound)
-          customer <- current.customers.find(_.id == order.customerId).toRight(ValidationMessages.RelatedCustomerNotFound)
+          ticket <- findAfterSalesTicket(current, ticketId)
+          _ <- requireAfterSalesTicket(ticket)
+          _ <- requireOpenAfterSalesTicket(ticket)
+          order <- findSupportOrderByTicket(current, ticket)
+          customer <- findRelatedCustomer(current, order)
           requestType <- ticket.requestType.toRight(ValidationMessages.MissingAfterSalesRequestType)
-          resolutionNote <- sanitizeRequiredText(request.resolutionNote, DeliveryValidationDefaults.OrderReasonMaxLength, ValidationMessages.ResolutionNoteRequired)
-          resolutionMode =
-            if request.approved then request.resolutionMode.getOrElse(AfterSalesResolutionMode.Balance)
-            else AfterSalesResolutionMode.Manual
-          creditedAmount <-
-            if request.approved then
-              resolutionMode match
-                case AfterSalesResolutionMode.Manual =>
-                  Right(0)
-                case AfterSalesResolutionMode.Balance | AfterSalesResolutionMode.Coupon =>
-                  requestType match
-                    case AfterSalesRequestType.ReturnRequest =>
-                      val amount = request.actualCompensationCents.getOrElse(order.totalPriceCents)
-                      Either.cond(amount > DeliveryValidationDefaults.CompensationAmountMinCentsExclusive, amount, ValidationMessages.RefundAmountMustBePositive)
-                    case AfterSalesRequestType.CompensationRequest =>
-                      val amount = request.actualCompensationCents.orElse(ticket.expectedCompensationCents)
-                      amount match
-                        case Some(value) if value > DeliveryValidationDefaults.CompensationAmountMinCentsExclusive => Right(value)
-                        case Some(_) => Left(ValidationMessages.CompensationAmountMustBePositive)
-                        case None => Left(ValidationMessages.CompensationAmountRequired)
-            else Right(0)
+          resolutionNote <- sanitizeSupportResolutionNote(request.resolutionNote)
+          resolutionMode = resolveAfterSalesMode(request)
+          creditedAmount <- resolveCreditedAmount(
+            AfterSalesResolutionContext(request, ticket, order, requestType, resolutionMode)
+          )
         yield
           val timestamp = now()
           val issuedCoupon =
@@ -48,29 +294,18 @@ def resolveAfterSalesTicket(
               Some(buildAfterSalesCoupon(customer.id, requestType, creditedAmount, timestamp))
             else None
           val outcomeNote =
-            if request.approved then
-              resolutionMode match
-                case AfterSalesResolutionMode.Balance =>
-                  requestType match
-                    case AfterSalesRequestType.ReturnRequest =>
-                      s"管理员已同意退货售后，退款 ${formatCurrency(creditedAmount)} 已退回顾客余额。$resolutionNote"
-                    case AfterSalesRequestType.CompensationRequest =>
-                      s"管理员已同意赔偿售后，赔偿 ${formatCurrency(creditedAmount)} 已发放至顾客余额。$resolutionNote"
-                case AfterSalesResolutionMode.Coupon =>
-                  val coupon = issuedCoupon.get
-                  s"管理员已同意售后申请，已补发优惠券 ${coupon.title}（${formatCurrency(coupon.discountCents)}，无门槛可用）。$resolutionNote"
-                case AfterSalesResolutionMode.Manual =>
-                  s"管理员已同意售后申请，本次不发放退款或优惠券。$resolutionNote"
-            else s"管理员已驳回售后申请：$resolutionNote"
+            buildAfterSalesOutcomeNote(
+              requestType,
+              request.approved,
+              resolutionMode,
+              creditedAmount,
+              issuedCoupon,
+              resolutionNote,
+            )
           val nextCustomers =
             current.customers.map(entry =>
               if entry.id == customer.id then
-                resolutionMode match
-                  case AfterSalesResolutionMode.Balance if request.approved && creditedAmount > 0 =>
-                    entry.copy(balanceCents = entry.balanceCents + creditedAmount)
-                  case AfterSalesResolutionMode.Coupon if request.approved =>
-                    entry.copy(coupons = issuedCoupon.toList ++ entry.coupons)
-                  case _ => entry
+                updateAfterSalesCustomer(entry, request.approved, resolutionMode, creditedAmount, issuedCoupon)
               else entry
             )
           val nextOrders = current.orders.map(entry =>
@@ -86,7 +321,8 @@ def resolveAfterSalesTicket(
               entry.copy(
                 status = TicketStatus.Resolved,
                 approved = Some(request.approved),
-                actualCompensationCents = if request.approved && creditedAmount > 0 then Some(creditedAmount) else None,
+                actualCompensationCents =
+                  if request.approved && creditedAmount > NumericDefaults.ZeroCurrencyCents then Some(creditedAmount) else None,
                 resolutionMode = if request.approved then Some(resolutionMode) else Some(AfterSalesResolutionMode.Manual),
                 issuedCoupon = issuedCoupon,
                 resolutionNote = Some(resolutionNote),
@@ -100,60 +336,28 @@ def resolveAfterSalesTicket(
     }
 
 def submitAfterSalesRequest(
-      orderId: String,
+      orderId: OrderId,
       request: SubmitAfterSalesRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          order <- current.orders.find(_.id == orderId).toRight(ValidationMessages.OrderNotFound)
-          _ <- Either.cond(
-            !current.tickets.exists(ticket =>
-              ticket.orderId == orderId &&
-              ticket.kind == TicketKind.DeliveryIssue &&
-              ticket.status == TicketStatus.Open,
-            ),
-            (),
-            ValidationMessages.PendingAfterSalesExists,
-          )
-          reason <- sanitizeRequiredText(request.reason, DeliveryValidationDefaults.OrderReasonMaxLength, ValidationMessages.AfterSalesReasonRequired)
-          expectedCompensationCents <-
-            request.expectedCompensationCents match
-              case Some(value) => Either.cond(value > DeliveryValidationDefaults.CompensationAmountMinCentsExclusive, Some(value), ValidationMessages.ExpectedCompensationMustBePositive)
-              case None =>
-                Either.cond(request.requestType != AfterSalesRequestType.CompensationRequest, None, ValidationMessages.ExpectedCompensationRequired)
+          order <- findSupportOrder(current, orderId)
+          _ <- Either.cond(!hasPendingAfterSalesTicket(current, orderId), (), ValidationMessages.PendingAfterSalesExists)
+          reason <- sanitizeAfterSalesReason(request.reason)
+          expectedCompensationCents <- validateExpectedCompensation(request)
         yield
           val timestamp = now()
-          val summary = request.requestType match
-            case AfterSalesRequestType.ReturnRequest =>
-              s"顾客申请退货售后：$reason"
-            case AfterSalesRequestType.CompensationRequest =>
-              val amountText = expectedCompensationCents.map(cents => f"${cents / 100.0}%.2f 元").getOrElse("未填写金额")
-              s"顾客申请赔偿售后（期望 $amountText）：$reason"
-          val ticket = AdminTicket(
-            id = nextId("ticket"),
-            orderId = order.id,
-            kind = TicketKind.DeliveryIssue,
-            status = TicketStatus.Open,
-            summary = summary,
-            requestType = Some(request.requestType),
-            submittedByRole = Some(UserRole.customer),
-            submittedByName = Some(order.customerName),
-            expectedCompensationCents = expectedCompensationCents,
-            actualCompensationCents = None,
-            approved = None,
-            resolutionMode = None,
-            issuedCoupon = None,
-            submittedAt = timestamp,
-            reviewedAt = None,
-            resolutionNote = None,
-            updatedAt = timestamp,
-          )
+          val ticket = buildAfterSalesTicket(order, request, reason, expectedCompensationCents, timestamp)
           val nextOrders = current.orders.map(entry =>
             if entry.id == order.id then
               entry.copy(
                 updatedAt = timestamp,
-                timeline = entry.timeline :+ OrderTimelineEntry(entry.status, "顾客已提交售后申请，等待管理员处理", timestamp),
+                timeline = entry.timeline :+ OrderTimelineEntry(
+                  entry.status,
+                  renderOrderTimelineMessage(OrderTimelineMessage.AfterSalesSubmitted),
+                  timestamp,
+                ),
               )
             else entry
           )
@@ -162,25 +366,19 @@ def submitAfterSalesRequest(
     }
 
 def addOrderChatMessage(
-      orderId: String,
+      orderId: OrderId,
       senderRole: UserRole,
-      senderName: String,
+      senderName: PersonName,
       request: SendOrderChatMessageRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          _ <- current.orders.find(_.id == orderId).toRight(ValidationMessages.OrderNotFound)
+          _ <- findSupportOrder(current, orderId)
           body <- sanitizeRequiredText(request.body, DeliveryValidationDefaults.OrderChatMessageMaxLength, ValidationMessages.OrderChatMessageRequired)
         yield
           val timestamp = now()
-          val message = OrderChatMessage(
-            id = nextId("chat"),
-            senderRole = senderRole,
-            senderName = senderName,
-            body = body,
-            sentAt = timestamp,
-          )
+          val message = buildOrderChatMessage(senderRole, senderName, body, timestamp)
           val nextOrders = current.orders.map(entry =>
             if entry.id == orderId then entry.copy(updatedAt = timestamp, chatMessages = entry.chatMessages :+ message)
             else entry
@@ -189,7 +387,7 @@ def addOrderChatMessage(
       }
     }
 
-def ownsPartialRefundRequestAsMerchant(refundId: String, merchantName: String): Boolean =
+def ownsPartialRefundRequestAsMerchant(refundId: RefundRequestId, merchantName: PersonName): ApprovalFlag =
     val current = stateRef.get()
     current.orders.exists(order =>
       order.partialRefundRequests.exists(_.id == refundId) &&
@@ -197,44 +395,35 @@ def ownsPartialRefundRequestAsMerchant(refundId: String, merchantName: String): 
     )
 
 def submitPartialRefundRequest(
-      orderId: String,
+      orderId: OrderId,
       request: SubmitPartialRefundRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          order <- current.orders.find(_.id == orderId).toRight(ValidationMessages.OrderNotFound)
-          _ <- Either.cond(
-            order.status == OrderStatus.PendingMerchantAcceptance || order.status == OrderStatus.Preparing,
-            (),
-            ValidationMessages.PartialRefundOrderStatusInvalid,
-          )
+          order <- findSupportOrder(current, orderId)
+          _ <- requireRefundableOrder(order)
           item <- order.items.find(_.menuItemId == request.menuItemId).toRight(ValidationMessages.PartialRefundItemMissing)
           _ <- Either.cond(request.quantity > DeliveryValidationDefaults.MenuItemPriceMinCentsExclusive, (), ValidationMessages.PartialRefundQuantityInvalid)
           remainingRefundable = item.quantity - item.refundedQuantity - pendingRefundQuantity(order, item.menuItemId)
-          _ <- Either.cond(remainingRefundable > 0, (), ValidationMessages.PartialRefundQuantityUnavailable)
-          _ <- Either.cond(request.quantity <= remainingRefundable, (), ValidationMessages.partialRefundQuantityExceeded(remainingRefundable))
+          _ <- Either.cond(remainingRefundable > NumericDefaults.ZeroQuantity, (), ValidationMessages.PartialRefundQuantityUnavailable)
+          _ <- Either.cond(request.quantity <= remainingRefundable, (), partialRefundQuantityExceeded(remainingRefundable))
           reason <- sanitizeRequiredText(request.reason, DeliveryValidationDefaults.OrderReasonMaxLength, ValidationMessages.PartialRefundReasonRequired)
         yield
           val timestamp = now()
-          val partialRefund = OrderPartialRefundRequest(
-            id = nextId("prf"),
-            orderId = order.id,
-            menuItemId = item.menuItemId,
-            itemName = item.name,
-            quantity = request.quantity,
-            reason = reason,
-            status = PartialRefundStatus.Pending,
-            resolutionNote = None,
-            submittedAt = timestamp,
-            reviewedAt = None,
-          )
+          val partialRefund = buildPartialRefundRequest(order, item, request, reason, timestamp)
           val nextOrders = current.orders.map(entry =>
             if entry.id == order.id then
               entry.copy(
                 updatedAt = timestamp,
                 partialRefundRequests = entry.partialRefundRequests :+ partialRefund,
-                timeline = entry.timeline :+ OrderTimelineEntry(entry.status, s"顾客申请退掉 ${item.name} x ${request.quantity}，原因：$reason", timestamp),
+                timeline = entry.timeline :+ OrderTimelineEntry(
+                  entry.status,
+                  renderOrderTimelineMessage(
+                    OrderTimelineMessage.PartialRefundRequested(item.name, request.quantity, reason)
+                  ),
+                  timestamp,
+                ),
               )
             else entry
           )
@@ -243,33 +432,30 @@ def submitPartialRefundRequest(
     }
 
 def resolvePartialRefundRequest(
-      refundId: String,
+      refundId: RefundRequestId,
       request: ResolvePartialRefundRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          order <- current.orders.find(_.partialRefundRequests.exists(_.id == refundId)).toRight(ValidationMessages.PartialRefundNotFound)
+          order <- findRefundOrder(current, refundId)
           partialRefund <- order.partialRefundRequests.find(_.id == refundId).toRight(ValidationMessages.PartialRefundNotFound)
           _ <- Either.cond(partialRefund.status == PartialRefundStatus.Pending, (), ValidationMessages.PartialRefundAlreadyResolved)
-          _ <- Either.cond(
-            order.status == OrderStatus.PendingMerchantAcceptance || order.status == OrderStatus.Preparing,
-            (),
-            ValidationMessages.PartialRefundResolveStatusInvalid,
-          )
+          _ <- requireResolvableRefundOrder(order)
           item <- order.items.find(_.menuItemId == partialRefund.menuItemId).toRight(ValidationMessages.PartialRefundItemMissing)
-          resolutionNote <- sanitizeRequiredText(request.resolutionNote, DeliveryValidationDefaults.OrderReasonMaxLength, ValidationMessages.ResolutionNoteRequired)
+          resolutionNote <- sanitizeSupportResolutionNote(request.resolutionNote)
           remainingQuantityAfterApproval =
-            order.items.map(entry => entry.quantity - entry.refundedQuantity).sum - (if request.approved then partialRefund.quantity else 0)
-          _ <- Either.cond(!request.approved || remainingQuantityAfterApproval > 0, (), ValidationMessages.PartialRefundWouldEmptyOrder)
+            order.items.map(entry => entry.quantity - entry.refundedQuantity).sum -
+              (if request.approved then partialRefund.quantity else NumericDefaults.ZeroQuantity)
+          _ <- Either.cond(
+            !request.approved || remainingQuantityAfterApproval > NumericDefaults.ZeroQuantity,
+            (),
+            ValidationMessages.PartialRefundWouldEmptyOrder,
+          )
           _ <- Either.cond(!request.approved || item.refundedQuantity + partialRefund.quantity <= item.quantity, (), ValidationMessages.PartialRefundQuantityOutOfRange)
         yield
           val timestamp = now()
-          val reviewedRefund = partialRefund.copy(
-            status = if request.approved then PartialRefundStatus.Approved else PartialRefundStatus.Rejected,
-            resolutionNote = Some(resolutionNote),
-            reviewedAt = Some(timestamp),
-          )
+          val reviewedRefund = reviewPartialRefund(partialRefund, request.approved, resolutionNote, timestamp)
           val refundAmountCents = partialRefund.quantity * item.unitPriceCents
           val nextOrders = current.orders.map(entry =>
             if entry.id == order.id then
@@ -281,10 +467,14 @@ def resolvePartialRefundRequest(
                     else lineItem
                   )
                 else entry.items
-              val nextItemSubtotal = if request.approved then entry.itemSubtotalCents - refundAmountCents else entry.itemSubtotalCents
-              val nextTotalPrice =
+              val nextItemSubtotal: CurrencyCents =
+                if request.approved then entry.itemSubtotalCents - refundAmountCents else entry.itemSubtotalCents
+              val nextTotalPrice: CurrencyCents =
                 if request.approved then
-                  Math.max(0, nextItemSubtotal + entry.deliveryFeeCents - calculateCouponDiscount(entry.appliedCoupon, nextItemSubtotal, entry.deliveryFeeCents))
+                  Math.max(
+                    NumericDefaults.ZeroCurrencyCents,
+                    nextItemSubtotal + entry.deliveryFeeCents - calculateCouponDiscount(entry.appliedCoupon, nextItemSubtotal, entry.deliveryFeeCents),
+                  )
                 else entry.totalPriceCents
               val nextCouponDiscountCents =
                 if request.approved then calculateCouponDiscount(entry.appliedCoupon, nextItemSubtotal, entry.deliveryFeeCents)
@@ -301,8 +491,22 @@ def resolvePartialRefundRequest(
                 timeline = entry.timeline :+ OrderTimelineEntry(
                   entry.status,
                   if request.approved then
-                    f"商家同意退掉 ${partialRefund.itemName} x ${partialRefund.quantity}，已退款 ${refundAmountCents / 100.0}%.2f 元：$resolutionNote"
-                  else s"商家拒绝退掉 ${partialRefund.itemName} x ${partialRefund.quantity}：$resolutionNote",
+                    renderOrderTimelineMessage(
+                      OrderTimelineMessage.PartialRefundApproved(
+                        partialRefund.itemName,
+                        partialRefund.quantity,
+                        refundAmountCents,
+                        resolutionNote,
+                      )
+                    )
+                  else
+                    renderOrderTimelineMessage(
+                      OrderTimelineMessage.PartialRefundRejected(
+                        partialRefund.itemName,
+                        partialRefund.quantity,
+                        resolutionNote,
+                      )
+                    ),
                   timestamp,
                 ),
               )

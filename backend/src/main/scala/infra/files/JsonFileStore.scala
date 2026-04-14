@@ -1,5 +1,7 @@
 package infra.files
 
+import domain.shared.given
+
 import io.circe.{Decoder, Encoder, Printer}
 import io.circe.parser.decode
 import io.circe.syntax.*

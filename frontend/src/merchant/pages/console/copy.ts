@@ -1,0 +1,16 @@
+export const MERCHANT_CONSOLE_COPY = {
+  title: '商家控制台',
+  description: '仅已审核通过的店铺可接单和推进出餐状态。',
+  storeEmpty: '当前没有已审核通过的店铺。',
+  orderEmpty: '当前店铺暂无订单。',
+  pendingOrdersOverviewTitle: '待处理订单',
+  pendingOrdersOverviewBody: '请及时进入店铺处理接单和备餐状态。',
+  pendingOrdersAction: '去处理',
+  enterStore: '进入店铺',
+  enterPendingStore: '进入处理',
+  newOrderAlertTitle: '有新订单待接单',
+  newOrderAlertBody: '请进入订单管理处理，避免顾客长时间等待。',
+  newOrderBadge: '新订单',
+  orderChatDisabledReason: '骑手尚未接单，当前聊天主要用于和顾客确认订单细节。',
+  pendingAppeal: '申诉处理中',
+} as const

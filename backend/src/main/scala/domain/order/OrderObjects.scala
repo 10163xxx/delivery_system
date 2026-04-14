@@ -1,44 +1,46 @@
 package domain.order
 
+import domain.shared.given
+
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.semiauto.*
 import domain.customer.Coupon
 import domain.shared.*
 
-final case class OrderItemInput(menuItemId: String, quantity: Int)
+final case class OrderItemInput(menuItemId: MenuItemId, quantity: Quantity)
 object OrderItemInput:
   given Encoder[OrderItemInput] = deriveEncoder
   given Decoder[OrderItemInput] = deriveDecoder
 
 final case class CreateOrderRequest(
-    customerId: String,
-    storeId: String,
-    deliveryAddress: String,
-    scheduledDeliveryAt: String,
-    remark: Option[String],
-    couponId: Option[String],
+    customerId: CustomerId,
+    storeId: StoreId,
+    deliveryAddress: AddressText,
+    scheduledDeliveryAt: IsoDateTime,
+    remark: Option[NoteText],
+    couponId: Option[CouponId],
     items: List[OrderItemInput],
 )
 object CreateOrderRequest:
   given Encoder[CreateOrderRequest] = deriveEncoder
   given Decoder[CreateOrderRequest] = deriveDecoder
 
-final case class AssignRiderRequest(riderId: String)
+final case class AssignRiderRequest(riderId: RiderId)
 object AssignRiderRequest:
   given Encoder[AssignRiderRequest] = deriveEncoder
   given Decoder[AssignRiderRequest] = deriveDecoder
 
-final case class RejectOrderRequest(reason: String)
+final case class RejectOrderRequest(reason: ReasonText)
 object RejectOrderRequest:
   given Encoder[RejectOrderRequest] = deriveEncoder
   given Decoder[RejectOrderRequest] = deriveDecoder
 
 final case class ResolveAfterSalesRequest(
-    approved: Boolean,
-    resolutionNote: String,
+    approved: ApprovalFlag,
+    resolutionNote: ResolutionText,
     resolutionMode: Option[AfterSalesResolutionMode],
-    actualCompensationCents: Option[Int],
-    couponMinimumSpendCents: Option[Int],
+    actualCompensationCents: Option[CurrencyCents],
+    couponMinimumSpendCents: Option[CurrencyCents],
 )
 object ResolveAfterSalesRequest:
   given Encoder[ResolveAfterSalesRequest] = deriveEncoder
@@ -46,51 +48,51 @@ object ResolveAfterSalesRequest:
 
 final case class SubmitAfterSalesRequest(
     requestType: AfterSalesRequestType,
-    reason: String,
-    expectedCompensationCents: Option[Int],
+    reason: ReasonText,
+    expectedCompensationCents: Option[CurrencyCents],
 )
 object SubmitAfterSalesRequest:
   given Encoder[SubmitAfterSalesRequest] = deriveEncoder
   given Decoder[SubmitAfterSalesRequest] = deriveDecoder
 
-final case class SendOrderChatMessageRequest(body: String)
+final case class SendOrderChatMessageRequest(body: DisplayText)
 object SendOrderChatMessageRequest:
   given Encoder[SendOrderChatMessageRequest] = deriveEncoder
   given Decoder[SendOrderChatMessageRequest] = deriveDecoder
 
 final case class SubmitPartialRefundRequest(
-    menuItemId: String,
-    quantity: Int,
-    reason: String,
+    menuItemId: MenuItemId,
+    quantity: Quantity,
+    reason: ReasonText,
 )
 object SubmitPartialRefundRequest:
   given Encoder[SubmitPartialRefundRequest] = deriveEncoder
   given Decoder[SubmitPartialRefundRequest] = deriveDecoder
 
 final case class ResolvePartialRefundRequest(
-    approved: Boolean,
-    resolutionNote: String,
+    approved: ApprovalFlag,
+    resolutionNote: ResolutionText,
 )
 object ResolvePartialRefundRequest:
   given Encoder[ResolvePartialRefundRequest] = deriveEncoder
   given Decoder[ResolvePartialRefundRequest] = deriveDecoder
 
 final case class OrderLineItem(
-    menuItemId: String,
-    name: String,
-    quantity: Int,
-    unitPriceCents: Int,
-    refundedQuantity: Int,
+    menuItemId: MenuItemId,
+    name: DisplayText,
+    quantity: Quantity,
+    unitPriceCents: CurrencyCents,
+    refundedQuantity: Quantity,
 )
 object OrderLineItem:
   given Encoder[OrderLineItem] = deriveEncoder
   given Decoder[OrderLineItem] = Decoder.instance { cursor =>
     for
-      menuItemId <- cursor.get[String]("menuItemId")
-      name <- cursor.get[String]("name")
-      quantity <- cursor.get[Int]("quantity")
-      unitPriceCents <- cursor.get[Int]("unitPriceCents")
-      refundedQuantity <- cursor.getOrElse[Int]("refundedQuantity")(0)
+      menuItemId <- cursor.get[MenuItemId]("menuItemId")
+      name <- cursor.get[DisplayText]("name")
+      quantity <- cursor.get[Quantity]("quantity")
+      unitPriceCents <- cursor.get[CurrencyCents]("unitPriceCents")
+      refundedQuantity <- cursor.getOrElse[Quantity]("refundedQuantity")(NumericDefaults.ZeroQuantity)
     yield OrderLineItem(
       menuItemId = menuItemId,
       name = name,
@@ -100,70 +102,70 @@ object OrderLineItem:
     )
   }
 
-final case class OrderTimelineEntry(status: OrderStatus, note: String, at: String)
+final case class OrderTimelineEntry(status: OrderStatus, note: DisplayText, at: IsoDateTime)
 object OrderTimelineEntry:
   given Encoder[OrderTimelineEntry] = deriveEncoder
   given Decoder[OrderTimelineEntry] = deriveDecoder
 
 final case class OrderChatMessage(
-    id: String,
+    id: ChatMessageId,
     senderRole: UserRole,
-    senderName: String,
-    body: String,
-    sentAt: String,
+    senderName: PersonName,
+    body: DisplayText,
+    sentAt: IsoDateTime,
 )
 object OrderChatMessage:
   given Encoder[OrderChatMessage] = deriveEncoder
   given Decoder[OrderChatMessage] = deriveDecoder
 
 final case class OrderPartialRefundRequest(
-    id: String,
-    orderId: String,
-    menuItemId: String,
-    itemName: String,
-    quantity: Int,
-    reason: String,
+    id: RefundRequestId,
+    orderId: OrderId,
+    menuItemId: MenuItemId,
+    itemName: DisplayText,
+    quantity: Quantity,
+    reason: ReasonText,
     status: PartialRefundStatus,
-    resolutionNote: Option[String],
-    submittedAt: String,
-    reviewedAt: Option[String],
+    resolutionNote: Option[ResolutionText],
+    submittedAt: IsoDateTime,
+    reviewedAt: Option[IsoDateTime],
 )
 object OrderPartialRefundRequest:
   given Encoder[OrderPartialRefundRequest] = deriveEncoder
   given Decoder[OrderPartialRefundRequest] = deriveDecoder
 
 final case class OrderSummary(
-    id: String,
-    customerId: String,
-    customerName: String,
-    storeId: String,
-    storeName: String,
-    riderId: Option[String],
-    riderName: Option[String],
+    id: OrderId,
+    customerId: CustomerId,
+    customerName: PersonName,
+    storeId: StoreId,
+    storeName: DisplayText,
+    riderId: Option[RiderId],
+    riderName: Option[PersonName],
     status: OrderStatus,
-    deliveryAddress: String,
-    scheduledDeliveryAt: String,
-    remark: Option[String],
+    deliveryAddress: AddressText,
+    scheduledDeliveryAt: IsoDateTime,
+    remark: Option[NoteText],
     items: List[OrderLineItem],
-    itemSubtotalCents: Int,
-    deliveryFeeCents: Int,
-    couponDiscountCents: Int,
+    itemSubtotalCents: CurrencyCents,
+    deliveryFeeCents: CurrencyCents,
+    couponDiscountCents: CurrencyCents,
     appliedCoupon: Option[Coupon],
-    totalPriceCents: Int,
-    createdAt: String,
-    updatedAt: String,
-    storeRating: Option[Int],
-    riderRating: Option[Int],
-    reviewComment: Option[String],
-    reviewExtraNote: Option[String],
-    storeReviewComment: Option[String],
-    storeReviewExtraNote: Option[String],
-    riderReviewComment: Option[String],
-    riderReviewExtraNote: Option[String],
-    merchantRejectReason: Option[String],
+    totalPriceCents: CurrencyCents,
+    createdAt: IsoDateTime,
+    updatedAt: IsoDateTime,
+    storeRating: Option[RatingValue],
+    riderRating: Option[RatingValue],
+    reviewComment: Option[ReasonText],
+    reviewExtraNote: Option[NoteText],
+    storeReviewComment: Option[ReasonText],
+    storeReviewExtraNote: Option[NoteText],
+    riderReviewComment: Option[ReasonText],
+    riderReviewExtraNote: Option[NoteText],
+    merchantRejectReason: Option[ReasonText],
     reviewStatus: ReviewStatus,
-    reviewRevokedReason: Option[String],
-    reviewRevokedAt: Option[String],
+    reviewRevokedReason: Option[ReasonText],
+    reviewRevokedAt: Option[IsoDateTime],
     timeline: List[OrderTimelineEntry],
     chatMessages: List[OrderChatMessage],
     partialRefundRequests: List[OrderPartialRefundRequest],
@@ -171,37 +173,37 @@ final case class OrderSummary(
 object OrderSummary:
   given Encoder[OrderSummary] = Encoder.instance { order =>
     Json.obj(
-      "id" -> Json.fromString(order.id),
-      "customerId" -> Json.fromString(order.customerId),
-      "customerName" -> Json.fromString(order.customerName),
-      "storeId" -> Json.fromString(order.storeId),
-      "storeName" -> Json.fromString(order.storeName),
-      "riderId" -> Encoder.encodeOption[String].apply(order.riderId),
-      "riderName" -> Encoder.encodeOption[String].apply(order.riderName),
+      "id" -> Json.fromString(order.id.raw),
+      "customerId" -> Json.fromString(order.customerId.raw),
+      "customerName" -> Json.fromString(order.customerName.raw),
+      "storeId" -> Json.fromString(order.storeId.raw),
+      "storeName" -> Json.fromString(order.storeName.raw),
+      "riderId" -> Encoder.encodeOption[RiderId].apply(order.riderId),
+      "riderName" -> Encoder.encodeOption[PersonName].apply(order.riderName),
       "status" -> summon[Encoder[OrderStatus]].apply(order.status),
-      "deliveryAddress" -> Json.fromString(order.deliveryAddress),
-      "scheduledDeliveryAt" -> Json.fromString(order.scheduledDeliveryAt),
-      "remark" -> Encoder.encodeOption[String].apply(order.remark),
+      "deliveryAddress" -> Json.fromString(order.deliveryAddress.raw),
+      "scheduledDeliveryAt" -> Json.fromString(order.scheduledDeliveryAt.raw),
+      "remark" -> Encoder.encodeOption[NoteText].apply(order.remark),
       "items" -> Encoder.encodeList[OrderLineItem].apply(order.items),
       "itemSubtotalCents" -> Json.fromInt(order.itemSubtotalCents),
       "deliveryFeeCents" -> Json.fromInt(order.deliveryFeeCents),
       "couponDiscountCents" -> Json.fromInt(order.couponDiscountCents),
       "appliedCoupon" -> Encoder.encodeOption[Coupon].apply(order.appliedCoupon),
       "totalPriceCents" -> Json.fromInt(order.totalPriceCents),
-      "createdAt" -> Json.fromString(order.createdAt),
-      "updatedAt" -> Json.fromString(order.updatedAt),
-      "storeRating" -> Encoder.encodeOption[Int].apply(order.storeRating),
-      "riderRating" -> Encoder.encodeOption[Int].apply(order.riderRating),
-      "reviewComment" -> Encoder.encodeOption[String].apply(order.reviewComment),
-      "reviewExtraNote" -> Encoder.encodeOption[String].apply(order.reviewExtraNote),
-      "storeReviewComment" -> Encoder.encodeOption[String].apply(order.storeReviewComment),
-      "storeReviewExtraNote" -> Encoder.encodeOption[String].apply(order.storeReviewExtraNote),
-      "riderReviewComment" -> Encoder.encodeOption[String].apply(order.riderReviewComment),
-      "riderReviewExtraNote" -> Encoder.encodeOption[String].apply(order.riderReviewExtraNote),
-      "merchantRejectReason" -> Encoder.encodeOption[String].apply(order.merchantRejectReason),
+      "createdAt" -> Json.fromString(order.createdAt.raw),
+      "updatedAt" -> Json.fromString(order.updatedAt.raw),
+      "storeRating" -> Encoder.encodeOption[RatingValue].apply(order.storeRating),
+      "riderRating" -> Encoder.encodeOption[RatingValue].apply(order.riderRating),
+      "reviewComment" -> Encoder.encodeOption[ReasonText].apply(order.reviewComment),
+      "reviewExtraNote" -> Encoder.encodeOption[NoteText].apply(order.reviewExtraNote),
+      "storeReviewComment" -> Encoder.encodeOption[ReasonText].apply(order.storeReviewComment),
+      "storeReviewExtraNote" -> Encoder.encodeOption[NoteText].apply(order.storeReviewExtraNote),
+      "riderReviewComment" -> Encoder.encodeOption[ReasonText].apply(order.riderReviewComment),
+      "riderReviewExtraNote" -> Encoder.encodeOption[NoteText].apply(order.riderReviewExtraNote),
+      "merchantRejectReason" -> Encoder.encodeOption[ReasonText].apply(order.merchantRejectReason),
       "reviewStatus" -> summon[Encoder[ReviewStatus]].apply(order.reviewStatus),
-      "reviewRevokedReason" -> Encoder.encodeOption[String].apply(order.reviewRevokedReason),
-      "reviewRevokedAt" -> Encoder.encodeOption[String].apply(order.reviewRevokedAt),
+      "reviewRevokedReason" -> Encoder.encodeOption[ReasonText].apply(order.reviewRevokedReason),
+      "reviewRevokedAt" -> Encoder.encodeOption[IsoDateTime].apply(order.reviewRevokedAt),
       "timeline" -> Encoder.encodeList[OrderTimelineEntry].apply(order.timeline),
       "chatMessages" -> Encoder.encodeList[OrderChatMessage].apply(order.chatMessages),
       "partialRefundRequests" -> Encoder.encodeList[OrderPartialRefundRequest].apply(order.partialRefundRequests),
@@ -209,37 +211,37 @@ object OrderSummary:
   }
   given Decoder[OrderSummary] = Decoder.instance { cursor =>
     for
-      id <- cursor.get[String]("id")
-      customerId <- cursor.get[String]("customerId")
-      customerName <- cursor.get[String]("customerName")
-      storeId <- cursor.get[String]("storeId")
-      storeName <- cursor.get[String]("storeName")
-      riderId <- cursor.get[Option[String]]("riderId")
-      riderName <- cursor.get[Option[String]]("riderName")
+      id <- cursor.get[OrderId]("id")
+      customerId <- cursor.get[CustomerId]("customerId")
+      customerName <- cursor.get[PersonName]("customerName")
+      storeId <- cursor.get[StoreId]("storeId")
+      storeName <- cursor.get[DisplayText]("storeName")
+      riderId <- cursor.get[Option[RiderId]]("riderId")
+      riderName <- cursor.get[Option[PersonName]]("riderName")
       status <- cursor.get[OrderStatus]("status")
-      deliveryAddress <- cursor.get[String]("deliveryAddress")
-      createdAt <- cursor.get[String]("createdAt")
-      scheduledDeliveryAt <- cursor.getOrElse[String]("scheduledDeliveryAt")(createdAt)
-      remark <- cursor.get[Option[String]]("remark")
+      deliveryAddress <- cursor.get[AddressText]("deliveryAddress")
+      createdAt <- cursor.get[IsoDateTime]("createdAt")
+      scheduledDeliveryAt <- cursor.getOrElse[IsoDateTime]("scheduledDeliveryAt")(createdAt)
+      remark <- cursor.get[Option[NoteText]]("remark")
       items <- cursor.get[List[OrderLineItem]]("items")
-      totalPriceCents <- cursor.get[Int]("totalPriceCents")
-      itemSubtotalCents <- cursor.getOrElse[Int]("itemSubtotalCents")(totalPriceCents)
-      deliveryFeeCents <- cursor.getOrElse[Int]("deliveryFeeCents")(0)
-      couponDiscountCents <- cursor.getOrElse[Int]("couponDiscountCents")(0)
+      totalPriceCents <- cursor.get[CurrencyCents]("totalPriceCents")
+      itemSubtotalCents <- cursor.getOrElse[CurrencyCents]("itemSubtotalCents")(totalPriceCents)
+      deliveryFeeCents <- cursor.getOrElse[CurrencyCents]("deliveryFeeCents")(NumericDefaults.ZeroCurrencyCents)
+      couponDiscountCents <- cursor.getOrElse[CurrencyCents]("couponDiscountCents")(NumericDefaults.ZeroCurrencyCents)
       appliedCoupon <- cursor.getOrElse[Option[Coupon]]("appliedCoupon")(None)
-      updatedAt <- cursor.get[String]("updatedAt")
-      storeRating <- cursor.get[Option[Int]]("storeRating")
-      riderRating <- cursor.get[Option[Int]]("riderRating")
-      reviewComment <- cursor.get[Option[String]]("reviewComment")
-      reviewExtraNote <- cursor.get[Option[String]]("reviewExtraNote")
-      storeReviewComment <- cursor.get[Option[String]]("storeReviewComment")
-      storeReviewExtraNote <- cursor.get[Option[String]]("storeReviewExtraNote")
-      riderReviewComment <- cursor.get[Option[String]]("riderReviewComment")
-      riderReviewExtraNote <- cursor.get[Option[String]]("riderReviewExtraNote")
-      merchantRejectReason <- cursor.get[Option[String]]("merchantRejectReason")
+      updatedAt <- cursor.get[IsoDateTime]("updatedAt")
+      storeRating <- cursor.get[Option[RatingValue]]("storeRating")
+      riderRating <- cursor.get[Option[RatingValue]]("riderRating")
+      reviewComment <- cursor.get[Option[ReasonText]]("reviewComment")
+      reviewExtraNote <- cursor.get[Option[NoteText]]("reviewExtraNote")
+      storeReviewComment <- cursor.get[Option[ReasonText]]("storeReviewComment")
+      storeReviewExtraNote <- cursor.get[Option[NoteText]]("storeReviewExtraNote")
+      riderReviewComment <- cursor.get[Option[ReasonText]]("riderReviewComment")
+      riderReviewExtraNote <- cursor.get[Option[NoteText]]("riderReviewExtraNote")
+      merchantRejectReason <- cursor.get[Option[ReasonText]]("merchantRejectReason")
       reviewStatus <- cursor.get[ReviewStatus]("reviewStatus")
-      reviewRevokedReason <- cursor.get[Option[String]]("reviewRevokedReason")
-      reviewRevokedAt <- cursor.get[Option[String]]("reviewRevokedAt")
+      reviewRevokedReason <- cursor.get[Option[ReasonText]]("reviewRevokedReason")
+      reviewRevokedAt <- cursor.get[Option[IsoDateTime]]("reviewRevokedAt")
       timeline <- cursor.get[List[OrderTimelineEntry]]("timeline")
       chatMessages <- cursor.getOrElse[List[OrderChatMessage]]("chatMessages")(List.empty)
       partialRefundRequests <- cursor.getOrElse[List[OrderPartialRefundRequest]]("partialRefundRequests")(List.empty)

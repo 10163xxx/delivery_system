@@ -1,31 +1,115 @@
 package app.delivery
 
+import domain.shared.given
+
 import cats.effect.IO
 import domain.merchant.*
 import domain.order.*
 import domain.shared.*
 
+private def findMerchantApplication(
+      current: DeliveryAppState,
+      applicationId: MerchantApplicationId,
+  ): Either[ErrorMessage, MerchantApplication] =
+    current.merchantApplications.find(_.id == applicationId).toRight(ValidationMessages.MerchantApplicationNotFound)
+
+private def requirePendingApplication(
+      application: MerchantApplication,
+      pendingError: ErrorMessage,
+  ): Either[ErrorMessage, Unit] =
+    Either.cond(application.status == MerchantApplicationStatus.Pending, (), pendingError)
+
+private def sanitizeReviewNote(request: ReviewMerchantApplicationRequest): Either[ErrorMessage, ResolutionText] =
+    sanitizeRequiredText(
+      request.reviewNote,
+      DeliveryValidationDefaults.ReviewApplicationNoteMaxLength,
+      ValidationMessages.ReviewNoteRequired,
+    )
+
+private def buildMerchantApplication(
+      request: MerchantRegistrationRequest,
+      timestamp: IsoDateTime,
+  ): MerchantApplication =
+    MerchantApplication(
+      id = nextId(new DisplayText("app")),
+      merchantName = request.merchantName,
+      storeName = request.storeName,
+      category = request.category,
+      businessHours = request.businessHours,
+      avgPrepMinutes = request.avgPrepMinutes,
+      imageUrl = request.imageUrl,
+      note = request.note,
+      status = MerchantApplicationStatus.Pending,
+      reviewNote = None,
+      submittedAt = timestamp,
+      reviewedAt = None,
+    )
+
+private def reviewMerchantApplication(
+      application: MerchantApplication,
+      status: MerchantApplicationStatus,
+      reviewNote: ResolutionText,
+      timestamp: IsoDateTime,
+  ): MerchantApplication =
+    application.copy(
+      status = status,
+      reviewNote = Some(reviewNote),
+      reviewedAt = Some(timestamp),
+    )
+
+private def replaceStore(
+      current: DeliveryAppState,
+      storeId: StoreId,
+      update: Store => Store,
+  ): DeliveryAppState =
+    current.copy(
+      stores = current.stores.map(store => if store.id == storeId then update(store) else store)
+    )
+
+private def addMenuItemToStore(store: Store, menuItem: MenuItem): Store =
+    store.copy(menu = store.menu :+ menuItem)
+
+private def removeMenuItemFromStore(store: Store, menuItemId: MenuItemId): Store =
+    store.copy(menu = store.menu.filterNot(_.id == menuItemId))
+
+private def updateMenuItemInStore(
+      store: Store,
+      menuItemId: MenuItemId,
+      update: MenuItem => MenuItem,
+  ): Store =
+    store.copy(
+      menu = store.menu.map(item => if item.id == menuItemId then update(item) else item)
+    )
+
+private def buildMenuItem(request: AddMenuItemRequest): MenuItem =
+    MenuItem(
+      id = nextId(new DisplayText("dish")),
+      name = request.name,
+      description = request.description,
+      priceCents = request.priceCents,
+      imageUrl = request.imageUrl,
+      remainingQuantity = request.remainingQuantity,
+    )
+
+private def validateStoreForMenuWrite(store: Store): Either[ErrorMessage, Unit] =
+    Either.cond(store.status != StoreRevokedStatus, (), ValidationMessages.RevokedStoreCannotAddMenuItem)
+
+private def validatePrepMinutes(value: Minutes): Either[ErrorMessage, Minutes] =
+    Either.cond(
+      value >= DeliveryValidationDefaults.PrepMinutesMin &&
+        value <= DeliveryValidationDefaults.PrepMinutesMax,
+      value,
+      ValidationMessages.PrepMinutesInvalid,
+    )
+
 def submitMerchantApplication(
       request: MerchantRegistrationRequest
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         validateMerchantRegistration(request).map { sanitized =>
           val timestamp = now()
-          val application = MerchantApplication(
-            id = nextId("app"),
-            merchantName = sanitized.merchantName,
-            storeName = sanitized.storeName,
-            category = sanitized.category,
-            businessHours = sanitized.businessHours,
-            avgPrepMinutes = sanitized.avgPrepMinutes,
-            imageUrl = sanitized.imageUrl,
-            note = sanitized.note,
-            status = MerchantApplicationStatus.Pending,
-            reviewNote = None,
-            submittedAt = timestamp,
-            reviewedAt = None,
-          )
+          val application = buildMerchantApplication(sanitized, timestamp)
           withDerivedData(
             current.copy(merchantApplications = application :: current.merchantApplications)
           )
@@ -34,22 +118,19 @@ def submitMerchantApplication(
     }
 
 def approveMerchantApplication(
-      applicationId: String,
+      applicationId: MerchantApplicationId,
       request: ReviewMerchantApplicationRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          application <- current.merchantApplications.find(_.id == applicationId).toRight(ValidationMessages.MerchantApplicationNotFound)
-          _ <- Either.cond(application.status == MerchantApplicationStatus.Pending, (), ValidationMessages.OnlyPendingApplicationCanApprove)
-          reviewNote <- sanitizeRequiredText(request.reviewNote, DeliveryValidationDefaults.ReviewApplicationNoteMaxLength, ValidationMessages.ReviewNoteRequired)
+          application <- findMerchantApplication(current, applicationId)
+          _ <- requirePendingApplication(application, ValidationMessages.OnlyPendingApplicationCanApprove)
+          reviewNote <- sanitizeReviewNote(request)
         yield
           val timestamp = now()
-          val reviewedApplication = application.copy(
-            status = MerchantApplicationStatus.Approved,
-            reviewNote = Some(reviewNote),
-            reviewedAt = Some(timestamp),
-          )
+          val reviewedApplication =
+            reviewMerchantApplication(application, MerchantApplicationStatus.Approved, reviewNote, timestamp)
           withDerivedData(
             current.copy(
               stores = createApprovedStore(application) :: current.stores,
@@ -60,22 +141,19 @@ def approveMerchantApplication(
     }
 
 def rejectMerchantApplication(
-      applicationId: String,
+      applicationId: MerchantApplicationId,
       request: ReviewMerchantApplicationRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
-          application <- current.merchantApplications.find(_.id == applicationId).toRight(ValidationMessages.MerchantApplicationNotFound)
-          _ <- Either.cond(application.status == MerchantApplicationStatus.Pending, (), ValidationMessages.OnlyPendingApplicationCanReject)
-          reviewNote <- sanitizeRequiredText(request.reviewNote, DeliveryValidationDefaults.ReviewApplicationNoteMaxLength, ValidationMessages.ReviewNoteRequired)
+          application <- findMerchantApplication(current, applicationId)
+          _ <- requirePendingApplication(application, ValidationMessages.OnlyPendingApplicationCanReject)
+          reviewNote <- sanitizeReviewNote(request)
         yield
           val timestamp = now()
-          val reviewedApplication = application.copy(
-            status = MerchantApplicationStatus.Rejected,
-            reviewNote = Some(reviewNote),
-            reviewedAt = Some(timestamp),
-          )
+          val reviewedApplication =
+            reviewMerchantApplication(application, MerchantApplicationStatus.Rejected, reviewNote, timestamp)
           withDerivedData(
             current.copy(
               merchantApplications = replaceApplication(current.merchantApplications, reviewedApplication)
@@ -85,38 +163,27 @@ def rejectMerchantApplication(
     }
 
 def addMenuItem(
-      storeId: String,
+      storeId: StoreId,
       request: AddMenuItemRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
           store <- current.stores.find(_.id == storeId).toRight(ValidationMessages.StoreNotFound)
-          _ <- Either.cond(store.status != "Revoked", (), ValidationMessages.RevokedStoreCannotAddMenuItem)
+          _ <- validateStoreForMenuWrite(store)
           sanitized <- validateMenuItemRequest(request)
-          nextMenuItem = MenuItem(
-            id = nextId("dish"),
-            name = sanitized.name,
-            description = sanitized.description,
-            priceCents = sanitized.priceCents,
-            imageUrl = sanitized.imageUrl,
-            remainingQuantity = sanitized.remainingQuantity,
-          )
+          nextMenuItem = buildMenuItem(sanitized)
         yield
           withDerivedData(
-            current.copy(
-              stores = current.stores.map(entry =>
-                if entry.id == store.id then entry.copy(menu = entry.menu :+ nextMenuItem) else entry
-              )
-            )
+            replaceStore(current, store.id, addMenuItemToStore(_, nextMenuItem))
           )
       }
     }
 
 def removeMenuItem(
-      storeId: String,
-      menuItemId: String,
-  ): IO[Either[String, DeliveryAppState]] =
+      storeId: StoreId,
+      menuItemId: MenuItemId,
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
@@ -124,21 +191,16 @@ def removeMenuItem(
           _ <- store.menu.find(_.id == menuItemId).toRight(ValidationMessages.MenuItemNotFound)
         yield
           withDerivedData(
-            current.copy(
-              stores = current.stores.map(entry =>
-                if entry.id == store.id then entry.copy(menu = entry.menu.filterNot(_.id == menuItemId))
-                else entry
-              )
-            )
+            replaceStore(current, store.id, removeMenuItemFromStore(_, menuItemId))
           )
       }
     }
 
 def updateMenuItemStock(
-      storeId: String,
-      menuItemId: String,
+      storeId: StoreId,
+      menuItemId: MenuItemId,
       request: UpdateMenuItemStockRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
@@ -147,48 +209,53 @@ def updateMenuItemStock(
           sanitized <- validateMenuItemStockRequest(request)
         yield
           withDerivedData(
-            current.copy(
-              stores = current.stores.map(entry =>
-                if entry.id == store.id then
-                  entry.copy(
-                    menu = entry.menu.map(menuItem =>
-                      if menuItem.id == menuItemId then menuItem.copy(remainingQuantity = sanitized.remainingQuantity)
-                      else menuItem
-                    )
-                  )
-                else entry
-              )
+            replaceStore(
+              current,
+              store.id,
+              updateMenuItemInStore(_, menuItemId, _.copy(remainingQuantity = sanitized.remainingQuantity)),
+            )
+          )
+      }
+    }
+
+def updateMenuItemPrice(
+      storeId: StoreId,
+      menuItemId: MenuItemId,
+      request: UpdateMenuItemPriceRequest,
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          store <- current.stores.find(_.id == storeId).toRight(ValidationMessages.StoreNotFound)
+          _ <- store.menu.find(_.id == menuItemId).toRight(ValidationMessages.MenuItemNotFound)
+          sanitized <- validateMenuItemPriceRequest(request)
+        yield
+          withDerivedData(
+            replaceStore(
+              current,
+              store.id,
+              updateMenuItemInStore(_, menuItemId, _.copy(priceCents = sanitized.priceCents)),
             )
           )
       }
     }
 
 def updateStoreOperationalInfo(
-      storeId: String,
+      storeId: StoreId,
       request: UpdateStoreOperationalRequest,
-  ): IO[Either[String, DeliveryAppState]] =
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
     IO.blocking {
       updateState { current =>
         for
           store <- current.stores.find(_.id == storeId).toRight(ValidationMessages.StoreNotFound)
           businessHours <- validateBusinessHours(request.businessHours)
-          _ <- Either.cond(
-            request.avgPrepMinutes >= DeliveryValidationDefaults.PrepMinutesMin &&
-              request.avgPrepMinutes <= DeliveryValidationDefaults.PrepMinutesMax,
-            (),
-            ValidationMessages.PrepMinutesInvalid,
-          )
+          avgPrepMinutes <- validatePrepMinutes(request.avgPrepMinutes)
         yield
           withDerivedData(
-            current.copy(
-              stores = current.stores.map(entry =>
-                if entry.id == store.id then
-                  entry.copy(
-                    businessHours = businessHours,
-                    avgPrepMinutes = request.avgPrepMinutes,
-                  )
-                else entry
-              )
+            replaceStore(
+              current,
+              store.id,
+              _.copy(businessHours = businessHours, avgPrepMinutes = avgPrepMinutes),
             )
           )
       }
