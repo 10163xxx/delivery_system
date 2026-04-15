@@ -17,7 +17,6 @@ private val riderSuspended = RiderSuspendedStatus
 private val storeRevoked = StoreRevokedStatus
 private val storeBusy = StoreBusyStatus
 private val storeOpen = StoreOpenStatus
-private val emptyPhoneNumber = new PhoneNumber("")
 
 def refreshState(state: DeliveryAppState, currentTime: IsoDateTime): DeliveryAppState =
     withDerivedData(applyAutomaticDispatch(state, currentTime), currentTime)
@@ -395,30 +394,3 @@ private def isAfterReviewReset(
     resetTimestamp: Option[IsoDateTime],
 ): ApprovalFlag =
   resetTimestamp.forall(reset => Ordering[IsoDateTime].gteq(reviewTimestamp, reset))
-
-private def mergeMerchantProfiles(
-    state: DeliveryAppState,
-    settledIncomeByMerchant: Map[PersonName, CurrencyCents],
-): List[MerchantProfile] =
-  val merchantNames = (state.merchantProfiles.map(_.merchantName) ++ state.stores.map(_.merchantName)).distinct
-    merchantNames.map { merchantName =>
-      val existing = state.merchantProfiles.find(_.merchantName == merchantName)
-      val profile = existing.getOrElse(
-        MerchantProfile(
-          id = nextId(MerchantIdPrefix),
-          merchantName = merchantName,
-          contactPhone = emptyPhoneNumber,
-          payoutAccount = None,
-          settledIncomeCents = NumericDefaults.ZeroCurrencyCents,
-          withdrawnCents = NumericDefaults.ZeroCurrencyCents,
-          availableToWithdrawCents = NumericDefaults.ZeroCurrencyCents,
-          withdrawalHistory = List.empty,
-        )
-      )
-      val settledIncomeCents = settledIncomeByMerchant.getOrElse(merchantName, NumericDefaults.ZeroCurrencyCents)
-      profile.copy(
-        settledIncomeCents = settledIncomeCents,
-        availableToWithdrawCents = Math.max(NumericDefaults.ZeroCurrencyCents, settledIncomeCents - profile.withdrawnCents),
-        withdrawalHistory = profile.withdrawalHistory.sortBy(_.requestedAt)(Ordering[IsoDateTime].reverse),
-      )
-    }
