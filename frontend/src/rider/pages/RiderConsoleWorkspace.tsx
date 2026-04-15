@@ -1,5 +1,5 @@
-import type { RiderRoleProps } from '@/shared/app-build-role-props'
-import { RIDER_CONSOLE_COPY } from '@/rider/app/rider-support'
+import type { RiderRoleProps } from '@/shared/AppBuildRoleProps'
+import { RIDER_CONSOLE_COPY } from '@/rider/app/RiderSupport'
 import { OrderChatPanel } from '@/order/pages/OrderChatPanel'
 import { OrderList } from '@/order/pages/OrderList'
 import { Panel } from '@/shared/components/LayoutPrimitives'
@@ -12,7 +12,7 @@ import {
   REVIEW_STATUS,
   ROLE,
   type Rider,
-} from '@/shared/object'
+} from '@/shared/object/SharedObjects'
 
 function RiderSelector({
   role,

@@ -1,7 +1,7 @@
-import type { MerchantRoleProps } from '@/shared/app-build-role-props'
+import type { MerchantRoleProps } from '@/shared/AppBuildRoleProps'
 import { Panel } from '@/shared/components/LayoutPrimitives'
-import { PAYOUT_ACCOUNT_TYPE } from '@/shared/object'
-import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery'
+import { PAYOUT_ACCOUNT_TYPE } from '@/shared/object/SharedObjects'
+import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery/DeliveryServices'
 
 export function MerchantProfilePanel(props: MerchantRoleProps) {
   const {

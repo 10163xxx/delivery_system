@@ -1,4 +1,4 @@
-import type { AdminRoleProps } from '@/shared/app-build-role-props'
+import type { AdminRoleProps } from '@/shared/AppBuildRoleProps'
 import { Panel } from '@/shared/components/LayoutPrimitives'
 import {
   AFTER_SALES_REQUEST_TYPE,
@@ -6,12 +6,12 @@ import {
   TICKET_KIND,
   TICKET_STATUS,
   type AdminTicket,
-} from '@/shared/object'
+} from '@/shared/object/SharedObjects'
 import type {
   AfterSalesResolutionDraft,
   ResolutionDraftMap,
-} from '@/shared/delivery-app/object'
-import { AFTER_SALES_APPROVED_NOTE, AFTER_SALES_REJECTED_STANDARD_NOTE } from '@/shared/delivery'
+} from '@/shared/delivery-app/DeliveryAppObjects'
+import { AFTER_SALES_APPROVED_NOTE, AFTER_SALES_REJECTED_STANDARD_NOTE } from '@/shared/delivery/DeliveryServices'
 import { useMemo, useState } from 'react'
 
 type AfterSalesQueue = 'open' | 'resolved' | 'all'

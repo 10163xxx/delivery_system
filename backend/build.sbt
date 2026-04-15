@@ -17,5 +17,5 @@ lazy val root = (project in file("."))
       "org.typelevel" %% "log4cats-slf4j" % "2.7.0",
       "org.slf4j" % "slf4j-simple" % "2.0.13"
     ),
-    Compile / run / mainClass := Some("Main")
+    Compile / run / mainClass := Some("shared.app.BackendMain")
   )

@@ -1,7 +1,7 @@
 import { AdminReviewPanels } from '@/admin/pages/AdminReviewPanels'
 import { AdminSupportPanels } from '@/admin/pages/AdminSupportPanels'
-import { DELIVERY_CONSOLE_COPY } from '@/shared/components/delivery-copy'
-import type { AdminRoleProps } from '@/shared/app-build-role-props'
+import { DELIVERY_CONSOLE_COPY } from '@/shared/components/DeliveryConsoleCopy'
+import type { AdminRoleProps } from '@/shared/AppBuildRoleProps'
 
 function AdminIncomePanel(props: AdminRoleProps) {
   if (!props.state) return null

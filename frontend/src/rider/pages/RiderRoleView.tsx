@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { RiderRoleProps } from '@/shared/app-build-role-props'
+import type { RiderRoleProps } from '@/shared/AppBuildRoleProps'
 import { Panel } from '@/shared/components/LayoutPrimitives'
 import { RiderConsoleWorkspace } from '@/rider/pages/RiderConsoleWorkspace'
 import { RiderProfileWorkspace } from '@/rider/pages/RiderProfileWorkspace'
@@ -8,7 +8,7 @@ import {
   getVisibleRiders,
   RIDER_CONSOLE_COPY,
   type RiderWorkspaceView,
-} from '@/rider/app/rider-support'
+} from '@/rider/app/RiderSupport'
 
 export function RiderRoleView(props: RiderRoleProps) {
   const {

@@ -3,14 +3,14 @@ import type {
   CustomerRoleProps,
   MerchantRoleProps,
   RiderRoleProps,
-} from '@/shared/app-build-role-props'
+} from '@/shared/AppBuildRoleProps'
 import { AdminRoleView } from '@/admin/pages/AdminRoleView'
 import { CustomerRoleView } from '@/customer/pages/CustomerRoleView'
-import { DELIVERY_CONSOLE_COPY } from '@/shared/components/delivery-copy'
+import { DELIVERY_CONSOLE_COPY } from '@/shared/components/DeliveryConsoleCopy'
 import { MetricCard } from '@/shared/components/LayoutPrimitives'
 import { MerchantRoleView } from '@/merchant/pages/MerchantRoleView'
 import { RiderRoleView } from '@/rider/pages/RiderRoleView'
-import { ROLE, type DeliveryAppState, type Role } from '@/shared/object'
+import { ROLE, type DeliveryAppState, type Role } from '@/shared/object/SharedObjects'
 
 type DeliveryConsoleStageProps = {
   role: Role

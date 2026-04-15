@@ -1,11 +1,11 @@
-import type { CustomerRoleProps } from '@/shared/app-build-role-props'
+import type { CustomerRoleProps } from '@/shared/AppBuildRoleProps'
 import { Panel } from '@/shared/components/LayoutPrimitives'
-import type { AddressEntry, Coupon } from '@/shared/object'
+import type { AddressEntry, Coupon } from '@/shared/object/SharedObjects'
 import {
   CURRENCY_CENTS_SCALE,
   MEMBER_AUTO_DISPATCH_MINUTES,
   STANDARD_AUTO_DISPATCH_MINUTES,
-} from '@/shared/delivery'
+} from '@/shared/delivery/DeliveryServices'
 
 function RechargePanel({ props }: { props: CustomerRoleProps }) {
   const {

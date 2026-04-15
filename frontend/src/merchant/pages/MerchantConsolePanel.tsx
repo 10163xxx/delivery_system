@@ -1,9 +1,9 @@
-import type { MerchantConsolePanelProps } from '@/merchant/app/merchant-console-state'
+import type { MerchantConsolePanelProps } from '@/merchant/app/MerchantConsoleState'
 import { Panel } from '@/shared/components/LayoutPrimitives'
-import { MERCHANT_CONSOLE_COPY } from '@/merchant/pages/console/copy'
+import { MERCHANT_CONSOLE_COPY } from '@/merchant/pages/console/MerchantConsoleCopy'
 import { MerchantStoreModule } from '@/merchant/pages/console/MerchantStoreModule'
 import { MerchantStoreSummaryCard } from '@/merchant/pages/console/MerchantStoreSummaryCard'
-import { ORDER_STATUS, type OrderSummary, type Store } from '@/shared/object'
+import { ORDER_STATUS, type OrderSummary, type Store } from '@/shared/object/SharedObjects'
 
 function getPendingMerchantOrders(orders: OrderSummary[]) {
   return orders.filter(

@@ -1,10 +1,10 @@
 import type {
   MenuComposerOpenState,
   MerchantConsolePanelProps,
-} from '@/merchant/app/merchant-console-state'
+} from '@/merchant/app/MerchantConsoleState'
 import { DisplayImageSlot } from '@/shared/components/DisplayImageSlot'
-import type { MenuItem, Store } from '@/shared/object'
-import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery'
+import type { MenuItem, Store } from '@/shared/object/SharedObjects'
+import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery/DeliveryServices'
 
 export function MerchantMenuSection({
   store,

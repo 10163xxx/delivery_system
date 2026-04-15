@@ -3,7 +3,7 @@ import { CustomerOrdersWorkspace } from '@/customer/pages/CustomerOrdersWorkspac
 import { CustomerProfilePanels } from '@/customer/pages/CustomerProfilePanels'
 import { CustomerReviewWorkspace } from '@/customer/pages/CustomerReviewWorkspace'
 import { CustomerWorkspaceHeader } from '@/customer/pages/CustomerWorkspaceHeader'
-import type { CustomerRoleProps } from '@/shared/app-build-role-props'
+import type { CustomerRoleProps } from '@/shared/AppBuildRoleProps'
 
 export function CustomerRoleView(props: CustomerRoleProps) {
   const { customerWorkspaceView } = props

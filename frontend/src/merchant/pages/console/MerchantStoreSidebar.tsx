@@ -1,5 +1,5 @@
-import type { MerchantConsolePanelProps } from '@/merchant/app/merchant-console-state'
-import { ELIGIBILITY_REVIEW_TARGET, STORE_STATUS, type Store } from '@/shared/object'
+import type { MerchantConsolePanelProps } from '@/merchant/app/MerchantConsoleState'
+import { ELIGIBILITY_REVIEW_TARGET, STORE_STATUS, type Store } from '@/shared/object/SharedObjects'
 
 export function MerchantStoreSidebar({
   store,

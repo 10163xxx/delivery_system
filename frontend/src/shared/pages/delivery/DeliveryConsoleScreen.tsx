@@ -1,14 +1,14 @@
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import AuthScreen from '@/auth/pages/AuthScreen'
-import { buildAdminProps, buildCustomerProps, buildMerchantProps, buildRiderProps } from '@/shared/app-build-role-props'
-import { createCustomerActions } from '@/customer/app/actions/customer-actions'
-import { createMerchantActions } from '@/merchant/app/actions/merchant-actions'
-import type { AuthSession } from '@/shared/object'
-import { ROLE, ROUTE_PATH } from '@/shared/object'
+import { buildAdminProps, buildCustomerProps, buildMerchantProps, buildRiderProps } from '@/shared/AppBuildRoleProps'
+import { createCustomerActions } from '@/customer/app/actions/CustomerActions'
+import { createMerchantActions } from '@/merchant/app/actions/MerchantActions'
+import type { AuthSession } from '@/shared/object/SharedObjects'
+import { ROLE, ROUTE_PATH } from '@/shared/object/SharedObjects'
 import { DeliveryConsoleStage } from '@/shared/pages/delivery/DeliveryConsoleStage'
-import { useDeliveryConsolePageState } from '@/shared/delivery-app/page-state-service'
-import { useDeliveryConsolePageViewService } from '@/shared/delivery-app/page-view-service'
-import { useDeliveryConsoleSessionService } from '@/shared/delivery-app/session-service'
+import { useDeliveryConsolePageState } from '@/shared/delivery-app/DeliveryPageStateService'
+import { useDeliveryConsolePageViewService } from '@/shared/delivery-app/DeliveryPageViewService'
+import { useDeliveryConsoleSessionService } from '@/shared/delivery-app/DeliverySessionService'
 
 type PageViewState = ReturnType<typeof useDeliveryConsolePageViewService>
 type PageState = ReturnType<typeof useDeliveryConsolePageState>

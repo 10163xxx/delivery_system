@@ -1,7 +1,7 @@
-import type { MerchantRoleProps } from '@/shared/app-build-role-props'
+import type { MerchantRoleProps } from '@/shared/AppBuildRoleProps'
 import { DisplayImageSlot } from '@/shared/components/DisplayImageSlot'
 import { Panel } from '@/shared/components/LayoutPrimitives'
-import { APPLICATION_STATUS, ROLE } from '@/shared/object'
+import { APPLICATION_STATUS, ROLE } from '@/shared/object/SharedObjects'
 
 export function MerchantApplicationPanel(props: MerchantRoleProps) {
   const {

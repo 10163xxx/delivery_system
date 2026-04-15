@@ -2,8 +2,8 @@ import type { NavigateFunction } from 'react-router-dom'
 import {
   CUSTOMER_WORKSPACE_HEADER_TABS,
   CUSTOMER_WORKSPACE_VIEW_META,
-} from '@/shared/components/delivery-copy'
-import type { CustomerWorkspaceView } from '@/shared/delivery-app/object'
+} from '@/shared/components/DeliveryConsoleCopy'
+import type { CustomerWorkspaceView } from '@/shared/delivery-app/DeliveryAppObjects'
 
 type CustomerWorkspaceHeaderProps = {
   customerWorkspaceView: CustomerWorkspaceView

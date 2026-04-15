@@ -1,6 +1,6 @@
-import type { CustomerRoleProps } from '@/shared/app-build-role-props'
+import type { CustomerRoleProps } from '@/shared/AppBuildRoleProps'
 import { DisplayImageSlot } from '@/shared/components/DisplayImageSlot'
-import { ACCOUNT_STATUS, STORE_STATUS, type Store } from '@/shared/object'
+import { ACCOUNT_STATUS, STORE_STATUS, type Store } from '@/shared/object/SharedObjects'
 
 type StoreCustomerReview = CustomerRoleProps['storeCustomerReviews'][string][number]
 

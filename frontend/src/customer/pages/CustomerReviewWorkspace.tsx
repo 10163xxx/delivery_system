@@ -1,6 +1,6 @@
-import type { CustomerRoleProps } from '@/shared/app-build-role-props'
-import { REVIEW_TARGET } from '@/shared/object'
-import { DEFAULT_REVIEW_RATING, LOW_RATING_MAX, MAX_RATING, MIN_RATING } from '@/shared/delivery'
+import type { CustomerRoleProps } from '@/shared/AppBuildRoleProps'
+import { REVIEW_TARGET } from '@/shared/object/SharedObjects'
+import { DEFAULT_REVIEW_RATING, LOW_RATING_MAX, MAX_RATING, MIN_RATING } from '@/shared/delivery/DeliveryServices'
 import { Panel } from '@/shared/components/LayoutPrimitives'
 import { StarRatingField } from '@/review/pages/StarRatingField'
 

@@ -4,10 +4,10 @@ import type {
   OrderChatDraftMap,
   OrderRejectDraftMap,
   PartialRefundResolutionDraftMap,
-} from '@/merchant/app/merchant-console-state'
+} from '@/merchant/app/MerchantConsoleState'
 import { OrderChatPanel } from '@/order/pages/OrderChatPanel'
 import { OrderList } from '@/order/pages/OrderList'
-import { MERCHANT_CONSOLE_COPY } from '@/merchant/pages/console/copy'
+import { MERCHANT_CONSOLE_COPY } from '@/merchant/pages/console/MerchantConsoleCopy'
 import {
   APPEAL_ROLE,
   APPLICATION_STATUS,
@@ -16,7 +16,7 @@ import {
   ROLE,
   type OrderSummary,
   type Store,
-} from '@/shared/object'
+} from '@/shared/object/SharedObjects'
 
 export function MerchantOrdersSection({
   state,

@@ -15,4 +15,6 @@ backend/.sbt-global/
 backend/uploads/
 backend/manual-classes/
 .idea/
+.codex
 .codex/
+registered-accounts.txt

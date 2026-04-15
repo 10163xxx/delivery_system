@@ -1,5 +1,5 @@
-import type { MerchantRoleProps } from '@/shared/app-build-role-props'
-import type { MerchantWorkspaceView } from '@/shared/delivery-app/object'
+import type { MerchantRoleProps } from '@/shared/AppBuildRoleProps'
+import type { MerchantWorkspaceView } from '@/shared/delivery-app/DeliveryAppObjects'
 
 const MERCHANT_WORKSPACE_VIEW_META: Record<
   MerchantWorkspaceView,

@@ -1,4 +1,4 @@
-import type { CustomerRoleProps } from '@/shared/app-build-role-props'
+import type { CustomerRoleProps } from '@/shared/AppBuildRoleProps'
 import { Panel } from '@/shared/components/LayoutPrimitives'
 import { CustomerCheckoutPanel } from '@/customer/pages/CustomerCheckoutPanel'
 import { CustomerStoreBrowse } from '@/customer/pages/CustomerStoreBrowse'

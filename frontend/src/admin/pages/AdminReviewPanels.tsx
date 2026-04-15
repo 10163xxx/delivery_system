@@ -1,6 +1,6 @@
-import type { AdminRoleProps } from '@/shared/app-build-role-props'
+import type { AdminRoleProps } from '@/shared/AppBuildRoleProps'
 import { Panel } from '@/shared/components/LayoutPrimitives'
-import type { AppealResolutionDraft } from '@/shared/delivery-app/object'
+import type { AppealResolutionDraft } from '@/shared/delivery-app/DeliveryAppObjects'
 
 const APPLICATION_REVIEW_DEFAULTS = {
   approve: '资料已核验',

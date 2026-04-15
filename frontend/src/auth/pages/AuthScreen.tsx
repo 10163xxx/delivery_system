@@ -4,9 +4,9 @@ import type {
   AuthSession,
   LoginRequest,
   RegisterRequest,
-} from '@/shared/object'
-import { clearSessionToken, login, register, saveSessionToken } from '@/shared/api'
-import { REGISTERABLE_ROLES, ROLE } from '@/shared/object'
+} from '@/shared/object/SharedObjects'
+import { clearSessionToken, login, register, saveSessionToken } from '@/shared/api/SharedApi'
+import { REGISTERABLE_ROLES, ROLE } from '@/shared/object/SharedObjects'
 
 type AuthScreenProps = {
   onAuthenticated: (session: AuthSession) => void

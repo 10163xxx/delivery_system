@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { Dialog, DialogContent } from '@/shared/components/ui/dialog'
+import { Dialog, DialogContent } from '@/shared/components/ui/Dialog'
 
 type ModalShellProps = {
   children: ReactNode

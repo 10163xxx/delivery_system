@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import type { CustomerRoleProps } from '@/shared/app-build-role-props'
+import type { CustomerRoleProps } from '@/shared/AppBuildRoleProps'
 import { Panel } from '@/shared/components/LayoutPrimitives'
 import { OrderList } from '@/order/pages/OrderList'
 import { CustomerOrderDetailSection } from '@/order/pages/CustomerOrderHelpers'
-import { ORDER_STATUS, type OrderSummary } from '@/shared/object'
+import { ORDER_STATUS, type OrderSummary } from '@/shared/object/SharedObjects'
 
 type CustomerOrderSection = 'all' | 'active' | 'review' | ''
 

@@ -1,17 +1,17 @@
 import { useState } from 'react'
-import type { RiderRoleProps } from '@/shared/app-build-role-props'
+import type { RiderRoleProps } from '@/shared/AppBuildRoleProps'
 import {
   buildRiderProfileDraft,
   type RiderProfileDraft,
   type RiderProfileErrors,
-} from '@/rider/app/rider-support'
-import { PAYOUT_ACCOUNT_TYPE, type Rider } from '@/shared/object'
+} from '@/rider/app/RiderSupport'
+import { PAYOUT_ACCOUNT_TYPE, type Rider } from '@/shared/object/SharedObjects'
 import {
   CURRENCY_CENTS_SCALE,
   DELIVERY_CONSOLE_MESSAGES,
   MAX_WITHDRAW_AMOUNT_YUAN,
   isValidBankAccountNumber,
-} from '@/shared/delivery'
+} from '@/shared/delivery/DeliveryServices'
 
 type RiderProfileWorkspaceProps = Pick<
   RiderRoleProps,

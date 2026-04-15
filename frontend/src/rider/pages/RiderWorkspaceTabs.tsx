@@ -1,7 +1,7 @@
 import {
   RIDER_CONSOLE_COPY,
   type RiderWorkspaceView,
-} from '@/rider/app/rider-support'
+} from '@/rider/app/RiderSupport'
 
 export function RiderWorkspaceTabs({
   workspaceView,

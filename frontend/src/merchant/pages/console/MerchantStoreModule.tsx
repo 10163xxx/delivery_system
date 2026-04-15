@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import type { MerchantConsolePanelProps } from '@/merchant/app/merchant-console-state'
+import type { MerchantConsolePanelProps } from '@/merchant/app/MerchantConsoleState'
 import { MerchantMenuSection } from '@/merchant/pages/console/MerchantMenuSection'
 import { MerchantOrdersSection } from '@/merchant/pages/console/MerchantOrdersSection'
 import { MerchantStoreSidebar } from '@/merchant/pages/console/MerchantStoreSidebar'
-import { MERCHANT_CONSOLE_COPY } from '@/merchant/pages/console/copy'
-import { ORDER_STATUS, STORE_STATUS, type OrderSummary, type Store } from '@/shared/object'
+import { MERCHANT_CONSOLE_COPY } from '@/merchant/pages/console/MerchantConsoleCopy'
+import { ORDER_STATUS, STORE_STATUS, type OrderSummary, type Store } from '@/shared/object/SharedObjects'
 
 type MerchantStoreSubView = 'menu' | 'orders'
 

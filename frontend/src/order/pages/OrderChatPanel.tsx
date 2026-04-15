@@ -1,4 +1,4 @@
-import type { OrderSummary, Role } from '@/shared/object'
+import type { OrderSummary, Role } from '@/shared/object/SharedObjects'
 
 type OrderChatPanelProps = {
   order: OrderSummary

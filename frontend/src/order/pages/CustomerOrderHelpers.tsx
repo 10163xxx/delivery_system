@@ -1,6 +1,6 @@
-import type { CustomerRoleProps } from '@/shared/app-build-role-props'
-import { DEFAULT_PARTIAL_REFUND_QUANTITY } from '@/shared/delivery'
-import { createInitialAfterSalesDraft, createInitialPartialRefundDraft } from '@/shared/delivery'
+import type { CustomerRoleProps } from '@/shared/AppBuildRoleProps'
+import { DEFAULT_PARTIAL_REFUND_QUANTITY } from '@/shared/delivery/DeliveryServices'
+import { createInitialAfterSalesDraft, createInitialPartialRefundDraft } from '@/shared/delivery/DeliveryServices'
 import { OrderChatPanel } from '@/order/pages/OrderChatPanel'
 import {
   APPLICATION_STATUS,
@@ -14,7 +14,7 @@ import {
   type OrderLineItem,
   type OrderSummary,
   type OrderTimelineEntry,
-} from '@/shared/object'
+} from '@/shared/object/SharedObjects'
 
 type CustomerOrderHelpersProps = CustomerRoleProps
 

@@ -1,6 +1,6 @@
-import type { CustomerRoleProps } from '@/shared/app-build-role-props'
-import { STORE_STATUS, type AddressEntry, type Coupon, type MenuItem } from '@/shared/object'
-import { MIN_SCHEDULE_LEAD_MINUTES } from '@/shared/delivery'
+import type { CustomerRoleProps } from '@/shared/AppBuildRoleProps'
+import { STORE_STATUS, type AddressEntry, type Coupon, type MenuItem } from '@/shared/object/SharedObjects'
+import { MIN_SCHEDULE_LEAD_MINUTES } from '@/shared/delivery/DeliveryServices'
 
 export function CustomerCheckoutPanel(props: CustomerRoleProps) {
   const {

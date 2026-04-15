@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-type OrderSummary = import('@/shared/object').OrderSummary
+type OrderSummary = import('@/shared/object/SharedObjects').OrderSummary
 
 type OrderListProps = {
   orders: OrderSummary[]
