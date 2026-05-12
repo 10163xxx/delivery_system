@@ -1,7 +1,5 @@
-import {
-  CUSTOMER_STORE_SEARCH_HISTORY_KEY,
-} from '@/shared/delivery/DeliveryServices'
-import type { CustomerActionParams } from '@/customer/app/actions/CustomerActionTypes'
+import { browserStorage } from '@/shared/api/SharedApi'
+import type { CustomerActionParams } from '@/customer/object/action/CustomerActionTypes'
 
 export function removeKey<T>(record: Record<string, T>, key: string) {
   const next = { ...record }
@@ -11,11 +9,11 @@ export function removeKey<T>(record: Record<string, T>, key: string) {
 
 export function persistCustomerStoreSearchHistory(next: string[]) {
   if (next.length === 0) {
-    window.localStorage.removeItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY)
+    browserStorage.clearCustomerStoreSearchHistory()
     return
   }
 
-  window.localStorage.setItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY, JSON.stringify(next))
+  browserStorage.saveCustomerStoreSearchHistory(next)
 }
 
 export function clearDraftError(

@@ -1,4 +1,4 @@
-import { AFTER_SALES_REQUEST_TYPE, AFTER_SALES_RESOLUTION_MODE, PAYOUT_ACCOUNT_TYPE, type Store } from '@/shared/object/SharedObjects'
+import { AFTER_SALES_REQUEST_TYPE, AFTER_SALES_RESOLUTION_MODE, PAYOUT_ACCOUNT_TYPE, type Store } from '@/shared/object/core/SharedObjects'
 import {
   DEFAULT_MERCHANT_PREP_MINUTES,
   DEFAULT_PARTIAL_REFUND_QUANTITY,
@@ -15,7 +15,7 @@ import type {
   MerchantProfileDraft,
   PartialRefundDraft,
   ReviewDraft,
-} from '@/shared/delivery-app/DeliveryAppObjects'
+} from '@/shared/object/core/DeliveryAppObjects'
 
 export function getInitialQuantities(store?: Store): Record<string, number> {
   return Object.fromEntries(store?.menu.map((item) => [item.id, 0]) ?? [])

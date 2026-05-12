@@ -4,8 +4,6 @@ import domain.shared.given
 
 import shared.app.{customerAlias, registerUserProfile}
 import cats.effect.IO
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.*
 import domain.auth.*
 import domain.shared.*
 import shared.infra.files.{loadOrCreateJsonFile, writeJsonFile}
@@ -13,29 +11,6 @@ import shared.infra.files.{loadOrCreateJsonFile, writeJsonFile}
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
-
-final case class AuthAccount(
-    id: AuthUserId,
-    username: Username,
-    password: Password,
-    role: UserRole,
-    displayName: PersonName,
-    linkedProfileId: Option[EntityId],
-    createdAt: IsoDateTime,
-)
-
-final case class AuthState(
-    accounts: List[AuthAccount],
-    sessions: Map[SessionToken, AuthUserId],
-)
-
-object AuthAccount:
-  given Encoder[AuthAccount] = deriveEncoder
-  given Decoder[AuthAccount] = deriveDecoder
-
-object AuthState:
-  given Encoder[AuthState] = deriveEncoder
-  given Decoder[AuthState] = deriveDecoder
 
 private val authStateFile = sys.env
   .get(AuthDefaults.StateFileEnv.raw)
@@ -47,11 +22,11 @@ private val authStateRef = new AtomicReference[AuthState](loadAuthState())
 def login(request: LoginRequest): IO[Either[ErrorMessage, AuthSessionResponse]] =
   updateAuthState { state =>
     for
-      username <- sanitizeAuthRequiredText(request.username, AuthDefaults.UsernameMaxLength, ValidationMessages.UsernameRequired)
-      password <- sanitizeAuthRequiredText(request.password, AuthDefaults.PasswordMaxLength, ValidationMessages.PasswordRequired)
-      account <- state.accounts.find(_.username == username).toRight(ValidationMessages.AccountNotFound)
-      _ <- Either.cond(account.password == password, (), ValidationMessages.PasswordIncorrect)
-      _ <- Either.cond(account.role == request.role, (), ValidationMessages.LoginRoleMismatch)
+      username <- sanitizeAuthRequiredText(request.username, AuthDefaults.UsernameMaxLength, ValidationMessages.Auth.UsernameRequired)
+      password <- sanitizeAuthRequiredText(request.password, AuthDefaults.PasswordMaxLength, ValidationMessages.Auth.PasswordRequired)
+      account <- state.accounts.find(_.username == username).toRight(ValidationMessages.Auth.AccountNotFound)
+      _ <- Either.cond(account.password == password, (), ValidationMessages.Auth.PasswordIncorrect)
+      _ <- Either.cond(account.role == request.role, (), ValidationMessages.Auth.LoginRoleMismatch)
     yield
       val token = nextAuthToken()
       val nextState = state.copy(sessions = state.sessions.updated(token, account.id))
@@ -61,9 +36,9 @@ def login(request: LoginRequest): IO[Either[ErrorMessage, AuthSessionResponse]] 
 def register(request: RegisterRequest): IO[Either[ErrorMessage, AuthSessionResponse]] =
   val validated = for
     username <- sanitizeAuthUsername(request.username)
-    password <- sanitizeAuthRequiredText(request.password, AuthDefaults.PasswordMaxLength, ValidationMessages.PasswordRequired)
-    _ <- Either.cond(password.length >= AuthDefaults.PasswordMinLength, (), ValidationMessages.PasswordTooShort)
-    _ <- Either.cond(request.role != UserRole.admin, (), ValidationMessages.AdminSelfRegistrationForbidden)
+    password <- sanitizeAuthRequiredText(request.password, AuthDefaults.PasswordMaxLength, ValidationMessages.Auth.PasswordRequired)
+    _ <- Either.cond(password.length >= AuthDefaults.PasswordMinLength, (), ValidationMessages.Auth.PasswordTooShort)
+    _ <- Either.cond(request.role != UserRole.admin, (), ValidationMessages.Auth.AdminSelfRegistrationForbidden)
   yield (username, password)
 
   validated match
@@ -78,7 +53,7 @@ def register(request: RegisterRequest): IO[Either[ErrorMessage, AuthSessionRespo
               _ <- Either.cond(
                 !current.accounts.exists(_.username == username),
                 (),
-                ValidationMessages.UsernameAlreadyExists,
+                ValidationMessages.Auth.UsernameAlreadyExists,
               )
             yield
               val account = AuthAccount(
@@ -128,11 +103,11 @@ private def toSessionResponse(account: AuthAccount, token: SessionToken): AuthSe
   )
 
 private def sanitizeAuthUsername(value: Username): Either[ErrorMessage, Username] =
-  sanitizeAuthRequiredText(value, AuthDefaults.UsernameMaxLength, ValidationMessages.UsernameRequired).flatMap { username =>
+  sanitizeAuthRequiredText(value, AuthDefaults.UsernameMaxLength, ValidationMessages.Auth.UsernameRequired).flatMap { username =>
     Either.cond(
       username.raw.matches(AuthDefaults.UsernamePattern.raw),
       username,
-      ValidationMessages.UsernamePatternInvalid,
+      ValidationMessages.Auth.UsernamePatternInvalid,
     )
   }
 

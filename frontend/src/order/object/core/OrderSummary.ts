@@ -1,0 +1,93 @@
+import type {
+  AddressText,
+  CurrencyCents,
+  CustomerId,
+  DescriptionText,
+  DisplayText,
+  IsoDateTime,
+  NoteText,
+  OrderId,
+  OrderStatus,
+  PersonName,
+  RatingValue,
+  ReasonText,
+  ReviewStatus,
+  RiderId,
+  StoreId,
+} from '@/shared/object/domain/DomainObjects'
+import type { Coupon } from '@/customer/object/profile/Coupon'
+import type { OrderChatMessage } from '@/order/object/core/OrderChatMessage'
+import type { OrderLineItem } from '@/order/object/core/OrderLineItem'
+import type { OrderTimelineEntry } from '@/order/object/core/OrderTimelineEntry'
+import type { OrderPartialRefundRequest } from '@/order/object/after-sales/OrderPartialRefundRequest'
+
+export type OrderSummaryIdentity = {
+  id: OrderId
+  customerId: CustomerId
+  customerName: PersonName
+  storeId: StoreId
+  storeName: DisplayText
+  riderId?: RiderId
+  riderName?: PersonName
+}
+
+export type OrderSummaryFulfillment = {
+  status: OrderStatus
+  deliveryAddress: AddressText
+  scheduledDeliveryAt: IsoDateTime
+  remark?: NoteText
+  items: OrderLineItem[]
+}
+
+export type OrderSummaryPricing = {
+  itemSubtotalCents: CurrencyCents
+  deliveryFeeCents: CurrencyCents
+  couponDiscountCents: CurrencyCents
+  appliedCoupon?: Coupon
+  totalPriceCents: CurrencyCents
+}
+
+export type OrderSummaryLifecycle = {
+  createdAt: IsoDateTime
+  updatedAt: IsoDateTime
+}
+
+export type OrderSummaryActivity = {
+  timeline: OrderTimelineEntry[]
+  chatMessages: OrderChatMessage[]
+  partialRefundRequests: OrderPartialRefundRequest[]
+}
+
+export type OrderSummaryReviewState = {
+  storeRating?: RatingValue
+  riderRating?: RatingValue
+  merchantRejectReason?: ReasonText
+  reviewStatus: ReviewStatus
+  reviewRevokedReason?: ReasonText
+  reviewRevokedAt?: IsoDateTime
+}
+
+export type OrderSummaryReviewContent = {
+  reviewComment?: DescriptionText
+  reviewExtraNote?: NoteText
+  storeReviewComment?: DescriptionText
+  storeReviewExtraNote?: NoteText
+  riderReviewComment?: DescriptionText
+  riderReviewExtraNote?: NoteText
+}
+
+export type OrderSummary = {
+  identity: OrderSummaryIdentity
+  fulfillment: OrderSummaryFulfillment
+  pricing: OrderSummaryPricing
+  lifecycle: OrderSummaryLifecycle
+  reviewState: OrderSummaryReviewState
+  reviewContent: OrderSummaryReviewContent
+  activity: OrderSummaryActivity
+} & OrderSummaryIdentity &
+  OrderSummaryFulfillment &
+  OrderSummaryPricing &
+  OrderSummaryLifecycle &
+  OrderSummaryActivity &
+  OrderSummaryReviewState &
+  OrderSummaryReviewContent

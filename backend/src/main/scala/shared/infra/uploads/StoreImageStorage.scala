@@ -30,7 +30,7 @@ private val gif87aSignature: Vector[Byte] = Vector(0x47.toByte, 0x49.toByte, 0x4
 private val gif89aSignature: Vector[Byte] = Vector(0x47.toByte, 0x49.toByte, 0x46.toByte, 0x38.toByte, 0x39.toByte, 0x61.toByte)
 private val webpHeaderSignature: Vector[Byte] = Vector(0x52.toByte, 0x49.toByte, 0x46.toByte, 0x46.toByte)
 private val webpFormatSignature: Vector[Byte] = Vector(0x57.toByte, 0x45.toByte, 0x42.toByte, 0x50.toByte)
-private val webpFormatOffset: EntityCount = 8
+private val webpFormatOffset: EntityCount = UploadNumericDefaults.WebpFormatOffset
 private val noExtensionIndex: EntityCount = -1
 
 private def supportedImageTypeFromMediaType(value: MediaTypeText): Option[SupportedImageType] =

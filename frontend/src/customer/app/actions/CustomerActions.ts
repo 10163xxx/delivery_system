@@ -3,14 +3,14 @@ import { createCustomerProfileActions } from '@/customer/app/actions/CustomerPro
 import { createCustomerRechargeActions } from '@/customer/app/actions/CustomerRechargeActions'
 import { createCustomerSearchActions } from '@/customer/app/actions/CustomerSearchActions'
 import { createCustomerSupportActions } from '@/customer/app/actions/CustomerSupportActions'
-import type { CustomerActionParams } from '@/customer/app/actions/CustomerActionTypes'
+import type { CustomerActionContexts } from '@/customer/object/action/CustomerActionObjects'
 
-export function createCustomerActions(params: CustomerActionParams) {
+export function createCustomerActions(contexts: CustomerActionContexts) {
   return {
-    ...createCustomerSearchActions(params),
-    ...createCustomerOrderActions(params),
-    ...createCustomerSupportActions(params),
-    ...createCustomerProfileActions(params),
-    ...createCustomerRechargeActions(params),
+    ...createCustomerSearchActions(contexts.search),
+    ...createCustomerOrderActions(contexts.order),
+    ...createCustomerSupportActions(contexts.support),
+    ...createCustomerProfileActions(contexts.profile),
+    ...createCustomerRechargeActions(contexts.recharge),
   }
 }

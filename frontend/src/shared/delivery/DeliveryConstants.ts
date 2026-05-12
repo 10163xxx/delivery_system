@@ -1,5 +1,10 @@
-import type { Role, StoreCategory } from '@/shared/object/SharedObjects'
-import type { OrderSummary, Store } from '@/shared/object/SharedObjects'
+import {
+  STORE_CATEGORY,
+  type OrderSummary,
+  type Role,
+  type Store,
+  type StoreCategory,
+} from '@/shared/object/core/SharedObjects'
 
 export const BANK_OPTIONS = [
   '中国银行',
@@ -18,13 +23,18 @@ export const RIDER_REVIEW_REASON_OPTIONS = ['送达太慢', '定位不准', '态
 export const STATE_POLL_INTERVAL_MS = 3000
 export const LOGOUT_TRANSITION_MS = 1000
 export const CUSTOMER_STORE_SEARCH_HISTORY_KEY = 'customer-store-search-history'
+export const CUSTOMER_PROFILE_NOTICE_SEEN_KEY_PREFIX = 'customer-profile-notice-seen'
 export const MAX_CUSTOMER_STORE_SEARCH_HISTORY = 10
 export const REVIEW_WINDOW_DAYS = 10
+export const MONTHLY_TREND_WINDOW_DAYS = 30
 export const DELIVERY_FEE_CENTS = 1000
 export const CURRENCY_CENTS_SCALE = 100
+export const CURRENCY_DECIMAL_PLACES = 2
 export const MIN_SCHEDULE_LEAD_MINUTES = 30
 export const STANDARD_AUTO_DISPATCH_MINUTES = 15
 export const MEMBER_AUTO_DISPATCH_MINUTES = 8
+export const MERCHANT_REVENUE_SHARE_NUMERATOR = 70
+export const MERCHANT_REVENUE_SHARE_DENOMINATOR = 100
 export const MAX_RECHARGE_AMOUNT_YUAN = 5000
 export const MAX_WITHDRAW_AMOUNT_YUAN = 50000
 export const MIN_RATING = 1
@@ -76,17 +86,11 @@ export const MILLISECONDS_PER_MINUTE =
   SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 export const MILLISECONDS_PER_HOUR = MINUTES_PER_HOUR * MILLISECONDS_PER_MINUTE
 export const MILLISECONDS_PER_DAY = HOURS_PER_DAY * MILLISECONDS_PER_HOUR
-export const STORE_CATEGORIES: StoreCategory[] = [
-  '中式快餐',
-  '盖饭简餐',
-  '面馆粉档',
-  '麻辣香锅',
-  '饺子馄饨',
-  '轻食沙拉',
-  '咖啡甜点',
-  '奶茶果饮',
-  '夜宵小吃',
-]
+export const END_OF_DAY_HOUR = 23
+export const END_OF_DAY_MINUTE = 59
+export const END_OF_DAY_SECOND = 0
+export const END_OF_DAY_MILLISECOND = 0
+export const STORE_CATEGORIES: StoreCategory[] = Object.values(STORE_CATEGORY)
 
 export const roleLabels: Record<Role, string> = {
   customer: '顾客',

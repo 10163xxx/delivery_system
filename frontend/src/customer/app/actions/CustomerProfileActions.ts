@@ -1,28 +1,11 @@
-import {
-  addCustomerAddress as addCustomerAddressRequest,
-  removeCustomerAddress as removeCustomerAddressRequest,
-  setDefaultCustomerAddress as setDefaultCustomerAddressRequest,
-  updateCustomerProfile as updateCustomerProfileRequest,
-} from '@/shared/api/SharedApi'
+import { deliveryApi } from '@/shared/api/SharedApi'
 import {
   buildCustomerAddressPayload,
   buildCustomerProfilePayload,
   DELIVERY_CONSOLE_MESSAGES,
   validateCustomerAddressDraft,
 } from '@/shared/delivery/DeliveryServices'
-import type { CustomerActionParams } from '@/customer/app/actions/CustomerActionTypes'
-
-type CustomerProfileParams = Pick<
-  CustomerActionParams,
-  | 'selectedCustomer'
-  | 'customerNameDraft'
-  | 'addressDraft'
-  | 'runAction'
-  | 'setError'
-  | 'setAddressFormErrors'
-  | 'setAddressDraft'
-  | 'setSession'
->
+import type { CustomerProfileParams } from '@/customer/object/action/CustomerActionObjects'
 
 export function createCustomerProfileActions(params: CustomerProfileParams) {
   const {
@@ -40,10 +23,12 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
     if (!selectedCustomer) return
     const payload = buildCustomerProfilePayload(customerNameDraft)
     if (!payload.name) {
-      setError(DELIVERY_CONSOLE_MESSAGES.customerNameRequired)
+      setError(DELIVERY_CONSOLE_MESSAGES.profile.customerNameRequired)
       return
     }
-    const success = await runAction(() => updateCustomerProfileRequest(selectedCustomer.id, payload))
+    const success = await runAction(() =>
+      deliveryApi.customer.updateCustomerProfile(selectedCustomer.id, payload),
+    )
     if (!success) return
     setSession((current) =>
       current
@@ -62,7 +47,10 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
     setAddressFormErrors(nextErrors)
     if (nextErrors.label || nextErrors.address) return
     const success = await runAction(() =>
-      addCustomerAddressRequest(selectedCustomer.id, buildCustomerAddressPayload(addressDraft)),
+      deliveryApi.customer.addCustomerAddress(
+        selectedCustomer.id,
+        buildCustomerAddressPayload(addressDraft),
+      ),
     )
     if (!success) return
     setAddressDraft({ label: '', address: '' })
@@ -71,12 +59,16 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
 
   async function removeCustomerAddress(addressId: string) {
     if (!selectedCustomer) return
-    await runAction(() => removeCustomerAddressRequest(selectedCustomer.id, { address: addressId }))
+    await runAction(() =>
+      deliveryApi.customer.removeCustomerAddress(selectedCustomer.id, { address: addressId }),
+    )
   }
 
   async function setDefaultCustomerAddress(addressId: string) {
     if (!selectedCustomer) return
-    await runAction(() => setDefaultCustomerAddressRequest(selectedCustomer.id, { address: addressId }))
+    await runAction(() =>
+      deliveryApi.customer.setDefaultCustomerAddress(selectedCustomer.id, { address: addressId }),
+    )
   }
 
   return {

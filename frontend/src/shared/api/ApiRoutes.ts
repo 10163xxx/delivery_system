@@ -9,61 +9,145 @@ import type {
   RiderId,
   StoreId,
   TicketId,
-} from '@/shared/object/SharedObjects'
+} from '@/shared/object/core/SharedObjects'
 
 const API_BASE_PATH = '/api'
 const DELIVERY_BASE_PATH = `${API_BASE_PATH}/delivery`
 const AUTH_BASE_PATH = `${API_BASE_PATH}/auth`
 
-export const AUTH_API_ROUTE = {
-  login: `${AUTH_BASE_PATH}/login`,
-  register: `${AUTH_BASE_PATH}/register`,
-  session: `${AUTH_BASE_PATH}/session`,
-  logout: `${AUTH_BASE_PATH}/logout`,
-} as const
+export const AUTH_LOGIN_API_ROUTE = `${AUTH_BASE_PATH}/login`
+export const AUTH_REGISTER_API_ROUTE = `${AUTH_BASE_PATH}/register`
+export const AUTH_SESSION_API_ROUTE = `${AUTH_BASE_PATH}/session`
+export const AUTH_LOGOUT_API_ROUTE = `${AUTH_BASE_PATH}/logout`
 
-export const DELIVERY_API_ROUTE = {
-  state: `${DELIVERY_BASE_PATH}/state`,
-  merchantProfile: `${DELIVERY_BASE_PATH}/merchant-profile`,
-  merchantWithdraw: `${DELIVERY_BASE_PATH}/merchant-profile/withdraw`,
-  merchantApplications: `${DELIVERY_BASE_PATH}/merchant-applications`,
-  eligibilityReviews: `${DELIVERY_BASE_PATH}/eligibility-reviews`,
-  orders: `${DELIVERY_BASE_PATH}/orders`,
-  storeImageUpload: `${DELIVERY_BASE_PATH}/uploads/store-image`,
-  customerProfile: (customerId: CustomerId) => `${DELIVERY_BASE_PATH}/customers/${customerId}/profile`,
-  customerAddresses: (customerId: CustomerId) => `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses`,
-  customerAddressRemove: (customerId: CustomerId) => `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses/remove`,
-  customerAddressDefault: (customerId: CustomerId) => `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses/default`,
-  customerRecharge: (customerId: CustomerId) => `${DELIVERY_BASE_PATH}/customers/${customerId}/recharge`,
-  riderProfile: (riderId: RiderId) => `${DELIVERY_BASE_PATH}/riders/${riderId}/profile`,
-  riderWithdraw: (riderId: RiderId) => `${DELIVERY_BASE_PATH}/riders/${riderId}/withdraw`,
-  merchantApplicationApprove: (applicationId: MerchantApplicationId) =>
-    `${DELIVERY_BASE_PATH}/merchant-applications/${applicationId}/approve`,
-  merchantApplicationReject: (applicationId: MerchantApplicationId) =>
-    `${DELIVERY_BASE_PATH}/merchant-applications/${applicationId}/reject`,
-  reviewAppealReview: (appealId: ReviewAppealId) => `${DELIVERY_BASE_PATH}/review-appeals/${appealId}/review`,
-  eligibilityReview: (reviewId: EligibilityReviewId) => `${DELIVERY_BASE_PATH}/eligibility-reviews/${reviewId}/review`,
-  storeMenu: (storeId: StoreId) => `${DELIVERY_BASE_PATH}/stores/${storeId}/menu`,
-  storeMenuItemRemove: (storeId: StoreId, menuItemId: MenuItemId) =>
-    `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/remove`,
-  storeMenuItemStock: (storeId: StoreId, menuItemId: MenuItemId) =>
-    `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/stock`,
-  storeMenuItemPrice: (storeId: StoreId, menuItemId: MenuItemId) =>
-    `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/price`,
-  storeOperations: (storeId: StoreId) => `${DELIVERY_BASE_PATH}/stores/${storeId}/operations`,
-  order: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}`,
-  orderAccept: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/accept`,
-  orderReject: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/reject`,
-  orderReady: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/ready`,
-  orderAssignRider: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/assign-rider`,
-  orderPickup: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/pickup`,
-  orderDeliver: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/deliver`,
-  orderReview: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/review`,
-  orderChat: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/chat`,
-  orderPartialRefunds: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/partial-refunds`,
-  orderAfterSales: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/after-sales`,
-  orderReviewAppeals: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/review-appeals`,
-  orderResolve: (orderId: OrderId) => `${DELIVERY_BASE_PATH}/orders/${orderId}/resolve`,
-  partialRefundReview: (refundId: RefundRequestId) => `${DELIVERY_BASE_PATH}/partial-refunds/${refundId}/review`,
-  afterSalesReview: (ticketId: TicketId) => `${DELIVERY_BASE_PATH}/tickets/${ticketId}/after-sales/review`,
-} as const
+export const DELIVERY_STATE_API_ROUTE = `${DELIVERY_BASE_PATH}/state`
+export const DELIVERY_MERCHANT_PROFILE_API_ROUTE = `${DELIVERY_BASE_PATH}/merchant-profile`
+export const DELIVERY_MERCHANT_WITHDRAW_API_ROUTE = `${DELIVERY_BASE_PATH}/merchant-profile/withdraw`
+export const DELIVERY_MERCHANT_APPLICATIONS_API_ROUTE = `${DELIVERY_BASE_PATH}/merchant-applications`
+export const DELIVERY_ELIGIBILITY_REVIEWS_API_ROUTE = `${DELIVERY_BASE_PATH}/eligibility-reviews`
+export const DELIVERY_ORDERS_API_ROUTE = `${DELIVERY_BASE_PATH}/orders`
+export const DELIVERY_STORE_IMAGE_UPLOAD_API_ROUTE = `${DELIVERY_BASE_PATH}/uploads/store-image`
+
+export function getCustomerProfileApiRoute(customerId: CustomerId) {
+  return `${DELIVERY_BASE_PATH}/customers/${customerId}/profile`
+}
+
+export function getCustomerAddressesApiRoute(customerId: CustomerId) {
+  return `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses`
+}
+
+export function getCustomerAddressRemoveApiRoute(customerId: CustomerId) {
+  return `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses/remove`
+}
+
+export function getCustomerAddressDefaultApiRoute(customerId: CustomerId) {
+  return `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses/default`
+}
+
+export function getCustomerRechargeApiRoute(customerId: CustomerId) {
+  return `${DELIVERY_BASE_PATH}/customers/${customerId}/recharge`
+}
+
+export function getRiderProfileApiRoute(riderId: RiderId) {
+  return `${DELIVERY_BASE_PATH}/riders/${riderId}/profile`
+}
+
+export function getRiderWithdrawApiRoute(riderId: RiderId) {
+  return `${DELIVERY_BASE_PATH}/riders/${riderId}/withdraw`
+}
+
+export function getMerchantApplicationApproveApiRoute(applicationId: MerchantApplicationId) {
+  return `${DELIVERY_BASE_PATH}/merchant-applications/${applicationId}/approve`
+}
+
+export function getMerchantApplicationRejectApiRoute(applicationId: MerchantApplicationId) {
+  return `${DELIVERY_BASE_PATH}/merchant-applications/${applicationId}/reject`
+}
+
+export function getReviewAppealReviewApiRoute(appealId: ReviewAppealId) {
+  return `${DELIVERY_BASE_PATH}/review-appeals/${appealId}/review`
+}
+
+export function getEligibilityReviewApiRoute(reviewId: EligibilityReviewId) {
+  return `${DELIVERY_BASE_PATH}/eligibility-reviews/${reviewId}/review`
+}
+
+export function getStoreMenuApiRoute(storeId: StoreId) {
+  return `${DELIVERY_BASE_PATH}/stores/${storeId}/menu`
+}
+
+export function getStoreMenuItemRemoveApiRoute(storeId: StoreId, menuItemId: MenuItemId) {
+  return `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/remove`
+}
+
+export function getStoreMenuItemStockApiRoute(storeId: StoreId, menuItemId: MenuItemId) {
+  return `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/stock`
+}
+
+export function getStoreMenuItemPriceApiRoute(storeId: StoreId, menuItemId: MenuItemId) {
+  return `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/price`
+}
+
+export function getStoreOperationsApiRoute(storeId: StoreId) {
+  return `${DELIVERY_BASE_PATH}/stores/${storeId}/operations`
+}
+
+export function getOrderApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}`
+}
+
+export function getOrderAcceptApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/accept`
+}
+
+export function getOrderRejectApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/reject`
+}
+
+export function getOrderReadyApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/ready`
+}
+
+export function getOrderAssignRiderApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/assign-rider`
+}
+
+export function getOrderPickupApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/pickup`
+}
+
+export function getOrderDeliverApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/deliver`
+}
+
+export function getOrderReviewApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/review`
+}
+
+export function getOrderChatApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/chat`
+}
+
+export function getOrderPartialRefundsApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/partial-refunds`
+}
+
+export function getOrderAfterSalesApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/after-sales`
+}
+
+export function getOrderReviewAppealsApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/review-appeals`
+}
+
+export function getOrderResolveApiRoute(orderId: OrderId) {
+  return `${DELIVERY_BASE_PATH}/orders/${orderId}/resolve`
+}
+
+export function getPartialRefundReviewApiRoute(refundId: RefundRequestId) {
+  return `${DELIVERY_BASE_PATH}/partial-refunds/${refundId}/review`
+}
+
+export function getAfterSalesReviewApiRoute(ticketId: TicketId) {
+  return `${DELIVERY_BASE_PATH}/tickets/${ticketId}/after-sales/review`
+}

@@ -25,8 +25,4 @@
     <circle cx="266" cy="177" r="13" fill="#f1d77a"/>
     <circle cx="351" cy="203" r="14" fill="#ffffff"/>
   </g>
-  <rect x="24" y="24" width="272" height="112" rx="24" fill="#050505" opacity=".8"/>
-  <rect x="36" y="36" width="248" height="88" rx="18" fill="#111111" opacity=".92"/>
-  <text x="52" y="74" font-size="34" font-weight="700" fill="#fff" stroke="#000" stroke-width="1.5" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">轻食沙拉</text>
-  <text x="52" y="106" font-size="17" fill="#ffffff" stroke="#000" stroke-width="0.8" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">轻负担组合，适合健身和工作餐</text>
 </svg>

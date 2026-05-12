@@ -1,0 +1,91 @@
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.form-grid label,
+.form-grid .upload-field,
+.compact-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-grid label.full {
+  grid-column: 1 / -1;
+}
+
+.form-grid .upload-field.full {
+  grid-column: 1 / -1;
+}
+
+.field-hint {
+  color: #786247;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.field-error {
+  border-color: #c84c3a;
+  box-shadow: 0 0 0 3px rgba(200, 76, 58, 0.14);
+  background: #fff8f5;
+}
+
+.field-error-text {
+  color: #b54433;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.visually-hidden-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.upload-trigger {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-trigger.is-uploading {
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.upload-file-name {
+  color: #5b492f;
+  background: #f8f1e5;
+}
+
+select,
+input,
+textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fffdf8;
+  border: 1px solid rgba(56, 64, 50, 0.1);
+  outline: none;
+  resize: vertical;
+}
+
+textarea {
+  min-height: 112px;
+}
+
+@media (max-width: 720px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

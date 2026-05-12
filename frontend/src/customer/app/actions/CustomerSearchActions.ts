@@ -1,13 +1,6 @@
-import type { CustomerActionParams } from '@/customer/app/actions/CustomerActionTypes'
+import { browserStorage } from '@/shared/api/SharedApi'
 import { persistCustomerStoreSearchHistory } from '@/customer/app/actions/CustomerActionHelpers'
-
-type CustomerSearchParams = Pick<
-  CustomerActionParams,
-  | 'customerStoreSearchDraft'
-  | 'setCustomerStoreSearchDraft'
-  | 'setCustomerStoreSearch'
-  | 'setCustomerStoreSearchHistory'
->
+import type { CustomerSearchParams } from '@/customer/object/action/CustomerActionObjects'
 
 export function createCustomerSearchActions(params: CustomerSearchParams) {
   const {
@@ -25,7 +18,7 @@ export function createCustomerSearchActions(params: CustomerSearchParams) {
 
   function clearCustomerStoreSearchHistory() {
     setCustomerStoreSearchHistory([])
-    window.localStorage.removeItem('customer-store-search-history')
+    browserStorage.clearCustomerStoreSearchHistory()
   }
 
   function removeCustomerStoreSearchHistoryItem(keyword: string) {

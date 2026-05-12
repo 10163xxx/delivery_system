@@ -3,20 +3,34 @@ import type {
   EligibilityReviewRequest,
   OrderId,
   ReviewAppealRequest,
-} from '@/shared/object/SharedObjects'
-import { request } from '@/shared/api/SharedHttpClient'
-import { DELIVERY_API_ROUTE } from '@/shared/api/ApiRoutes'
+} from '@/shared/object/core/SharedObjects'
+import {
+  defineJsonPostEndpoint,
+  httpClient,
+} from '@/shared/api/SharedHttpClient'
+import { normalizeDeliveryState } from '@/shared/api/DeliveryStateNormalizer'
+import {
+  DELIVERY_ELIGIBILITY_REVIEWS_API_ROUTE,
+  getOrderReviewAppealsApiRoute,
+} from '@/shared/api/ApiRoutes'
 
-export function submitReviewAppeal(orderId: OrderId, payload: ReviewAppealRequest) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.orderReviewAppeals(orderId), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
+export const reviewApi = {
+  submitReviewAppeal(orderId: OrderId, payload: ReviewAppealRequest) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<ReviewAppealRequest, DeliveryAppState>(
+        getOrderReviewAppealsApiRoute(orderId),
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
+  submitEligibilityReview(payload: EligibilityReviewRequest) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<EligibilityReviewRequest, DeliveryAppState>(
+        DELIVERY_ELIGIBILITY_REVIEWS_API_ROUTE,
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
 }
 
-export function submitEligibilityReview(payload: EligibilityReviewRequest) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.eligibilityReviews, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
+export const { submitReviewAppeal, submitEligibilityReview } = reviewApi

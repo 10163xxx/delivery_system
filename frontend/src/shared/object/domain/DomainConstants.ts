@@ -62,6 +62,12 @@ export const APPEAL_STATUS = {
   rejected: 'Rejected',
 } as const
 
+export const PARTIAL_REFUND_STATUS = {
+  pending: 'Pending',
+  approved: 'Approved',
+  rejected: 'Rejected',
+} as const
+
 export const APPEAL_ROLE = {
   merchant: 'Merchant',
   rider: 'Rider',
@@ -85,6 +91,29 @@ export const REVIEW_TARGET = {
 export const REVIEW_STATUS = {
   active: 'Active',
   revoked: 'Revoked',
+} as const
+
+export const MEMBERSHIP_TIER = {
+  standard: 'Standard',
+  member: 'Member',
+} as const
+
+export const RIDER_AVAILABILITY = {
+  available: 'Available',
+  onDelivery: 'OnDelivery',
+  suspended: 'Suspended',
+} as const
+
+export const STORE_CATEGORY = {
+  chineseFastFood: '中式快餐',
+  riceMeals: '盖饭简餐',
+  noodles: '面馆粉档',
+  spicyPot: '麻辣香锅',
+  dumplings: '饺子馄饨',
+  salads: '轻食沙拉',
+  cafeDesserts: '咖啡甜点',
+  teaDrinks: '奶茶果饮',
+  lateNightSnacks: '夜宵小吃',
 } as const
 
 export const ROUTE_PATH = {

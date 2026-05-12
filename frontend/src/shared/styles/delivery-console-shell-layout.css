@@ -1,0 +1,203 @@
+#root {
+  min-height: 100vh;
+}
+
+.delivery-app {
+  position: relative;
+  isolation: isolate;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.delivery-app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(180deg, rgba(255, 247, 237, 0.92), rgba(246, 236, 224, 0.94)),
+    var(--delivery-role-glow, radial-gradient(circle at top left, rgba(255, 212, 168, 0.55), transparent 34%)),
+    url('/patterns/delivery-doodles.svg') left top / 248px 248px repeat;
+}
+
+.delivery-app::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.18)),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.28), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(255, 230, 198, 0.24), transparent 28%);
+}
+
+.delivery-app--customer {
+  --delivery-role-glow: radial-gradient(circle at top left, rgba(255, 210, 166, 0.6), transparent 32%);
+}
+
+.delivery-app--merchant {
+  --delivery-role-glow: radial-gradient(circle at top left, rgba(255, 193, 148, 0.62), transparent 32%);
+}
+
+.delivery-app--rider {
+  --delivery-role-glow: radial-gradient(circle at top left, rgba(188, 227, 204, 0.58), transparent 32%);
+}
+
+.delivery-app--admin {
+  --delivery-role-glow: radial-gradient(circle at top left, rgba(252, 214, 179, 0.56), transparent 32%);
+}
+
+.hero-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+  gap: 24px;
+  padding: 32px;
+  border: 1px solid rgba(39, 50, 40, 0.08);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 234, 0.88), rgba(255, 241, 227, 0.86)),
+    #fff;
+  box-shadow: 0 24px 60px rgba(73, 52, 24, 0.08);
+}
+
+.admin-summary-panel {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #91612d;
+  margin-bottom: 12px;
+}
+
+.hero-panel h1 {
+  font-size: clamp(2rem, 4vw, 4.3rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  margin-bottom: 16px;
+}
+
+.hero-copy {
+  max-width: 720px;
+  font-size: 1.05rem;
+  color: #645746;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.metric-card,
+.panel,
+.role-strip,
+.order-card,
+.menu-card,
+.ticket-card,
+.empty-card {
+  border: 1px solid rgba(39, 50, 40, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 250, 244, 0.9);
+  box-shadow: 0 12px 32px rgba(48, 42, 31, 0.06);
+}
+
+.metric-card {
+  padding: 20px;
+}
+
+.metric-card p,
+.meta-line,
+.panel-header p,
+.menu-card p,
+.ticket-card p,
+.timeline-item p {
+  color: #6b6252;
+}
+
+.metric-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.role-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  align-self: start;
+  position: sticky;
+  top: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 238, 0.94), rgba(255, 252, 246, 0.9));
+}
+
+.role-stage,
+.panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.banner {
+  padding: 14px 18px;
+  border-radius: 16px;
+}
+
+.banner.error {
+  background: #fde8e3;
+  color: #8d372a;
+}
+
+.banner.info {
+  background: #f4ecd5;
+  color: #75571b;
+}
+
+.panel {
+  padding: 24px;
+}
+
+.panel-header {
+  margin-bottom: 20px;
+}
+
+.panel-header h2 {
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+}
+
+@media (max-width: 960px) {
+  .delivery-app {
+    padding: 20px;
+  }
+
+  .hero-panel,
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .role-strip {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 720px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

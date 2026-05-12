@@ -1,6 +1,7 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import type { ComponentProps } from 'react'
+import type { DialogContentProps } from '@/shared/object/core/DialogObjects'
 
 import { cn } from '@/shared/components/ui/UiUtils'
 
@@ -34,10 +35,6 @@ function DialogOverlay({
       {...props}
     />
   )
-}
-
-type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
-  showCloseButton?: boolean
 }
 
 function DialogContent({

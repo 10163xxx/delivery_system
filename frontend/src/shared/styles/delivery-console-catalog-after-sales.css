@@ -1,0 +1,159 @@
+.after-sales-console {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 18px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(56, 64, 50, 0.1);
+}
+
+.after-sales-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: start;
+}
+
+.after-sales-rail-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1px solid rgba(56, 64, 50, 0.1);
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #5d503d;
+  font-weight: 700;
+}
+
+.after-sales-rail-button.is-active {
+  background: #26321f;
+  color: #fff8ea;
+  box-shadow: 0 10px 20px rgba(41, 62, 35, 0.16);
+}
+
+.after-sales-rail-button strong {
+  display: inline-grid;
+  min-width: 2.2rem;
+  min-height: 2rem;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(38, 50, 31, 0.08);
+}
+
+.after-sales-rail-button.is-active strong {
+  background: rgba(255, 248, 234, 0.18);
+}
+
+.after-sales-workspace {
+  min-width: 0;
+}
+
+.after-sales-date-range {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.after-sales-date-range label {
+  display: grid;
+  flex: 1 1 180px;
+  gap: 8px;
+  max-width: 260px;
+}
+
+.after-sales-date-range span {
+  color: #6b6252;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.after-sales-date-reset {
+  min-height: 49px;
+  white-space: nowrap;
+}
+
+.after-sales-ticket-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.after-sales-ticket-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.4fr) minmax(240px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.after-sales-ticket-main,
+.after-sales-ticket-detail {
+  min-width: 0;
+}
+
+.after-sales-ticket-main {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.after-sales-ticket-main h3,
+.after-sales-ticket-detail p,
+.after-sales-ticket-result {
+  overflow-wrap: anywhere;
+}
+
+.after-sales-ticket-actions {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.after-sales-ticket-result {
+  align-self: center;
+}
+
+.after-sales-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.after-sales-page-button {
+  display: inline-grid;
+  min-width: 40px;
+  min-height: 40px;
+  place-items: center;
+  border: 1px solid rgba(56, 64, 50, 0.12);
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #5d503d;
+  font-weight: 800;
+}
+
+.after-sales-page-button.is-active {
+  background: #26321f;
+  color: #fff8ea;
+}
+
+@media (max-width: 720px) {
+  .after-sales-console {
+    grid-template-columns: 1fr;
+  }
+
+  .after-sales-rail {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .after-sales-rail-button {
+    min-width: 132px;
+  }
+
+  .after-sales-ticket-row {
+    grid-template-columns: 1fr;
+  }
+}

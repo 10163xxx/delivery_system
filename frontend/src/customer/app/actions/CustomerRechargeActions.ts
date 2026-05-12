@@ -1,5 +1,5 @@
-import { rechargeCustomerBalance as rechargeCustomerBalanceRequest } from '@/shared/api/SharedApi'
-import { ROUTE_PATH } from '@/shared/object/SharedObjects'
+import { deliveryApi } from '@/shared/api/SharedApi'
+import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 import {
   buildRechargePayload,
   DEFAULT_RECHARGE_PRESET_INDEX,
@@ -8,18 +8,7 @@ import {
   parseRechargeAmount,
   RECHARGE_PRESET_AMOUNTS,
 } from '@/shared/delivery/DeliveryServices'
-import type { CustomerActionParams } from '@/customer/app/actions/CustomerActionTypes'
-
-type CustomerRechargeParams = Pick<
-  CustomerActionParams,
-  | 'selectedCustomer'
-  | 'customRechargeAmount'
-  | 'runAction'
-  | 'navigate'
-  | 'setCustomRechargeAmount'
-  | 'setSelectedRechargeAmount'
-  | 'setRechargeFieldError'
->
+import type { CustomerRechargeParams } from '@/customer/object/action/CustomerActionObjects'
 
 export function createCustomerRechargeActions(params: CustomerRechargeParams) {
   const {
@@ -42,14 +31,16 @@ export function createCustomerRechargeActions(params: CustomerRechargeParams) {
     if (!selectedCustomer) return
     const amount = parseRechargeAmount(customRechargeAmount) ?? RECHARGE_PRESET_AMOUNTS[DEFAULT_RECHARGE_PRESET_INDEX]
     if (amount <= 0) {
-      setRechargeFieldError(DELIVERY_CONSOLE_MESSAGES.invalidRechargeAmount)
+      setRechargeFieldError(DELIVERY_CONSOLE_MESSAGES.account.invalidRechargeAmount)
       return
     }
     if (amount > MAX_RECHARGE_AMOUNT_YUAN) {
-      setRechargeFieldError(DELIVERY_CONSOLE_MESSAGES.rechargeAmountTooLarge)
+      setRechargeFieldError(DELIVERY_CONSOLE_MESSAGES.account.rechargeAmountTooLarge)
       return
     }
-    const success = await runAction(() => rechargeCustomerBalanceRequest(selectedCustomer.id, buildRechargePayload(amount)))
+    const success = await runAction(() =>
+      deliveryApi.customer.rechargeCustomerBalance(selectedCustomer.id, buildRechargePayload(amount)),
+    )
     if (!success) return
     setRechargeFieldError(null)
     navigate(ROUTE_PATH.customerProfile)

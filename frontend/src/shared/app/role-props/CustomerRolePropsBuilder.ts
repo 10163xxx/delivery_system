@@ -1,0 +1,48 @@
+import type { CustomerPropsArgs } from '@/shared/object/core/AppBuildRolePropsObjects'
+import { getCustomerStateProps, getCustomerViewProps } from './CustomerRolePropGroups'
+
+export function buildCustomerProps({
+  pageView,
+  pageState,
+  sessionService,
+  navigate,
+  addCustomerAddress,
+  getRemainingRefundableQuantity,
+  openRechargePage,
+  removeCustomerAddress,
+  setDefaultCustomerAddress,
+  saveCustomerName,
+  selectRechargeAmount,
+  clearCustomerStoreSearchHistory,
+  removeCustomerStoreSearchHistoryItem,
+  submitAfterSalesRequest,
+  submitCustomerStoreSearch,
+  submitOrder,
+  submitOrderChatMessage,
+  submitPartialRefundRequest,
+  submitRechargeFromPage,
+  submitReview,
+  canSubmitPartialRefund,
+}: CustomerPropsArgs) {
+  return {
+    ...getCustomerViewProps(pageView, navigate),
+    ...getCustomerStateProps(pageState, sessionService),
+    addCustomerAddress,
+    getRemainingRefundableQuantity,
+    openRechargePage,
+    removeCustomerAddress,
+    setDefaultCustomerAddress,
+    saveCustomerName,
+    selectRechargeAmount,
+    clearCustomerStoreSearchHistory,
+    removeCustomerStoreSearchHistoryItem,
+    submitAfterSalesRequest,
+    submitCustomerStoreSearch,
+    submitOrder,
+    submitOrderChatMessage,
+    submitPartialRefundRequest,
+    submitRechargeFromPage,
+    submitReview,
+    canSubmitPartialRefund,
+  }
+}

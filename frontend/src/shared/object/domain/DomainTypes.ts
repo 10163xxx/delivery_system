@@ -1,4 +1,24 @@
-export type Role = 'customer' | 'merchant' | 'rider' | 'admin'
+import {
+  ACCOUNT_STATUS,
+  AFTER_SALES_REQUEST_TYPE,
+  AFTER_SALES_RESOLUTION_MODE,
+  APPEAL_ROLE,
+  APPEAL_STATUS,
+  APPLICATION_STATUS,
+  ELIGIBILITY_REVIEW_TARGET,
+  MEMBERSHIP_TIER,
+  ORDER_STATUS,
+  PARTIAL_REFUND_STATUS,
+  REVIEW_STATUS,
+  RIDER_AVAILABILITY,
+  ROLE,
+  STORE_CATEGORY,
+  STORE_STATUS,
+  TICKET_KIND,
+  TICKET_STATUS,
+} from './DomainConstants'
+
+export type Role = (typeof ROLE)[keyof typeof ROLE]
 
 declare const domainBrand: unique symbol
 
@@ -89,39 +109,24 @@ export type PercentageValue = NumericDomainValue<PercentageValueTag>
 export type ApprovalFlag = BooleanDomainValue<ApprovalFlagTag>
 export type EmptySelection = TextDomainValue<EmptySelectionTag>
 
-export type OrderStatus =
-  | 'PendingMerchantAcceptance'
-  | 'Preparing'
-  | 'ReadyForPickup'
-  | 'Delivering'
-  | 'Completed'
-  | 'Cancelled'
-  | 'Escalated'
-
-export type TicketKind =
-  | 'PositiveReview'
-  | 'NegativeReview'
-  | 'DeliveryIssue'
-
-export type AfterSalesRequestType = 'ReturnRequest' | 'CompensationRequest'
-export type AfterSalesResolutionMode = 'Balance' | 'Coupon' | 'Manual'
-
-export type TicketStatus = 'Open' | 'Resolved'
-export type MerchantApplicationStatus = 'Pending' | 'Approved' | 'Rejected'
-export type AccountStatus = 'Active' | 'Suspended'
-export type ReviewStatus = 'Active' | 'Revoked'
-export type AppealStatus = 'Pending' | 'Approved' | 'Rejected'
-export type PartialRefundStatus = 'Pending' | 'Approved' | 'Rejected'
-export type AppealRole = 'Merchant' | 'Rider'
-export type EligibilityReviewTarget = 'Store' | 'Rider'
-export type MembershipTier = 'Standard' | 'Member'
-export type StoreCategory =
-  | '中式快餐'
-  | '盖饭简餐'
-  | '面馆粉档'
-  | '麻辣香锅'
-  | '饺子馄饨'
-  | '轻食沙拉'
-  | '咖啡甜点'
-  | '奶茶果饮'
-  | '夜宵小吃'
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS]
+export type TicketKind = (typeof TICKET_KIND)[keyof typeof TICKET_KIND]
+export type AfterSalesRequestType =
+  (typeof AFTER_SALES_REQUEST_TYPE)[keyof typeof AFTER_SALES_REQUEST_TYPE]
+export type AfterSalesResolutionMode =
+  (typeof AFTER_SALES_RESOLUTION_MODE)[keyof typeof AFTER_SALES_RESOLUTION_MODE]
+export type TicketStatus = (typeof TICKET_STATUS)[keyof typeof TICKET_STATUS]
+export type MerchantApplicationStatus =
+  (typeof APPLICATION_STATUS)[keyof typeof APPLICATION_STATUS]
+export type AccountStatus = (typeof ACCOUNT_STATUS)[keyof typeof ACCOUNT_STATUS]
+export type ReviewStatus = (typeof REVIEW_STATUS)[keyof typeof REVIEW_STATUS]
+export type AppealStatus = (typeof APPEAL_STATUS)[keyof typeof APPEAL_STATUS]
+export type PartialRefundStatus =
+  (typeof PARTIAL_REFUND_STATUS)[keyof typeof PARTIAL_REFUND_STATUS]
+export type AppealRole = (typeof APPEAL_ROLE)[keyof typeof APPEAL_ROLE]
+export type EligibilityReviewTarget =
+  (typeof ELIGIBILITY_REVIEW_TARGET)[keyof typeof ELIGIBILITY_REVIEW_TARGET]
+export type MembershipTier = (typeof MEMBERSHIP_TIER)[keyof typeof MEMBERSHIP_TIER]
+export type StoreStatus = (typeof STORE_STATUS)[keyof typeof STORE_STATUS]
+export type AvailabilityLabel = (typeof RIDER_AVAILABILITY)[keyof typeof RIDER_AVAILABILITY]
+export type StoreCategory = (typeof STORE_CATEGORY)[keyof typeof STORE_CATEGORY]

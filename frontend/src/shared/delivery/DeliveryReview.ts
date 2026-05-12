@@ -1,4 +1,4 @@
-import { ORDER_STATUS, type OrderSummary } from '@/shared/object/SharedObjects'
+import { ORDER_STATUS, type OrderSummary } from '@/shared/object/core/SharedObjects'
 import {
   MAX_RATING,
   MILLISECONDS_PER_DAY,

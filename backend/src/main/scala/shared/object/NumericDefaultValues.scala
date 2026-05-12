@@ -8,6 +8,7 @@ object NumericDefaults:
   val ZeroCurrencyCents: CurrencyCents = 0
   val ZeroAverageRating: AverageRating = 0.0
   val SingleItemCount: EntityCount = 1
+  val CurrencyDisplayScale: EntityCount = 2
   val CurrencyCentsPerYuan: Double = 100.0
   val HoursPerDay: DurationDays = 24L
   val MinutesPerHour: DurationDays = 60L
@@ -20,6 +21,9 @@ object NumericDefaults:
 object IdentifierDefaults:
   val GeneratedCouponSuffixLength: EntityCount = 8
   val ApprovedStoreIdSuffixLength: EntityCount = 4
+
+object UploadNumericDefaults:
+  val WebpFormatOffset: EntityCount = 8
 
 object NoteTableDefaults:
   val TitleColumnLength: EntityCount = 120

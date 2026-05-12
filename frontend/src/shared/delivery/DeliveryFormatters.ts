@@ -1,9 +1,13 @@
-import { STORE_STATUS, type Store, type StoreCategory } from '@/shared/object/SharedObjects'
-import { storeStatusLabels } from './DeliveryConstants'
+import { STORE_STATUS, type Store, type StoreCategory } from '@/shared/object/core/SharedObjects'
+import {
+  CURRENCY_CENTS_SCALE,
+  CURRENCY_DECIMAL_PLACES,
+  storeStatusLabels,
+} from './DeliveryConstants'
 import { isStoreCurrentlyOpen } from './DeliverySchedule'
 
 export function formatPrice(priceCents: number) {
-  return `¥${(priceCents / 100).toFixed(2)}`
+  return `¥${(priceCents / CURRENCY_CENTS_SCALE).toFixed(CURRENCY_DECIMAL_PLACES)}`
 }
 
 export function formatTime(value: string) {

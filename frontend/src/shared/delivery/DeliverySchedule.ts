@@ -1,5 +1,14 @@
-import { STORE_STATUS, type BusinessHours, type Store } from '@/shared/object/SharedObjects'
-import { MIN_SCHEDULE_LEAD_MINUTES } from './DeliveryConstants'
+import { STORE_STATUS, type BusinessHours, type Store } from '@/shared/object/core/SharedObjects'
+import {
+  END_OF_DAY_HOUR,
+  END_OF_DAY_MILLISECOND,
+  END_OF_DAY_MINUTE,
+  END_OF_DAY_SECOND,
+  MILLISECONDS_PER_SECOND,
+  MINUTES_PER_HOUR,
+  MIN_SCHEDULE_LEAD_MINUTES,
+  SECONDS_PER_MINUTE,
+} from './DeliveryConstants'
 import { DELIVERY_CONSOLE_MESSAGES } from './DeliveryMessages'
 import { isValidBusinessTime } from './DeliveryShared'
 
@@ -11,16 +20,16 @@ function businessTimeToMinutes(value: string) {
   if (!isValidBusinessTime(value)) return Number.NaN
   const [hours, minutes] = value.split(':').map(Number)
   if (hours == null || minutes == null) return Number.NaN
-  return hours * 60 + minutes
+  return hours * MINUTES_PER_HOUR + minutes
 }
 
 export function validateBusinessHours(businessHours: BusinessHours) {
   if (!isValidBusinessTime(businessHours.openTime) || !isValidBusinessTime(businessHours.closeTime)) {
-    return DELIVERY_CONSOLE_MESSAGES.businessHoursInvalid
+    return DELIVERY_CONSOLE_MESSAGES.merchant.businessHoursInvalid
   }
 
   if (businessTimeToMinutes(businessHours.openTime) >= businessTimeToMinutes(businessHours.closeTime)) {
-    return DELIVERY_CONSOLE_MESSAGES.businessHoursOrderInvalid
+    return DELIVERY_CONSOLE_MESSAGES.merchant.businessHoursOrderInvalid
   }
 
   return undefined
@@ -32,7 +41,7 @@ export function formatBusinessHours(businessHours: BusinessHours) {
 
 export function isStoreCurrentlyOpen(store: Store, currentTime = new Date()) {
   if (store.status === STORE_STATUS.revoked) return false
-  const minutes = currentTime.getHours() * 60 + currentTime.getMinutes()
+  const minutes = currentTime.getHours() * MINUTES_PER_HOUR + currentTime.getMinutes()
   const openMinutes = businessTimeToMinutes(store.businessHours.openTime)
   const closeMinutes = businessTimeToMinutes(store.businessHours.closeTime)
   if (!Number.isFinite(openMinutes) || !Number.isFinite(closeMinutes)) return false
@@ -63,9 +72,16 @@ function ceilToMinute(date: Date) {
 }
 
 export function getTodayDeliveryWindow(now = new Date()) {
-  const minimum = ceilToMinute(new Date(now.getTime() + MIN_SCHEDULE_LEAD_MINUTES * 60 * 1000))
+  const minimum = ceilToMinute(
+    new Date(now.getTime() + MIN_SCHEDULE_LEAD_MINUTES * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND),
+  )
   const cutoff = new Date(now)
-  cutoff.setHours(23, 59, 0, 0)
+  cutoff.setHours(
+    END_OF_DAY_HOUR,
+    END_OF_DAY_MINUTE,
+    END_OF_DAY_SECOND,
+    END_OF_DAY_MILLISECOND,
+  )
 
   return {
     minimum,
@@ -83,13 +99,13 @@ function normalizeScheduledDeliveryAt(value: string) {
 }
 
 export function validateScheduledDeliveryTime(value: string, now = new Date()) {
-  if (!value) return DELIVERY_CONSOLE_MESSAGES.deliveryTimeRequired
+  if (!value) return DELIVERY_CONSOLE_MESSAGES.schedule.deliveryTimeRequired
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return DELIVERY_CONSOLE_MESSAGES.deliveryTimeFormatInvalid
+  if (Number.isNaN(parsed.getTime())) return DELIVERY_CONSOLE_MESSAGES.schedule.deliveryTimeFormatInvalid
   const { minimum, cutoff } = getTodayDeliveryWindow(now)
-  if (parsed.getTime() < minimum.getTime()) return DELIVERY_CONSOLE_MESSAGES.deliveryTimeTooEarly
-  if (parsed.getTime() > cutoff.getTime()) return DELIVERY_CONSOLE_MESSAGES.deliveryTimeOutOfRange
-  if (parsed.toDateString() !== now.toDateString()) return DELIVERY_CONSOLE_MESSAGES.deliveryTimeTodayOnly
+  if (parsed.getTime() < minimum.getTime()) return DELIVERY_CONSOLE_MESSAGES.schedule.deliveryTimeTooEarly
+  if (parsed.getTime() > cutoff.getTime()) return DELIVERY_CONSOLE_MESSAGES.schedule.deliveryTimeOutOfRange
+  if (parsed.toDateString() !== now.toDateString()) return DELIVERY_CONSOLE_MESSAGES.schedule.deliveryTimeTodayOnly
   return null
 }
 

@@ -6,57 +6,78 @@ import type {
   RemoveCustomerAddressRequest,
   SetDefaultCustomerAddressRequest,
   UpdateCustomerProfileRequest,
-} from '@/shared/object/SharedObjects'
-import { request } from '@/shared/api/SharedHttpClient'
-import { DELIVERY_API_ROUTE } from '@/shared/api/ApiRoutes'
+} from '@/shared/object/core/SharedObjects'
+import {
+  defineJsonGetEndpoint,
+  defineJsonPostEndpoint,
+  httpClient,
+} from '@/shared/api/SharedHttpClient'
+import { normalizeDeliveryState } from '@/shared/api/DeliveryStateNormalizer'
+import {
+  DELIVERY_STATE_API_ROUTE,
+  getCustomerAddressDefaultApiRoute,
+  getCustomerAddressRemoveApiRoute,
+  getCustomerAddressesApiRoute,
+  getCustomerProfileApiRoute,
+  getCustomerRechargeApiRoute,
+} from '@/shared/api/ApiRoutes'
 
-export function getState() {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.state)
+const DELIVERY_STATE_ENDPOINT = defineJsonGetEndpoint<DeliveryAppState>(DELIVERY_STATE_API_ROUTE)
+
+export const customerApi = {
+  getState() {
+    return httpClient.getJson(DELIVERY_STATE_ENDPOINT).then(normalizeDeliveryState)
+  },
+  updateCustomerProfile(customerId: CustomerId, payload: UpdateCustomerProfileRequest) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<UpdateCustomerProfileRequest, DeliveryAppState>(
+        getCustomerProfileApiRoute(customerId),
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
+  addCustomerAddress(customerId: CustomerId, payload: AddCustomerAddressRequest) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<AddCustomerAddressRequest, DeliveryAppState>(
+        getCustomerAddressesApiRoute(customerId),
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
+  removeCustomerAddress(customerId: CustomerId, payload: RemoveCustomerAddressRequest) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<RemoveCustomerAddressRequest, DeliveryAppState>(
+        getCustomerAddressRemoveApiRoute(customerId),
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
+  setDefaultCustomerAddress(
+    customerId: CustomerId,
+    payload: SetDefaultCustomerAddressRequest,
+  ) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<SetDefaultCustomerAddressRequest, DeliveryAppState>(
+        getCustomerAddressDefaultApiRoute(customerId),
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
+  rechargeCustomerBalance(customerId: CustomerId, payload: RechargeBalanceRequest) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<RechargeBalanceRequest, DeliveryAppState>(
+        getCustomerRechargeApiRoute(customerId),
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
 }
 
-export function updateCustomerProfile(
-  customerId: CustomerId,
-  payload: UpdateCustomerProfileRequest,
-) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.customerProfile(customerId), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export function addCustomerAddress(customerId: CustomerId, payload: AddCustomerAddressRequest) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.customerAddresses(customerId), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export function removeCustomerAddress(
-  customerId: CustomerId,
-  payload: RemoveCustomerAddressRequest,
-) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.customerAddressRemove(customerId), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export function setDefaultCustomerAddress(
-  customerId: CustomerId,
-  payload: SetDefaultCustomerAddressRequest,
-) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.customerAddressDefault(customerId), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-export function rechargeCustomerBalance(
-  customerId: CustomerId,
-  payload: RechargeBalanceRequest,
-) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.customerRecharge(customerId), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
+export const {
+  getState,
+  updateCustomerProfile,
+  addCustomerAddress,
+  removeCustomerAddress,
+  setDefaultCustomerAddress,
+  rechargeCustomerBalance,
+} = customerApi

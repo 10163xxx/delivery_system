@@ -1,169 +1,43 @@
-import {
-  createOrder as createOrderRequest,
-  sendOrderChatMessage as sendOrderChatMessageRequest,
-} from '@/shared/api/SharedApi'
-import { ROUTE_PATH } from '@/shared/object/SharedObjects'
-import {
-  buildOrderChatPayload,
-  buildOrderPayload,
-  DELIVERY_CONSOLE_MESSAGES,
-  formatBusinessHours,
-  formatStoreClosedMessage,
-  getInitialQuantities,
-  getTodayDeliveryWindow,
-  validateScheduledDeliveryTime,
-} from '@/shared/delivery/DeliveryServices'
-import type { CustomerActionParams } from '@/customer/app/actions/CustomerActionTypes'
+import { deliveryApi } from '@/shared/api/SharedApi'
+import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
+import type {
+  CustomerOrderParams,
+} from '@/customer/object/action/CustomerActionObjects'
 import { clearDraftError, removeKey, setDraftError } from '@/customer/app/actions/CustomerActionHelpers'
-
-type CustomerOrderParams = Pick<
-  CustomerActionParams,
-  | 'selectedStore'
-  | 'selectedStoreIsOpen'
-  | 'selectedCustomer'
-  | 'selectedCoupon'
-  | 'quantities'
-  | 'deliveryAddress'
-  | 'scheduledDeliveryTime'
-  | 'scheduledDeliveryTouched'
-  | 'remark'
-  | 'payableTotalCents'
-  | 'orderChatDrafts'
-  | 'runAction'
-  | 'navigate'
-  | 'setDeliveryAddressError'
-  | 'setScheduledDeliveryError'
-  | 'setScheduledDeliveryTime'
-  | 'setScheduledDeliveryTouched'
-  | 'setRemark'
-  | 'setQuantities'
-  | 'setIsCheckoutExpanded'
-  | 'setSelectedCouponId'
-  | 'setError'
-  | 'setOrderChatErrors'
-  | 'setOrderChatDrafts'
->
-
-type OrderSubmissionValidationResult = { ok: true } | { ok: false }
+import {
+  buildCustomerOrderChatRequestPayload,
+  buildCustomerOrderRequestPayload,
+  resetCustomerOrderSubmissionState,
+  validateCustomerOrderSubmission,
+} from '@/customer/app/actions/CustomerOrderActionHelpers'
 
 export function createCustomerOrderActions(params: CustomerOrderParams) {
-  const {
-    selectedStore,
-    selectedStoreIsOpen,
-    selectedCustomer,
-    selectedCoupon,
-    quantities,
-    deliveryAddress,
-    scheduledDeliveryTime,
-    scheduledDeliveryTouched,
-    remark,
-    payableTotalCents,
-    orderChatDrafts,
-    runAction,
-    navigate,
-    setDeliveryAddressError,
-    setScheduledDeliveryError,
-    setScheduledDeliveryTime,
-    setScheduledDeliveryTouched,
-    setRemark,
-    setQuantities,
-    setIsCheckoutExpanded,
-    setSelectedCouponId,
-    setError,
-    setOrderChatErrors,
-    setOrderChatDrafts,
-  } = params
-
   function openRechargePage() {
-    navigate(ROUTE_PATH.customerProfileRecharge)
-  }
-
-  function validateOrderSubmission(): OrderSubmissionValidationResult {
-    if (!selectedStore || !selectedCustomer) return { ok: false }
-    const address = deliveryAddress.trim()
-    if (!address) {
-      setDeliveryAddressError(DELIVERY_CONSOLE_MESSAGES.deliveryAddressRequired)
-      return { ok: false }
-    }
-    setDeliveryAddressError(null)
-
-    const todayDeliveryWindow = getTodayDeliveryWindow()
-    const scheduledDeliveryError = validateScheduledDeliveryTime(scheduledDeliveryTime)
-    if (scheduledDeliveryTouched && scheduledDeliveryError) {
-      setScheduledDeliveryError(scheduledDeliveryError)
-      if (todayDeliveryWindow.isAvailable) {
-        setScheduledDeliveryTime(todayDeliveryWindow.minimumValue)
-      }
-      return { ok: false }
-    }
-    setScheduledDeliveryError(null)
-
-    if (!selectedStoreIsOpen) {
-      setError(formatStoreClosedMessage(formatBusinessHours(selectedStore.businessHours)))
-      return { ok: false }
-    }
-
-    const payload = buildOrderPayload(
-      selectedCustomer.id,
-      selectedStore,
-      address,
-      scheduledDeliveryTime,
-      remark,
-      selectedCoupon?.id ?? '',
-      quantities,
-    )
-    if (payload.items.length === 0) {
-      setError(DELIVERY_CONSOLE_MESSAGES.noMenuItemSelected)
-      return { ok: false }
-    }
-    if (payableTotalCents > selectedCustomer.balanceCents) {
-      setError(DELIVERY_CONSOLE_MESSAGES.insufficientBalanceForOrder)
-      return { ok: false }
-    }
-    return { ok: true }
-  }
-
-  function resetOrderSubmissionState() {
-    if (!selectedStore) return
-    setDeliveryAddressError(null)
-    setScheduledDeliveryError(null)
-    setScheduledDeliveryTouched(false)
-    setRemark('')
-    setQuantities(getInitialQuantities(selectedStore))
-    setIsCheckoutExpanded(false)
-    setSelectedCouponId('')
-    setError(null)
+    params.navigate(ROUTE_PATH.customerProfileRecharge)
   }
 
   async function submitOrder() {
-    if (!selectedStore || !selectedCustomer) return
-    if (!validateOrderSubmission().ok) return
-
-    const payload = buildOrderPayload(
-      selectedCustomer.id,
-      selectedStore,
-      deliveryAddress.trim(),
-      scheduledDeliveryTime,
-      remark,
-      selectedCoupon?.id ?? '',
-      quantities,
-    )
-    const success = await runAction(() => createOrderRequest(payload))
+    if (!params.selectedStore || !params.selectedCustomer) return
+    if (!validateCustomerOrderSubmission(params).ok) return
+    const payload = buildCustomerOrderRequestPayload(params)
+    if (!payload) return
+    const success = await params.runAction(() => deliveryApi.order.createOrder(payload))
     if (!success) return
-    resetOrderSubmissionState()
+    resetCustomerOrderSubmissionState(params)
   }
 
   async function submitOrderChatMessage(orderId: string) {
-    const body = orderChatDrafts[orderId] ?? ''
-    const payload = buildOrderChatPayload(body)
+    const payload = buildCustomerOrderChatRequestPayload(params.orderChatDrafts, orderId)
     if (!payload.body) {
-      setDraftError(setOrderChatErrors, orderId, DELIVERY_CONSOLE_MESSAGES.orderChatMessageRequired)
+      setDraftError(params.setOrderChatErrors, orderId, '消息内容不能为空')
       return
     }
-    const success = await runAction(() => sendOrderChatMessageRequest(orderId, payload))
+    const success = await params.runAction(() =>
+      deliveryApi.order.sendOrderChatMessage(orderId, payload),
+    )
     if (!success) return
-    setOrderChatDrafts((current) => removeKey(current, orderId))
-    clearDraftError(setOrderChatErrors, orderId)
+    params.setOrderChatDrafts((current) => removeKey(current, orderId))
+    clearDraftError(params.setOrderChatErrors, orderId)
   }
 
   return {

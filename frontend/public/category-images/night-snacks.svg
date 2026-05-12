@@ -21,8 +21,4 @@
   </g>
   <circle cx="442" cy="112" r="16" fill="#b32121"/>
   <circle cx="442" cy="112" r="10" fill="#d53a30"/>
-  <rect x="24" y="24" width="272" height="112" rx="24" fill="#050505" opacity=".8"/>
-  <rect x="36" y="36" width="248" height="88" rx="18" fill="#111111" opacity=".92"/>
-  <text x="52" y="74" font-size="34" font-weight="700" fill="#fff" stroke="#000" stroke-width="1.5" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">夜宵小吃</text>
-  <text x="52" y="106" font-size="17" fill="#ffffff" stroke="#000" stroke-width="0.8" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif">烧烤炸物和夜间加餐选择更多</text>
 </svg>

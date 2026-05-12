@@ -3,20 +3,34 @@ import type {
   RiderId,
   UpdateRiderProfileRequest,
   WithdrawRiderIncomeRequest,
-} from '@/shared/object/SharedObjects'
-import { request } from '@/shared/api/SharedHttpClient'
-import { DELIVERY_API_ROUTE } from '@/shared/api/ApiRoutes'
+} from '@/shared/object/core/SharedObjects'
+import {
+  defineJsonPostEndpoint,
+  httpClient,
+} from '@/shared/api/SharedHttpClient'
+import { normalizeDeliveryState } from '@/shared/api/DeliveryStateNormalizer'
+import {
+  getRiderProfileApiRoute,
+  getRiderWithdrawApiRoute,
+} from '@/shared/api/ApiRoutes'
 
-export function updateRiderProfile(riderId: RiderId, payload: UpdateRiderProfileRequest) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.riderProfile(riderId), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
+export const riderApi = {
+  updateRiderProfile(riderId: RiderId, payload: UpdateRiderProfileRequest) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<UpdateRiderProfileRequest, DeliveryAppState>(
+        getRiderProfileApiRoute(riderId),
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
+  withdrawRiderIncome(riderId: RiderId, payload: WithdrawRiderIncomeRequest) {
+    return httpClient.postJson(
+      defineJsonPostEndpoint<WithdrawRiderIncomeRequest, DeliveryAppState>(
+        getRiderWithdrawApiRoute(riderId),
+      ),
+      payload,
+    ).then(normalizeDeliveryState)
+  },
 }
 
-export function withdrawRiderIncome(riderId: RiderId, payload: WithdrawRiderIncomeRequest) {
-  return request<DeliveryAppState>(DELIVERY_API_ROUTE.riderWithdraw(riderId), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
+export const { updateRiderProfile, withdrawRiderIncome } = riderApi
