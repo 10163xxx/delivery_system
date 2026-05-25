@@ -32,10 +32,13 @@ object ValidationMessages:
     val InvalidStoreCategory: ErrorMessage = new ErrorMessage("店铺大类不合法")
     val PrepMinutesInvalid: ErrorMessage = new ErrorMessage("预计出餐时间需在 1 到 120 分钟之间")
     val MenuItemNameRequired: ErrorMessage = new ErrorMessage("菜品名称不能为空")
+    val MenuItemCategoryRequired: ErrorMessage = new ErrorMessage("菜品分类不能为空")
+    val MenuItemCategoryInvalid: ErrorMessage = new ErrorMessage("菜品分类长度不能超过 20 个字符")
     val MenuItemDescriptionRequired: ErrorMessage = new ErrorMessage("菜品说明不能为空")
     val MenuItemPriceInvalid: ErrorMessage = new ErrorMessage("菜品价格需在 0.01 到 9999.99 元之间")
     val MenuItemRemainingQuantityInvalid: ErrorMessage = new ErrorMessage("限量库存需在 1 到 10 之间")
     val MenuItemImageRequired: ErrorMessage = new ErrorMessage("请上传菜品图片或填写可访问的图片 URL")
+    val MenuItemSelectionGroupsInvalid: ErrorMessage = new ErrorMessage("商品选项配置不合法")
     val MenuItemStockInvalid: ErrorMessage = new ErrorMessage("剩余份数需在 0 到 10 之间，留空表示不限量")
     val MerchantProfileNameRequired: ErrorMessage = new ErrorMessage("商家名称不能为空")
     val ContactPhoneRequired: ErrorMessage = new ErrorMessage("联系电话不能为空")
@@ -71,17 +74,25 @@ object ValidationMessages:
     val DeliveryTimeFormatInvalid: ErrorMessage = new ErrorMessage("配送时间格式不正确")
     val DeliveryTimeTodayOnly: ErrorMessage = new ErrorMessage("配送时间仅支持选择下单当天")
     val CouponUnavailable: ErrorMessage = new ErrorMessage("优惠券不存在或已失效")
+    val MenuItemSelectionsRequired: ErrorMessage = new ErrorMessage("请先完成商品配置选择")
+    val RequiredCategoryItemMissingPrefix: ErrorMessage = new ErrorMessage("当前店铺要求至少选择 1 件“")
+    val RequiredCategoryItemMissingSuffix: ErrorMessage = new ErrorMessage("”分区商品后才能下单")
     val OrderNotFound: ErrorMessage = new ErrorMessage("订单不存在")
     val RejectOrderReasonRequired: ErrorMessage = new ErrorMessage("拒单理由不能为空")
     val OrderCannotReject: ErrorMessage = new ErrorMessage("当前订单不能拒绝")
     val OrderCannotAssignRider: ErrorMessage = new ErrorMessage("当前订单不可分配骑手")
     val OrderAlreadyAssignedRider: ErrorMessage = new ErrorMessage("订单已经分配过骑手")
     val RiderSuspended: ErrorMessage = new ErrorMessage("骑手已取消接单资格")
+    val RiderUnavailable: ErrorMessage = new ErrorMessage("骑手当前不可接新单")
+    val RiderAvailabilityLocked: ErrorMessage = new ErrorMessage("骑手配送中，暂不可切换接单状态")
     val OrderCannotPickup: ErrorMessage = new ErrorMessage("当前订单不能取餐")
     val RiderAssignmentRequired: ErrorMessage = new ErrorMessage("请先分配骑手")
     val OrderCannotDeliver: ErrorMessage = new ErrorMessage("当前订单不能确认送达")
     val OnlyCompletedOrdersCanReview: ErrorMessage = new ErrorMessage("只有已完成订单可以评价")
     val StoreReviewAlreadySubmitted: ErrorMessage = new ErrorMessage("商家评价已提交")
+    val StoreReviewReplyRequired: ErrorMessage = new ErrorMessage("商家追加评论不能为空")
+    val StoreReviewReplyUnavailable: ErrorMessage = new ErrorMessage("当前订单没有可追加评论的商家评价")
+    val StoreReviewReplyAlreadySubmitted: ErrorMessage = new ErrorMessage("该评价已追加过商家评论")
     val RiderReviewAlreadySubmitted: ErrorMessage = new ErrorMessage("骑手评价已提交")
     val RiderReviewUnavailable: ErrorMessage = new ErrorMessage("当前订单没有骑手可评价")
     val OrderChatMessageRequired: ErrorMessage = new ErrorMessage("消息内容不能为空")
@@ -148,6 +159,11 @@ def deliveryTimeTooEarly(minutes: DurationDays): ErrorMessage =
 
 def couponThresholdNotMet(couponTitle: DisplayText): ErrorMessage =
   new ErrorMessage(s"${couponTitle.raw} 未达到使用门槛")
+
+def requiredCategoryItemMissing(categoryName: DisplayText): ErrorMessage =
+  new ErrorMessage(
+    s"${ValidationMessages.Order.RequiredCategoryItemMissingPrefix.raw}${categoryName.raw}${ValidationMessages.Order.RequiredCategoryItemMissingSuffix.raw}"
+  )
 
 def reviewWindowExpired(days: DurationDays): ErrorMessage =
   new ErrorMessage(s"只能评价最近${days}天内完成的订单")

@@ -12,6 +12,7 @@ import {
   MAX_ACCOUNT_NUMBER_LENGTH,
   MAX_BANK_NAME_LENGTH,
   MAX_CONTACT_PHONE_LENGTH,
+  MAX_MENU_ITEM_CATEGORY_LENGTH,
   MAX_MENU_ITEM_PRICE_CENTS,
   MAX_MENU_ITEM_STOCK,
   MAX_MERCHANT_NAME_LENGTH,
@@ -20,7 +21,7 @@ import {
   MIN_MENU_ITEM_QUANTITY,
 } from './DeliveryConstants'
 import { DELIVERY_CONSOLE_MESSAGES } from './DeliveryMessages'
-import { buildMenuItemPayload } from './DeliveryPayloads'
+import { buildMenuItemPayload, parseMenuItemSelectionGroups } from './DeliveryPayloads'
 import { validateBusinessHours } from './DeliverySchedule'
 import { isValidContactPhone, normalizeTextInput } from './DeliveryShared'
 
@@ -61,6 +62,7 @@ export function validateMenuItemDraft(
   draft: MenuItemDraft,
 ): Partial<Record<MenuItemFormField, string>> {
   const payload = buildMenuItemPayload(draft)
+  const category = normalizeTextInput(draft.category, MAX_MENU_ITEM_CATEGORY_LENGTH)
   const price = Number(draft.priceYuan.trim())
   const remainingQuantityText = draft.remainingQuantity.trim()
   const parsedRemainingQuantity = Number(remainingQuantityText)
@@ -70,10 +72,15 @@ export function validateMenuItemDraft(
       parsedRemainingQuantity >= MIN_MENU_ITEM_QUANTITY &&
       parsedRemainingQuantity <= MAX_MENU_ITEM_STOCK)
 
+  const selectionGroupParseResult = parseMenuItemSelectionGroups(draft.selectionGroupsText)
+
   return {
     name: payload.name
       ? undefined
       : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemNameRequired,
+    category: category
+      ? undefined
+      : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryRequired,
     description: payload.description
       ? undefined
       : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemDescriptionRequired,
@@ -89,6 +96,7 @@ export function validateMenuItemDraft(
     imageUrl: payload.imageUrl
       ? undefined
       : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemImageRequired,
+    selectionGroupsText: selectionGroupParseResult.errorText ?? undefined,
   }
 }
 

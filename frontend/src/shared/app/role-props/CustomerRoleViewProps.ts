@@ -1,7 +1,7 @@
 import type { CustomerPropsArgs, PageView } from '@/shared/object/core/AppBuildRolePropsObjects'
 import { getSharedFormattingProps } from './SharedFormattingProps'
 
-function getCustomerOrderViewProps(pageView: PageView) {
+function getCustomerOrderCollectionViewProps(pageView: PageView) {
   return {
     activeReviewOrder: pageView.activeReviewOrder,
     activeCustomerOrder: pageView.activeCustomerOrder,
@@ -11,6 +11,11 @@ function getCustomerOrderViewProps(pageView: PageView) {
     statusLabels: pageView.statusLabels,
     canReviewOrder: pageView.canReviewOrder,
     getRemainingReviewDays: pageView.getRemainingReviewDays,
+  }
+}
+
+function getCustomerReviewViewProps(pageView: PageView) {
+  return {
     hasPendingRiderReview: pageView.hasPendingRiderReview,
     hasPendingStoreReview: pageView.hasPendingStoreReview,
     REVIEW_WINDOW_DAYS: pageView.REVIEW_WINDOW_DAYS,
@@ -31,12 +36,24 @@ function getCustomerStoreViewProps(
     enterStore: pageView.enterStore,
     leaveStore: pageView.leaveStore,
     resetStoreCategory: pageView.resetStoreCategory,
+  }
+}
+
+function getCustomerStoreCollectionViewProps(pageView: PageView) {
+  return {
     categoryStores: pageView.categoryStores,
     monthlyOrdersByStore: pageView.monthlyOrdersByStore,
     monthlySalesByMenuItem: pageView.monthlySalesByMenuItem,
+    recentFrequentStores: pageView.recentFrequentStores,
     storeCategories: pageView.storeCategories,
+    storeBrowseHighlights: pageView.storeBrowseHighlights,
     storeCustomerReviews: pageView.storeCustomerReviews,
     visibleStores: pageView.visibleStores,
+  }
+}
+
+function getCustomerSelectedStoreViewProps(pageView: PageView) {
+  return {
     isStoreCurrentlyOpen: pageView.isStoreCurrentlyOpen,
     selectedStore: pageView.selectedStore,
     selectedStoreCanOrder: pageView.selectedStoreCanOrder,
@@ -44,7 +61,7 @@ function getCustomerStoreViewProps(
   }
 }
 
-function getCustomerCheckoutViewProps(pageView: PageView) {
+function getCustomerCheckoutPricingViewProps(pageView: PageView) {
   return {
     availableCheckoutCoupons: pageView.availableCheckoutCoupons,
     cartSubtotal: pageView.cartSubtotal,
@@ -57,13 +74,28 @@ function getCustomerCheckoutViewProps(pageView: PageView) {
     selectedCoupon: pageView.selectedCoupon,
     selectedCustomer: pageView.selectedCustomer,
     DELIVERY_FEE_CENTS: pageView.DELIVERY_FEE_CENTS,
+  }
+}
+
+function getCustomerRechargeViewProps(pageView: PageView) {
+  return {
     parsedRechargeAmount: pageView.parsedRechargeAmount,
     rechargeAmountError: pageView.rechargeAmountError,
     rechargeAmountPreview: pageView.rechargeAmountPreview,
     RECHARGE_PRESET_AMOUNTS: pageView.RECHARGE_PRESET_AMOUNTS,
+  }
+}
+
+function getCustomerMenuActionViewProps(pageView: PageView) {
+  return {
     suggestedDeliveryTime: pageView.todayDeliveryWindow.minimumValue,
     todayDeliveryCutoff: pageView.todayDeliveryWindow.cutoffValue,
+    addPreviousOrderToCart: pageView.addPreviousOrderToCart,
+    closeMenuItemConfiguration: pageView.closeMenuItemConfiguration,
+    confirmMenuItemConfiguration: pageView.confirmMenuItemConfiguration,
+    openMenuItemConfiguration: pageView.openMenuItemConfiguration,
     openCheckout: pageView.openCheckout,
+    repeatOrder: pageView.repeatOrder,
     updateQuantity: pageView.updateQuantity,
   }
 }
@@ -73,9 +105,14 @@ export function getCustomerViewProps(
   navigate: CustomerPropsArgs['navigate'],
 ) {
   return {
-    ...getCustomerOrderViewProps(pageView),
+    ...getCustomerOrderCollectionViewProps(pageView),
+    ...getCustomerReviewViewProps(pageView),
     ...getCustomerStoreViewProps(pageView, navigate),
-    ...getCustomerCheckoutViewProps(pageView),
+    ...getCustomerStoreCollectionViewProps(pageView),
+    ...getCustomerSelectedStoreViewProps(pageView),
+    ...getCustomerCheckoutPricingViewProps(pageView),
+    ...getCustomerRechargeViewProps(pageView),
+    ...getCustomerMenuActionViewProps(pageView),
     customerProfileNoticeCount: pageView.unreadCustomerProfileNoticeCount,
     selectedCustomer: pageView.selectedCustomer,
     ...getSharedFormattingProps(pageView),

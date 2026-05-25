@@ -1,22 +1,74 @@
 import type { CustomerRoleProps } from '@/shared/app/role-props'
 import { ACCOUNT_STATUS, type Store } from '@/shared/object/core/SharedObjects'
 import { CustomerStoreResultCard } from '@/pages/customer/store/CustomerStoreResultCard'
+import type { RecentFrequentStore } from '@/pages/customer/object/CustomerPageObjects'
+import { CUSTOMER_STORE_VISIBILITY } from '@/shared/object/core/DeliveryAppObjects'
+import {
+  CUSTOMER_STORE_BROWSE_COPY,
+  CUSTOMER_STORE_BROWSE_LAYOUT,
+} from '@/shared/delivery/DeliveryMessages'
+
+const SEARCH_HISTORY_WRAPPER_STYLE = {
+  flex: 1,
+} as const
+
+const SEARCH_HISTORY_LIST_STYLE = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: CUSTOMER_STORE_BROWSE_LAYOUT.searchHistoryGap,
+} as const
+
+const SEARCH_HISTORY_ITEM_STYLE = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: CUSTOMER_STORE_BROWSE_LAYOUT.searchHistoryGap,
+  padding: CUSTOMER_STORE_BROWSE_LAYOUT.searchHistoryCardPadding,
+  borderRadius: CUSTOMER_STORE_BROWSE_LAYOUT.searchHistoryCardRadius,
+  background: CUSTOMER_STORE_BROWSE_LAYOUT.searchHistoryBackground,
+  border: CUSTOMER_STORE_BROWSE_LAYOUT.searchHistoryBorder,
+} as const
+
+const SEARCH_HISTORY_KEYWORD_BUTTON_STYLE = {
+  flex: 1,
+  textAlign: 'left',
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  font: 'inherit',
+  color: 'inherit',
+  cursor: 'pointer',
+} as const
+
+const SEARCH_HISTORY_REMOVE_BUTTON_STYLE = {
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  fontSize: CUSTOMER_STORE_BROWSE_LAYOUT.searchHistoryFontSize,
+  lineHeight: 1,
+  color: CUSTOMER_STORE_BROWSE_LAYOUT.searchHistoryTextColor,
+  cursor: 'pointer',
+} as const
 
 export function StoreSearchBar({ props }: { props: CustomerRoleProps }) {
   const {
     customerStoreSearchDraft,
     customerStoreSearch,
+    customerStoreVisibility,
     setCustomerStoreSearchDraft,
     setCustomerStoreSearch,
+    setCustomerStoreVisibility,
     submitCustomerStoreSearch,
   } = props
+  const showOrderableOnly =
+    customerStoreVisibility === CUSTOMER_STORE_VISIBILITY.orderableOnly
 
   return (
     <div className="summary-bar">
-      <label style={{ flex: 1, minWidth: '280px' }}>
-        <span>搜索店家</span>
+      <label style={{ flex: 1, minWidth: CUSTOMER_STORE_BROWSE_LAYOUT.searchInputMinWidth }}>
+        <span>{CUSTOMER_STORE_BROWSE_COPY.searchInputLabel}</span>
         <input
-          placeholder="输入店铺名或商家名"
+          placeholder={CUSTOMER_STORE_BROWSE_COPY.searchInputPlaceholder}
           value={customerStoreSearchDraft}
           onChange={(event) => setCustomerStoreSearchDraft(event.target.value)}
           onKeyDown={(event) => {
@@ -28,7 +80,7 @@ export function StoreSearchBar({ props }: { props: CustomerRoleProps }) {
         />
       </label>
       <button className="primary-button" onClick={() => submitCustomerStoreSearch()} type="button">
-        搜索
+        {CUSTOMER_STORE_BROWSE_COPY.searchButton}
       </button>
       {customerStoreSearchDraft.trim() || customerStoreSearch.trim() ? (
         <button
@@ -39,9 +91,24 @@ export function StoreSearchBar({ props }: { props: CustomerRoleProps }) {
           }}
           type="button"
         >
-          清空搜索
+          {CUSTOMER_STORE_BROWSE_COPY.searchClearButton}
         </button>
       ) : null}
+      <button
+        className={showOrderableOnly ? 'primary-button' : 'secondary-button'}
+        onClick={() =>
+          setCustomerStoreVisibility((current) =>
+            current === CUSTOMER_STORE_VISIBILITY.orderableOnly
+              ? CUSTOMER_STORE_VISIBILITY.all
+              : CUSTOMER_STORE_VISIBILITY.orderableOnly,
+          )
+        }
+        type="button"
+      >
+        {showOrderableOnly
+          ? CUSTOMER_STORE_BROWSE_COPY.showOrderableOnlyButton
+          : CUSTOMER_STORE_BROWSE_COPY.showAllStoresButton}
+      </button>
     </div>
   )
 }
@@ -58,54 +125,25 @@ export function SearchHistoryPanel({ props }: { props: CustomerRoleProps }) {
 
   return (
     <div className="summary-bar">
-      <div style={{ flex: 1 }}>
-        <p>搜索记录</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div style={SEARCH_HISTORY_WRAPPER_STYLE}>
+        <p>{CUSTOMER_STORE_BROWSE_COPY.searchHistoryLabel}</p>
+        <div style={SEARCH_HISTORY_LIST_STYLE}>
           {customerStoreSearchHistory.map((keyword: string) => (
-            <div
-              key={keyword}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '0.75rem',
-                padding: '0.75rem 1rem',
-                borderRadius: '18px',
-                background: 'rgba(15, 23, 42, 0.04)',
-                border: '1px solid rgba(15, 23, 42, 0.08)',
-              }}
-            >
+            <div key={keyword} style={SEARCH_HISTORY_ITEM_STYLE}>
               <button
                 type="button"
                 onClick={() => submitCustomerStoreSearch(keyword)}
-                style={{
-                  flex: 1,
-                  textAlign: 'left',
-                  border: 'none',
-                  background: 'transparent',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                }}
+                style={SEARCH_HISTORY_KEYWORD_BUTTON_STYLE}
               >
                 {keyword}
               </button>
               <button
                 onClick={() => removeCustomerStoreSearchHistoryItem(keyword)}
-                aria-label={`删除搜索记录 ${keyword}`}
+                aria-label={CUSTOMER_STORE_BROWSE_COPY.searchHistoryDeleteLabel(keyword)}
                 type="button"
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  padding: 0,
-                  fontSize: '1rem',
-                  lineHeight: 1,
-                  color: 'rgba(15, 23, 42, 0.6)',
-                  cursor: 'pointer',
-                }}
+                style={SEARCH_HISTORY_REMOVE_BUTTON_STYLE}
               >
-                x
+                {CUSTOMER_STORE_BROWSE_COPY.searchHistoryRemoveButton}
               </button>
             </div>
           ))}
@@ -116,7 +154,7 @@ export function SearchHistoryPanel({ props }: { props: CustomerRoleProps }) {
         onClick={() => clearCustomerStoreSearchHistory()}
         type="button"
       >
-        清空记录
+        {CUSTOMER_STORE_BROWSE_COPY.searchHistoryClearButton}
       </button>
     </div>
   )
@@ -130,14 +168,100 @@ export function CustomerStatusBar({ props }: { props: CustomerRoleProps }) {
   return (
     <div className="summary-bar">
       <div>
-        <p>顾客状态</p>
-        <strong>{selectedCustomer.accountStatus === ACCOUNT_STATUS.suspended ? '已封号' : '正常'}</strong>
+        <p>{CUSTOMER_STORE_BROWSE_COPY.customerStatusLabel}</p>
+        <strong>
+          {selectedCustomer.accountStatus === ACCOUNT_STATUS.suspended
+            ? CUSTOMER_STORE_BROWSE_COPY.customerStatusSuspended
+            : CUSTOMER_STORE_BROWSE_COPY.customerStatusActive}
+        </strong>
       </div>
       <div>
-        <p>评价撤销次数</p>
+        <p>{CUSTOMER_STORE_BROWSE_COPY.reviewRevokedCountLabel}</p>
         <strong>{selectedCustomer.revokedReviewCount}</strong>
       </div>
     </div>
+  )
+}
+
+export function RecentFrequentStoresPanel({ props }: { props: CustomerRoleProps }) {
+  const {
+    addPreviousOrderToCart,
+    enterStore,
+    formatTime,
+    recentFrequentStores,
+    repeatOrder,
+  } = props
+  const visibleFrequentStores = recentFrequentStores.filter(
+    (entry): entry is NonNullable<typeof entry> => entry != null,
+  )
+
+  if (visibleFrequentStores.length === 0) return null
+
+  return (
+    <section className="order-section-card">
+      <div className="order-section-header">
+        <div>
+          <p className="ticket-kind">{CUSTOMER_STORE_BROWSE_COPY.recentFrequentCardTitle}</p>
+          <h3>{CUSTOMER_STORE_BROWSE_COPY.recentFrequentSectionSubtitle}</h3>
+        </div>
+      </div>
+      <div className="store-grid compact-store-grid">
+        {visibleFrequentStores.map((entry: RecentFrequentStore) => (
+          <article key={entry.storeId} className="store-card compact-store-card">
+            <div className="compact-store-content">
+              <div className="ticket-header">
+                <div>
+                  <p className="ticket-kind">{entry.category}</p>
+                  <h3>{entry.storeName}</h3>
+                </div>
+                <span className="badge success">
+                  {`${entry.orderCount}${CUSTOMER_STORE_BROWSE_COPY.recentFrequentCountSuffix}`}
+                </span>
+              </div>
+              <div className="summary-bar compact-store-summary">
+                <div>
+                  <p>{CUSTOMER_STORE_BROWSE_COPY.recentFrequentLastOrderedLabel}</p>
+                  <strong>{formatTime(entry.lastOrderedAt)}</strong>
+                </div>
+                <div>
+                  <p>{CUSTOMER_STORE_BROWSE_COPY.recentFrequentTopItemsLabel}</p>
+                  <strong>{entry.topItems.length}</strong>
+                </div>
+              </div>
+              <p className="meta-line">
+                {entry.topItems.length > 0
+                  ? `${CUSTOMER_STORE_BROWSE_COPY.recentFrequentTopItemsPrefix}${entry.topItems.join('、')}`
+                  : CUSTOMER_STORE_BROWSE_COPY.recentFrequentEmptyHint}
+              </p>
+              <div className="action-row">
+                <button
+                  className="primary-button"
+                  onClick={() => addPreviousOrderToCart(entry.latestOrder)}
+                  type="button"
+                >
+                  {CUSTOMER_STORE_BROWSE_COPY.recentFrequentAddToCartButton}
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={() => repeatOrder(entry.latestOrder)}
+                  type="button"
+                >
+                  {CUSTOMER_STORE_BROWSE_COPY.recentFrequentRepeatOrderButton}
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={() => enterStore(entry.storeId)}
+                  disabled={!entry.canOrder}
+                  type="button"
+                >
+                  {CUSTOMER_STORE_BROWSE_COPY.recentFrequentEnterStoreButton}
+                </button>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -161,27 +285,32 @@ export function StoreCategoryGrid({ props }: { props: CustomerRoleProps }) {
         return (
           <article key={category} className="store-card category-card">
             <img
-              alt={`${category} 分类插图`}
+              alt={CUSTOMER_STORE_BROWSE_COPY.categoryImageAlt(category)}
               className="category-image"
               src={getCategoryMeta(category).imageSrc}
             />
             <div className="ticket-header">
               <div>
-                <p className="ticket-kind">餐厅大类</p>
+                <p className="ticket-kind">{CUSTOMER_STORE_BROWSE_COPY.categoryTicketKind}</p>
                 <h3 className="category-title">{category}</h3>
               </div>
-              <span className="badge">{storesInCategory.length} 家</span>
+              <span className="badge">
+                {`${storesInCategory.length}${CUSTOMER_STORE_BROWSE_COPY.categoryStoreCountSuffix}`}
+              </span>
             </div>
             <p className="category-description">{getCategoryMeta(category).subtitle}</p>
             <p className="meta-line">
-              可下单 {openStoreCount} 家 · 覆盖 {storesInCategory.length} 家餐厅
+              {CUSTOMER_STORE_BROWSE_COPY.categoryOrderableCoverageSummary(
+                openStoreCount,
+                storesInCategory.length,
+              )}
             </p>
             <button
               className="primary-button"
               onClick={() => chooseStoreCategory(category)}
               type="button"
             >
-              选择此分类
+              {CUSTOMER_STORE_BROWSE_COPY.chooseCategoryButton}
             </button>
           </article>
         )
@@ -208,6 +337,7 @@ export function StoreResultsGrid({
     isStoreCurrentlyOpen,
     enterStore,
     monthlyOrdersByStore,
+    storeBrowseHighlights,
     storeCustomerReviews,
   } = props
 
@@ -215,9 +345,18 @@ export function StoreResultsGrid({
     <>
       <div className="category-toolbar">
         <div>
-          <p className="ticket-kind">{selectedStoreCategory ? '当前分类' : '搜索结果'}</p>
-          <strong>{selectedStoreCategory || `“${customerStoreSearch.trim()}”`}</strong>
-          <p className="meta-line">共 {storesToBrowse.length} 家餐厅，请选择已有菜品的店铺进入点餐。</p>
+          <p className="ticket-kind">
+            {selectedStoreCategory
+              ? CUSTOMER_STORE_BROWSE_COPY.currentCategoryLabel
+              : CUSTOMER_STORE_BROWSE_COPY.searchResultLabel}
+          </p>
+          <strong>
+            {selectedStoreCategory ||
+              CUSTOMER_STORE_BROWSE_COPY.searchResultKeyword(customerStoreSearch.trim())}
+          </strong>
+          <p className="meta-line">
+            {CUSTOMER_STORE_BROWSE_COPY.searchResultSummary(storesToBrowse.length)}
+          </p>
         </div>
         <button
           className="primary-button category-back-button"
@@ -228,10 +367,16 @@ export function StoreResultsGrid({
               setCustomerStoreSearch('')
             }
           }}
-          style={{ minWidth: '240px', minHeight: '64px', fontSize: '1.1rem' }}
+          style={{
+            minWidth: CUSTOMER_STORE_BROWSE_COPY.resultToolbarButtonMinWidth,
+            minHeight: CUSTOMER_STORE_BROWSE_COPY.resultToolbarButtonMinHeight,
+            fontSize: CUSTOMER_STORE_BROWSE_COPY.resultToolbarButtonFontSize,
+          }}
           type="button"
         >
-          {selectedStoreCategory ? '返回全部分类' : '清空搜索'}
+          {selectedStoreCategory
+            ? CUSTOMER_STORE_BROWSE_COPY.backToAllCategoriesButton
+            : CUSTOMER_STORE_BROWSE_COPY.clearSearchResultButton}
         </button>
       </div>
 
@@ -248,6 +393,7 @@ export function StoreResultsGrid({
                 formatTime,
                 isStoreCurrentlyOpen,
                 monthlyOrdersByStore,
+                storeBrowseHighlights,
               }}
               reviews={reviews.slice(0, 2)}
               store={store}
@@ -260,13 +406,19 @@ export function StoreResultsGrid({
 }
 
 export function StoreBrowseEmptyState({ props }: { props: CustomerRoleProps }) {
-  const { customerStoreSearch, resetStoreCategory } = props
+  const { customerStoreSearch, customerStoreVisibility, resetStoreCategory } = props
+  const showOrderableOnly =
+    customerStoreVisibility === CUSTOMER_STORE_VISIBILITY.orderableOnly
 
   return (
     <div className="empty-card">
-      {customerStoreSearch.trim() ? '没有找到匹配的店铺，请换个关键词试试。' : '当前分类下没有可浏览的店铺。'}
+      {customerStoreSearch.trim()
+        ? CUSTOMER_STORE_BROWSE_COPY.emptySearchResult
+        : showOrderableOnly
+          ? CUSTOMER_STORE_BROWSE_COPY.switchToAllStoresHint
+          : CUSTOMER_STORE_BROWSE_COPY.emptyCategoryResult}
       <button className="secondary-button" onClick={() => resetStoreCategory()} type="button">
-        返回分类列表
+        {CUSTOMER_STORE_BROWSE_COPY.backToCategoryListButton}
       </button>
     </div>
   )

@@ -3,7 +3,7 @@ package shared.api.planner
 import domain.shared.given
 
 import cats.effect.IO
-import shared.database.withTransactionConnection
+import database.withTransactionConnection
 import io.circe.Json
 import io.circe.syntax.*
 import io.circe.{Decoder, Encoder}

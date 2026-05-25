@@ -101,6 +101,7 @@ export const MEMBERSHIP_TIER = {
 export const RIDER_AVAILABILITY = {
   available: 'Available',
   onDelivery: 'OnDelivery',
+  unavailable: 'Unavailable',
   suspended: 'Suspended',
 } as const
 
@@ -119,9 +120,23 @@ export const STORE_CATEGORY = {
 export const ROUTE_PATH = {
   root: '/',
   customerOrder: '/customer/order',
+  customerCart: '/customer/cart',
   customerOrders: '/customer/orders',
+  customerOrdersPrefix: '/customer/orders/',
+  customerReviewPrefix: '/customer/review/',
   customerProfile: '/customer/profile',
   customerProfileRecharge: '/customer/profile/recharge',
+  customerProfileCoupons: '/customer/profile/coupons',
   customerProfileAddresses: '/customer/profile/addresses',
+  customerProfileRefunds: '/customer/profile/refunds',
+  merchantApplication: '/merchant/application',
   merchantApplicationSubmit: '/merchant/application?merchantView=submit',
+  merchantConsole: '/merchant/console',
+  merchantProfile: '/merchant/profile',
+  merchantProfileAnalytics: '/merchant/profile/analytics',
+} as const
+
+export const ROUTE_QUERY_KEY = {
+  merchantView: 'merchantView',
+  store: 'store',
 } as const

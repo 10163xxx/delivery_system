@@ -1,4 +1,4 @@
-import type { MerchantMenuImageFieldsProps } from '@/merchant/object/console/MerchantConsoleObjects'
+import type { MerchantMenuImageFieldsProps } from '@/pages/merchant/object/MerchantConsoleObjects'
 import { MENU_ITEM_FORM_FIELD } from '@/shared/object/core/DeliveryAppObjects'
 import { DisplayImageSlot } from '@/shared/components/primitives/DisplayImageSlot'
 

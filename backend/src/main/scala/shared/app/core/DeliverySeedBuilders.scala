@@ -24,6 +24,7 @@ def zone(value: String): ZoneLabel = new ZoneLabel(value)
 def seedMenuItem(
       id: MenuItemId,
       name: DisplayText,
+      category: DisplayText,
       description: DescriptionText,
       priceCents: CurrencyCents,
       imageUrl: ImageUrl,
@@ -32,10 +33,12 @@ def seedMenuItem(
     MenuItem(
       id = id,
       name = name,
+      category = Some(category),
       description = description,
       priceCents = priceCents,
       imageUrl = Some(imageUrl),
       remainingQuantity = remainingQuantity,
+      selectionGroups = List.empty,
     )
 
 def seedStore(

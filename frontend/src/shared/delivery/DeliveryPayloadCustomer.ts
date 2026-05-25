@@ -1,6 +1,7 @@
 import type {
   AddCustomerAddressRequest,
   CreateOrderRequest,
+  MenuItem,
   RechargeBalanceRequest,
   ReviewOrderRequest,
   SendOrderChatMessageRequest,
@@ -31,12 +32,16 @@ import type {
   CustomerAddressDraft,
   PartialRefundDraft,
   ReviewDraft,
+  SelectedMenuItemConfiguration,
 } from '@/shared/object/core/DeliveryAppObjects'
 import {
   createInitialAfterSalesDraft,
   createInitialPartialRefundDraft,
   createInitialReviewDraft,
 } from './DeliveryDrafts'
+
+export const REQUIRED_MENU_CATEGORY_NAME = '必选品'
+export const REQUIRED_MENU_CATEGORY_HASH = 'required-category'
 
 export function buildOrderPayload(
   customerId: string,
@@ -46,9 +51,14 @@ export function buildOrderPayload(
   remark: string,
   couponId: string,
   quantities: Record<string, number>,
+  selectedMenuItemConfigurations: Record<string, SelectedMenuItemConfiguration>,
 ): CreateOrderRequest {
   const items = store.menu
-    .map((item) => ({ menuItemId: item.id, quantity: quantities[item.id] ?? 0 }))
+    .map((item) => ({
+      menuItemId: item.id,
+      quantity: quantities[item.id] ?? 0,
+      selections: selectedMenuItemConfigurations[item.id]?.selections ?? [],
+    }))
     .filter((item) => item.quantity > 0)
 
   return {
@@ -59,6 +69,64 @@ export function buildOrderPayload(
     remark: normalizeTextInput(remark, MAX_ORDER_REMARK_LENGTH) || undefined,
     couponId: couponId || undefined,
     items,
+  }
+}
+
+export function hasValidMenuItemSelections(
+  item: MenuItem,
+  selectedConfiguration?: SelectedMenuItemConfiguration,
+) {
+  if (item.selectionGroups.length === 0) return true
+  if (!selectedConfiguration) return false
+  const selectionMap = new Map(
+    selectedConfiguration.selections.map((selection) => [selection.groupName, selection.selectedOptions]),
+  )
+
+  return item.selectionGroups.every((group) => {
+    const selectedOptions = selectionMap.get(group.name) ?? []
+    return (
+      selectedOptions.length >= group.minSelections &&
+      selectedOptions.length <= group.maxSelections &&
+      selectedOptions.every((option) => group.options.includes(option))
+    )
+  })
+}
+
+export function storeHasRequiredMenuCategory(store: Store) {
+  return store.menu.some((item) => item.category?.trim() === REQUIRED_MENU_CATEGORY_NAME)
+}
+
+export function hasSelectedRequiredCategoryItem(
+  store: Store,
+  quantities: Record<string, number>,
+) {
+  return store.menu.some(
+    (item) => item.category?.trim() === REQUIRED_MENU_CATEGORY_NAME && (quantities[item.id] ?? 0) > 0,
+  )
+}
+
+export function buildMenuItemConfigurationSummary(item: MenuItem, selections: Record<string, string[]>) {
+  return item.selectionGroups
+    .map((group) => {
+      const selectedOptions = selections[group.name] ?? []
+      if (selectedOptions.length === 0) return null
+      return `${group.name}：${selectedOptions.join(' / ')}`
+    })
+    .filter(Boolean)
+    .join('；')
+}
+
+export function buildSelectedMenuItemConfiguration(item: MenuItem, selections: Record<string, string[]>) {
+  return {
+    selections: item.selectionGroups
+      .map((group) => ({
+        groupName: group.name,
+        selectedOptions: Array.from(
+          new Set((selections[group.name] ?? []).filter((option) => group.options.includes(option))),
+        ),
+      }))
+      .filter((selection) => selection.selectedOptions.length > 0),
+    summaryText: buildMenuItemConfigurationSummary(item, selections),
   }
 }
 

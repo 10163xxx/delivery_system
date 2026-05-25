@@ -1,5 +1,5 @@
 import { DisplayImageSlot } from '@/shared/components/primitives/DisplayImageSlot'
-import type { MerchantMenuSectionItemCardProps } from '@/merchant/object/console/MerchantConsoleObjects'
+import type { MerchantMenuSectionItemCardProps } from '@/pages/merchant/object/MerchantConsoleObjects'
 import {
   MerchantMenuSectionItemActions,
   MerchantMenuSectionItemInfo,

@@ -3,14 +3,18 @@ import type { Store } from '@/shared/object/core/SharedObjects'
 import type {
   MerchantConsolePanelProps,
   MerchantConsoleStateArgs,
+  MenuItemCategoryDraftMap,
+  MenuItemPriceDraftMap,
+  MenuItemStockDraftMap,
   MenuComposerOpenState,
   MerchantAppealDraftMap,
   OrderChatDraftMap,
   OrderRejectDraftMap,
   PartialRefundResolutionDraftMap,
-  StoreOperationDraft,
-  StoreOperationErrors,
-} from '@/merchant/object/console/MerchantConsoleObjects'
+  StoreReviewReplyDraftMap,
+  StoreOperationDraftMap,
+  StoreOperationErrorMap,
+} from '@/pages/merchant/object/MerchantConsoleObjects'
 import {
   createMerchantConsoleActions,
   createMerchantConsoleSelectors,
@@ -24,13 +28,16 @@ export function useMerchantConsoleState({
 }: MerchantConsoleStateArgs) {
   const activeMerchantStore = merchantStores.find((store: Store) => store.id === selectedMerchantStoreId)
   const storesToRender = activeMerchantStore ? [activeMerchantStore] : merchantStores
-  const [menuItemStockDrafts, setMenuItemStockDrafts] = useState<Record<string, string>>({})
-  const [menuItemPriceDrafts, setMenuItemPriceDrafts] = useState<Record<string, string>>({})
-  const [orderRejectDrafts, setOrderRejectDrafts] = useState<Record<string, string>>({})
-  const [orderRejectErrors, setOrderRejectErrors] = useState<Record<string, string>>({})
-  const [storeOperationDrafts, setStoreOperationDrafts] = useState<Record<string, StoreOperationDraft>>({})
-  const [storeOperationErrors, setStoreOperationErrors] = useState<Record<string, StoreOperationErrors>>({})
+  const [menuItemCategoryDrafts, setMenuItemCategoryDrafts] = useState<MenuItemCategoryDraftMap>({})
+  const [menuItemStockDrafts, setMenuItemStockDrafts] = useState<MenuItemStockDraftMap>({})
+  const [menuItemPriceDrafts, setMenuItemPriceDrafts] = useState<MenuItemPriceDraftMap>({})
+  const [orderRejectDrafts, setOrderRejectDrafts] = useState<OrderRejectDraftMap>({})
+  const [orderRejectErrors, setOrderRejectErrors] = useState<OrderRejectDraftMap>({})
+  const [storeReviewReplyDrafts, setStoreReviewReplyDrafts] = useState<StoreReviewReplyDraftMap>({})
+  const [storeOperationDrafts, setStoreOperationDrafts] = useState<StoreOperationDraftMap>({})
+  const [storeOperationErrors, setStoreOperationErrors] = useState<StoreOperationErrorMap>({})
   const selectors = createMerchantConsoleSelectors({
+    menuItemCategoryDrafts,
     menuItemPriceDrafts,
     menuItemStockDrafts,
     orderRejectDrafts,
@@ -42,6 +49,7 @@ export function useMerchantConsoleState({
     ...selectors,
     ...validators,
     runAction,
+    setMenuItemCategoryDrafts,
     setMenuItemPriceDrafts,
     setMenuItemStockDrafts,
     setOrderRejectDrafts,
@@ -55,10 +63,13 @@ export function useMerchantConsoleState({
     ...selectors,
     ...validators,
     ...actions,
+    setMenuItemCategoryDrafts,
     setMenuItemStockDrafts,
     setMenuItemPriceDrafts,
     setOrderRejectDrafts,
     setOrderRejectErrors,
+    storeReviewReplyDrafts,
+    setStoreReviewReplyDrafts,
     setStoreOperationDrafts,
     setStoreOperationErrors,
     storeOperationErrors,
@@ -72,5 +83,6 @@ export type {
   OrderChatDraftMap,
   OrderRejectDraftMap,
   PartialRefundResolutionDraftMap,
+  StoreReviewReplyDraftMap,
 }
 export type { MerchantConsolePanelProps }

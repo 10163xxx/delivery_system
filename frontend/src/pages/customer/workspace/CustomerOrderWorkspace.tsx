@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { CustomerRoleProps } from '@/shared/app/role-props'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { CustomerCheckoutPanel } from '@/pages/customer/checkout/CustomerCheckoutPanel'
 import { CustomerStoreBrowse } from '@/pages/customer/store/CustomerStoreBrowse'
 import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/pages/customer/object/CustomerPageObjects'
+import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 
 export function CustomerOrderWorkspace(props: CustomerRoleProps) {
   const {
@@ -18,13 +18,17 @@ export function CustomerOrderWorkspace(props: CustomerRoleProps) {
 
   return (
     <Panel
-      title={selectedStore ? `${selectedStore.name} · 店内点餐` : '顾客下单'}
+      title={
+        selectedStore
+          ? ORDER_PAGE_COPY.workspace.selectedStoreTitle(selectedStore.name)
+          : ORDER_PAGE_COPY.workspace.orderPanelTitle
+      }
       description={
         selectedStore
-          ? '当前已进入店铺，可直接选择菜品并提交订单。'
+          ? ORDER_PAGE_COPY.workspace.selectedStoreDescription
           : selectedStoreCategory
-            ? `当前分类为「${selectedStoreCategory}」，请选择对应餐厅。`
-            : '先选择细分餐厅大类，再进入对应餐厅选购菜品。'
+            ? ORDER_PAGE_COPY.workspace.selectedCategoryDescription(selectedStoreCategory)
+            : ORDER_PAGE_COPY.workspace.orderPanelDescription
       }
     >
       <CustomerStoreBrowse
@@ -32,7 +36,6 @@ export function CustomerOrderWorkspace(props: CustomerRoleProps) {
         selectedStoreTab={selectedStoreTab}
         setSelectedStoreTab={setSelectedStoreTab}
       />
-      {!selectedStore || selectedStoreTab === CUSTOMER_STORE_TAB.menu ? <CustomerCheckoutPanel {...props} /> : null}
     </Panel>
   )
 }

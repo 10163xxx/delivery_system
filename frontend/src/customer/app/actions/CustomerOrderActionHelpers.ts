@@ -2,16 +2,29 @@ import {
   buildOrderChatPayload,
   buildOrderPayload,
   DELIVERY_CONSOLE_MESSAGES,
+  formatRequiredCategorySelectionMessage,
   formatBusinessHours,
   formatStoreClosedMessage,
   getInitialQuantities,
   getTodayDeliveryWindow,
+  hasSelectedRequiredCategoryItem,
+  hasValidMenuItemSelections,
+  REQUIRED_MENU_CATEGORY_HASH,
+  REQUIRED_MENU_CATEGORY_NAME,
+  storeHasRequiredMenuCategory,
   validateScheduledDeliveryTime,
 } from '@/shared/delivery/DeliveryServices'
+import { buildCustomerOrderStoreRoute } from '@/shared/object/core/DeliveryAppObjects'
 import type {
   CustomerOrderParams,
   OrderSubmissionValidationResult,
-} from '@/customer/object/action/CustomerActionObjects'
+} from '@/pages/customer/object/CustomerActionObjects'
+
+function returnToRequiredCategory(params: CustomerOrderParams, storeId: string, message: string) {
+  params.setIsCheckoutExpanded(false)
+  params.setError(message)
+  params.navigate(`${buildCustomerOrderStoreRoute(storeId)}#${REQUIRED_MENU_CATEGORY_HASH}`)
+}
 
 export function validateCustomerOrderSubmission(params: CustomerOrderParams): OrderSubmissionValidationResult {
   const {
@@ -66,9 +79,31 @@ export function validateCustomerOrderSubmission(params: CustomerOrderParams): Or
     params.remark,
     params.selectedCoupon?.id ?? '',
     params.quantities,
+    params.selectedMenuItemConfigurations,
   )
   if (payload.items.length === 0) {
     setError(DELIVERY_CONSOLE_MESSAGES.order.noMenuItemSelected)
+    return { ok: false }
+  }
+  if (
+    selectedStore.menu.some(
+      (item) =>
+        (params.quantities[item.id] ?? 0) > 0 &&
+        !hasValidMenuItemSelections(item, params.selectedMenuItemConfigurations[item.id]),
+    )
+  ) {
+    setError(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired)
+    return { ok: false }
+  }
+  if (
+    storeHasRequiredMenuCategory(selectedStore) &&
+    !hasSelectedRequiredCategoryItem(selectedStore, params.quantities)
+  ) {
+    returnToRequiredCategory(
+      params,
+      selectedStore.id,
+      formatRequiredCategorySelectionMessage(REQUIRED_MENU_CATEGORY_NAME),
+    )
     return { ok: false }
   }
   if (payableTotalCents > selectedCustomer.balanceCents) {
@@ -85,6 +120,8 @@ export function resetCustomerOrderSubmissionState(params: CustomerOrderParams) {
   params.setScheduledDeliveryTouched(false)
   params.setRemark('')
   params.setQuantities(getInitialQuantities(params.selectedStore))
+  params.setSelectedMenuItemConfigurations({})
+  params.setMenuItemConfigurationModal(null)
   params.setIsCheckoutExpanded(false)
   params.setSelectedCouponId('')
   params.setError(null)
@@ -100,6 +137,7 @@ export function buildCustomerOrderRequestPayload(params: CustomerOrderParams) {
     params.remark,
     params.selectedCoupon?.id ?? '',
     params.quantities,
+    params.selectedMenuItemConfigurations,
   )
 }
 

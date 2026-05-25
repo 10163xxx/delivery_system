@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { type RiderProfileDraft, type RiderProfileErrors } from '@/rider/object/profile/RiderWorkspaceObjects'
+import { type RiderProfileDraft, type RiderProfileErrors } from '@/pages/rider/object/RiderWorkspaceObjects'
 import type { RiderProfileWorkspaceProps } from '@/pages/rider/object/RiderPageObjects'
 import { RiderProfileAccountSection, createInitialRiderProfileDraft } from '@/pages/rider/profile/RiderProfileAccountSection'
 import { RiderProfileWithdrawSection } from '@/pages/rider/profile/RiderProfileWithdrawSection'

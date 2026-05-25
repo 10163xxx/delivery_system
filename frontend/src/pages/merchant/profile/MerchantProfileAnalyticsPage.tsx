@@ -1,6 +1,7 @@
 import type { MerchantRoleProps } from '@/shared/app/role-props'
 import type { MerchantTrendPoint } from '@/pages/merchant/object/MerchantPageObjects'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 
 const MERCHANT_PROFILE_ANALYTICS = {
   chartHeight: 240,
@@ -133,7 +134,7 @@ export function MerchantProfileAnalyticsPage(props: MerchantRoleProps) {
           <p>近 30 天收入</p>
           <strong>{formatPrice(monthlyIncomeCents)}</strong>
         </div>
-        <button className="secondary-button" onClick={() => navigate('/merchant/profile')} type="button">
+        <button className="secondary-button" onClick={() => navigate(ROUTE_PATH.merchantProfile)} type="button">
           返回个人信息
         </button>
       </div>

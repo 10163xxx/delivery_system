@@ -10,7 +10,8 @@ import domain.merchant.*
 import domain.order.*
 import domain.rider.*
 import domain.shared.*
-import shared.infra.files.{loadOrCreateJsonFile, writeJsonFile}
+import database.{initializeDeliveryStateTable, loadPersistedDeliveryState, savePersistedDeliveryState, savePersistedDeliveryStateBlocking, withTransactionConnection, withTransactionConnectionBlocking}
+import shared.infra.files.loadJsonFileIfExists
 
 import java.time.{Instant, ZoneId}
 import java.util.UUID
@@ -33,6 +34,7 @@ val StoreBusyStatus = DeliveryBusinessDefaults.StoreBusyStatus
 val StoreRevokedStatus = DeliveryBusinessDefaults.StoreRevokedStatus
 val RiderAvailableStatus = DeliveryBusinessDefaults.RiderAvailableStatus
 val RiderOnDeliveryStatus = DeliveryBusinessDefaults.RiderOnDeliveryStatus
+val RiderUnavailableStatus = DeliveryBusinessDefaults.RiderUnavailableStatus
 val RiderSuspendedStatus = DeliveryBusinessDefaults.RiderSuspendedStatus
 val OrderIdPrefix = DeliveryBusinessDefaults.OrderIdPrefix
 val MerchantAcceptedTimelineNote = DeliveryBusinessDefaults.MerchantAcceptedTimelineNote
@@ -70,27 +72,44 @@ private val adminSelfRegistrationMessage = new ErrorMessage("管理员账号不�
 private val userAliasPrefix = new DisplayText("用户")
 private val customerPhonePrefix = "139"
 
-val stateFile = sys.env
+private val legacyStateFile = sys.env
   .get(DeliveryRuntimeDefaults.StateFileEnv.raw)
   .map(java.nio.file.Paths.get(_))
   .getOrElse(DeliveryRuntimeDefaults.StateFilePath)
 val writeLock = new AnyRef
-val stateRef = new AtomicReference[DeliveryAppState](loadState())
+val stateRef = new AtomicReference[DeliveryAppState](seedState())
+
+def initializeDeliveryStatePersistence: IO[Unit] =
+  withTransactionConnection { connection =>
+    for
+      _ <- initializeDeliveryStateTable(connection)
+      maybeState <- loadPersistedDeliveryState(connection)
+      initialState = maybeState.getOrElse(loadLegacyState())
+      _ <- maybeState match
+        case Some(_) => IO.unit
+        case None => savePersistedDeliveryState(connection, initialState)
+      _ <- IO(stateRef.set(initialState))
+    yield ()
+  }
 
 def getState: IO[DeliveryAppState] =
-  IO.blocking {
-    writeLock.synchronized {
-      val refreshed = refreshState(stateRef.get(), now())
-      saveState(refreshed)
-      stateRef.set(refreshed)
-      refreshed
-    }
+  withTransactionConnection { connection =>
+    IO.blocking {
+      writeLock.synchronized {
+        val refreshed = refreshState(stateRef.get(), now())
+        stateRef.set(refreshed)
+        refreshed
+      }
+    }.flatTap(refreshed => savePersistedDeliveryState(connection, refreshed))
   }
+
+def getStateForUser(user: AuthUser): IO[DeliveryAppState] =
+  getState.map(state => projectStateForUser(state, user))
 
 def registerUserProfile(role: UserRole, displayName: PersonName): Either[ErrorMessage, Option[EntityId]] =
   role match
       case UserRole.customer =>
-        val customerId = nextId(new DisplayText("cust"))
+        val customerId = nextId[CustomerId](new DisplayText("cust"))
         val registrationCoupons = initialRegistrationCoupons(customerId, now())
         updateState { current =>
           Right(
@@ -119,9 +138,9 @@ def registerUserProfile(role: UserRole, displayName: PersonName): Either[ErrorMe
               )
             )
           )
-        }.map(_ => Some(customerId))
+        }.map(_ => Some(new EntityId(customerId.raw)))
       case UserRole.rider =>
-        val riderId = nextId(RiderIdPrefix)
+        val riderId = nextId[RiderId](RiderIdPrefix)
         updateState { current =>
           Right(
             withDerivedData(
@@ -145,9 +164,9 @@ def registerUserProfile(role: UserRole, displayName: PersonName): Either[ErrorMe
               )
             )
           )
-        }.map(_ => Some(riderId))
+        }.map(_ => Some(new EntityId(riderId.raw)))
       case UserRole.merchant =>
-        val merchantProfileId = nextId(MerchantIdPrefix)
+        val merchantProfileId = nextId[MerchantId](MerchantIdPrefix)
         updateState { current =>
           Right(
             withDerivedData(
@@ -166,7 +185,7 @@ def registerUserProfile(role: UserRole, displayName: PersonName): Either[ErrorMe
               )
             )
           )
-        }.map(_ => Some(merchantProfileId))
+        }.map(_ => Some(new EntityId(merchantProfileId.raw)))
       case UserRole.admin =>
         Left(adminSelfRegistrationMessage)
 
@@ -184,10 +203,10 @@ def customerAlias(customerId: CustomerId): PersonName =
     new PersonName(List(userAliasPrefix.raw, suffix).mkString)
 
 def ownsCustomer(customerId: CustomerId, linkedProfileId: Option[EntityId]): ApprovalFlag =
-    linkedProfileId.contains(customerId)
+    linkedProfileId.exists(_.raw == customerId.raw)
 
 def ownsOrderAsCustomer(orderId: OrderId, linkedProfileId: Option[EntityId]): ApprovalFlag =
-    stateRef.get().orders.exists(order => order.id == orderId && linkedProfileId.contains(order.customerId))
+    stateRef.get().orders.exists(order => order.id == orderId && linkedProfileId.exists(_.raw == order.customerId.raw))
 
 def ownsStore(storeId: StoreId, merchantName: PersonName): ApprovalFlag =
     stateRef.get().stores.exists(store => store.id == storeId && store.merchantName == merchantName)
@@ -206,14 +225,98 @@ def ownsMerchantApplication(applicationId: MerchantApplicationId, merchantName: 
 def ownsMerchantProfile(merchantName: PersonName, linkedProfileId: Option[EntityId]): ApprovalFlag =
     val current = stateRef.get()
     linkedProfileId.exists(profileId =>
-      current.merchantProfiles.exists(profile => profile.id == profileId && profile.merchantName == merchantName)
+      current.merchantProfiles.exists(profile => profile.id.raw == profileId.raw && profile.merchantName == merchantName)
     ) || current.merchantProfiles.exists(_.merchantName == merchantName)
 
 def ownsRiderProfile(riderId: RiderId, linkedProfileId: Option[EntityId]): ApprovalFlag =
-    linkedProfileId.contains(riderId)
+    linkedProfileId.exists(_.raw == riderId.raw)
 
 def ownsOrderAsRider(orderId: OrderId, linkedProfileId: Option[EntityId]): ApprovalFlag =
-    stateRef.get().orders.exists(order => order.id == orderId && linkedProfileId.contains(order.riderId.getOrElse("")))
+    stateRef.get().orders.exists(order =>
+      order.id == orderId && order.riderId.exists(riderId => linkedProfileId.exists(_.raw == riderId.raw))
+    )
+
+private def projectStateForUser(state: DeliveryAppState, user: AuthUser): DeliveryAppState =
+    user.role match
+      case UserRole.admin => state
+      case UserRole.customer => projectCustomerState(state, user.linkedProfileId)
+      case UserRole.merchant => projectMerchantState(state, user.displayName)
+      case UserRole.rider => projectRiderState(state, user.linkedProfileId)
+
+private def projectCustomerState(
+    state: DeliveryAppState,
+    linkedProfileId: Option[EntityId],
+): DeliveryAppState =
+    val visibleCustomers = state.customers.filter(customer => linkedProfileId.exists(_.raw == customer.id.raw))
+    val visibleOrders = state.orders.filter(order => linkedProfileId.exists(_.raw == order.customerId.raw))
+    val visibleOrderIds = visibleOrders.map(_.id.raw).toSet
+
+    state.copy(
+      customers = visibleCustomers,
+      merchantProfiles = List.empty,
+      riders = List.empty,
+      admins = List.empty,
+      merchantApplications = List.empty,
+      reviewAppeals = List.empty,
+      eligibilityReviews = List.empty,
+      deliveryState = state.deliveryState.copy(
+        orders = visibleOrders,
+        tickets = state.tickets.filter(ticket => visibleOrderIds.contains(ticket.orderId.raw)),
+      ),
+    )
+
+private def projectMerchantState(
+    state: DeliveryAppState,
+    merchantName: PersonName,
+): DeliveryAppState =
+    val visibleStores = state.stores.filter(_.merchantName == merchantName)
+    val visibleStoreIds = visibleStores.map(_.id.raw).toSet
+    val visibleOrders = state.orders.filter(order => visibleStoreIds.contains(order.storeId.raw))
+
+    state.copy(
+      customers = List.empty,
+      stores = visibleStores,
+      merchantProfiles = state.merchantProfiles.filter(_.merchantName == merchantName),
+      riders = List.empty,
+      admins = List.empty,
+      merchantApplications = state.merchantApplications.filter(_.merchantName == merchantName),
+      reviewAppeals = state.reviewAppeals.filter(appeal => visibleStoreIds.contains(appeal.storeId.raw)),
+      eligibilityReviews = state.eligibilityReviews.filter(review =>
+        review.target == EligibilityReviewTarget.Store && visibleStoreIds.contains(review.targetId.raw)
+      ),
+      deliveryState = state.deliveryState.copy(
+        orders = visibleOrders,
+        tickets = List.empty,
+      ),
+    )
+
+private def projectRiderState(
+    state: DeliveryAppState,
+    linkedProfileId: Option[EntityId],
+): DeliveryAppState =
+    val visibleRiders = state.riders.filter(rider => linkedProfileId.exists(_.raw == rider.id.raw))
+    val visibleOrders = state.orders.filter(order =>
+      order.status == OrderStatus.ReadyForPickup || order.riderId.exists(riderId => linkedProfileId.exists(_.raw == riderId.raw))
+    )
+
+    state.copy(
+      customers = List.empty,
+      stores = List.empty,
+      merchantProfiles = List.empty,
+      riders = visibleRiders,
+      admins = List.empty,
+      merchantApplications = List.empty,
+      reviewAppeals = state.reviewAppeals.filter(appeal =>
+        appeal.riderId.exists(riderId => linkedProfileId.exists(_.raw == riderId.raw))
+      ),
+      eligibilityReviews = state.eligibilityReviews.filter(review =>
+        review.target == EligibilityReviewTarget.Rider && linkedProfileId.exists(_.raw == review.targetId.raw)
+      ),
+      deliveryState = state.deliveryState.copy(
+        orders = visibleOrders,
+        tickets = List.empty,
+      ),
+    )
 
 def transitionOrder(
       orderId: OrderId,
@@ -250,19 +353,16 @@ def updateState(
       val current = refreshState(stateRef.get(), now())
       mutate(current).map(next =>
         val refreshed = refreshState(next, now())
-        saveState(refreshed)
+        withTransactionConnectionBlocking(connection => savePersistedDeliveryStateBlocking(connection, refreshed))
         stateRef.set(refreshed)
         refreshed
       )
     }
 
-def loadState(): DeliveryAppState =
-  loadOrCreateJsonFile(stateFile, seedState())
+private def loadLegacyState(): DeliveryAppState =
+  loadJsonFileIfExists[DeliveryAppState](legacyStateFile).getOrElse(seedState())
 
-def saveState(state: DeliveryAppState): Unit =
-  writeJsonFile(stateFile, state)
-
-def nextId(prefix: DisplayText): EntityId =
-  List(prefix.raw, "-", UUID.randomUUID().toString.take(DeliveryBusinessDefaults.GeneratedIdSuffixLength)).mkString
+def nextId[T](prefix: DisplayText)(using wrapped: WrappedTextType[T]): T =
+  wrapText[T](List(prefix.raw, "-", UUID.randomUUID().toString.take(DeliveryBusinessDefaults.GeneratedIdSuffixLength)).mkString)
 
 def now(): IsoDateTime = new IsoDateTime(Instant.now().toString)

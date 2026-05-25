@@ -2,96 +2,122 @@ package auth.app
 
 import domain.shared.given
 
-import shared.app.{customerAlias, registerUserProfile}
 import cats.effect.IO
+import database.{
+  createPersistedAuthAccountWithSession,
+  createPersistedAuthSession,
+  deletePersistedAuthSession,
+  findPersistedAuthAccountBySessionToken,
+  findPersistedAuthAccountByUsername,
+  initializeAuthPersistenceData,
+}
 import domain.auth.*
 import domain.shared.*
-import shared.infra.files.{loadOrCreateJsonFile, writeJsonFile}
+import shared.app.{customerAlias, registerUserProfile}
 
 import java.time.Instant
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicReference
 
-private val authStateFile = sys.env
-  .get(AuthDefaults.StateFileEnv.raw)
-  .map(java.nio.file.Paths.get(_))
-  .getOrElse(AuthDefaults.StateFilePath)
-private val authWriteLock = new AnyRef
-private val authStateRef = new AtomicReference[AuthState](loadAuthState())
+def initializeAuthPersistence: IO[Unit] =
+  initializeAuthPersistenceData
 
-def login(request: LoginRequest): IO[Either[ErrorMessage, AuthSessionResponse]] =
-  updateAuthState { state =>
-    for
-      username <- sanitizeAuthRequiredText(request.username, AuthDefaults.UsernameMaxLength, ValidationMessages.Auth.UsernameRequired)
-      password <- sanitizeAuthRequiredText(request.password, AuthDefaults.PasswordMaxLength, ValidationMessages.Auth.PasswordRequired)
-      account <- state.accounts.find(_.username == username).toRight(ValidationMessages.Auth.AccountNotFound)
-      _ <- Either.cond(account.password == password, (), ValidationMessages.Auth.PasswordIncorrect)
-      _ <- Either.cond(account.role == request.role, (), ValidationMessages.Auth.LoginRoleMismatch)
-    yield
-      val token = nextAuthToken()
-      val nextState = state.copy(sessions = state.sessions.updated(token, account.id))
-      nextState -> toSessionResponse(account, token)
-  }
-
-def register(request: RegisterRequest): IO[Either[ErrorMessage, AuthSessionResponse]] =
+def login(request: LoginRequest): IO[Either[ErrorMessage, AuthSession]] =
   val validated = for
-    username <- sanitizeAuthUsername(request.username)
-    password <- sanitizeAuthRequiredText(request.password, AuthDefaults.PasswordMaxLength, ValidationMessages.Auth.PasswordRequired)
-    _ <- Either.cond(password.length >= AuthDefaults.PasswordMinLength, (), ValidationMessages.Auth.PasswordTooShort)
-    _ <- Either.cond(request.role != UserRole.admin, (), ValidationMessages.Auth.AdminSelfRegistrationForbidden)
+    username <- sanitizeAuthRequiredText(
+      request.username,
+      AuthDefaults.UsernameMaxLength,
+      ValidationMessages.Auth.UsernameRequired,
+    )
+    password <- sanitizeAuthRequiredText(
+      request.password,
+      AuthDefaults.PasswordMaxLength,
+      ValidationMessages.Auth.PasswordRequired,
+    )
   yield (username, password)
 
   validated match
     case Left(message) => IO.pure(Left(message))
     case Right((username, password)) =>
-      val displayName = new PersonName(username.raw)
-      registerUserProfile(request.role, displayName) match
-        case Left(registerError) => IO.pure(Left(registerError))
-        case Right(profileId) =>
-          updateAuthState { current =>
-            for
-              _ <- Either.cond(
-                !current.accounts.exists(_.username == username),
-                (),
-                ValidationMessages.Auth.UsernameAlreadyExists,
-              )
-            yield
-              val account = AuthAccount(
-                id = nextAuthId(AuthDefaults.UserIdPrefix),
-                username = username,
-                password = password,
-                role = request.role,
-                displayName = displayName,
-                linkedProfileId = profileId,
-                createdAt = authNow(),
-              )
-              val token = nextAuthToken()
-              val nextState = current.copy(
-                accounts = account :: current.accounts,
-                sessions = current.sessions.updated(token, account.id),
-              )
-              nextState -> toSessionResponse(account, token)
-          }
+      findPersistedAuthAccountByUsername(username).flatMap {
+        case None => IO.pure(Left(ValidationMessages.Auth.AccountNotFound))
+        case Some(account) =>
+          if !passwordMatches(password, account.passwordHash) then
+            IO.pure(Left(ValidationMessages.Auth.PasswordIncorrect))
+          else if account.role != request.role then
+            IO.pure(Left(ValidationMessages.Auth.LoginRoleMismatch))
+          else
+            val token = nextAuthToken()
+            createPersistedAuthSession(token, account.id, authNow()).as(Right(toSessionResponse(account, token)))
+      }
 
-def getSession(token: SessionToken): IO[Option[AuthSessionResponse]] =
-  IO.pure {
-    authStateRef.get().sessions.get(token).flatMap(accountId =>
-      authStateRef.get().accounts.find(_.id == accountId).map(account => toSessionResponse(account, token))
+def register(request: RegisterRequest): IO[Either[ErrorMessage, AuthSession]] =
+  val validated = for
+    username <- sanitizeAuthUsername(request.username)
+    password <- sanitizeAuthRequiredText(
+      request.password,
+      AuthDefaults.PasswordMaxLength,
+      ValidationMessages.Auth.PasswordRequired,
     )
-  }
+    _ <- Either.cond(
+      password.length >= AuthDefaults.PasswordMinLength,
+      (),
+      ValidationMessages.Auth.PasswordTooShort,
+    )
+    _ <- Either.cond(
+      request.role != UserRole.admin,
+      (),
+      ValidationMessages.Auth.AdminSelfRegistrationForbidden,
+    )
+  yield (username, password)
+
+  validated match
+    case Left(message) => IO.pure(Left(message))
+    case Right((username, password)) =>
+      findPersistedAuthAccountByUsername(username).flatMap {
+        case Some(_) => IO.pure(Left(ValidationMessages.Auth.UsernameAlreadyExists))
+        case None =>
+          val displayName = new PersonName(username.raw)
+          registerUserProfile(request.role, displayName) match
+            case Left(registerError) => IO.pure(Left(registerError))
+            case Right(profileId) =>
+              createRegisteredSession(username, password, request.role, displayName, profileId)
+      }
+
+def getSession(token: SessionToken): IO[Option[AuthSession]] =
+  findPersistedAuthAccountBySessionToken(token).map(_.map(account => toSessionResponse(account, token)))
 
 def logout(token: SessionToken): IO[Unit] =
-  updateAuthState[Unit] { current =>
-    val nextState = current.copy(sessions = current.sessions - token)
-    Right(nextState -> ())
-  }.void
+  deletePersistedAuthSession(token)
 
-private def toSessionResponse(account: AuthAccount, token: SessionToken): AuthSessionResponse =
+private def createRegisteredSession(
+    username: Username,
+    password: Password,
+    role: UserRole,
+    displayName: PersonName,
+    linkedProfileId: Option[EntityId],
+): IO[Either[ErrorMessage, AuthSession]] =
+  val account = AuthAccount(
+    id = nextAuthId(AuthDefaults.UserIdPrefix),
+    username = username,
+    passwordHash = hashPassword(password),
+    role = role,
+    displayName = displayName,
+    linkedProfileId = linkedProfileId,
+    createdAt = authNow(),
+  )
+  val token = nextAuthToken()
+
+  for
+    _ <- createPersistedAuthAccountWithSession(account, token, authNow())
+  yield Right(toSessionResponse(account, token))
+
+private def toSessionResponse(account: AuthAccount, token: SessionToken): AuthSession =
   val displayName =
     if account.role == UserRole.customer then
-      account.linkedProfileId.map(customerAlias).getOrElse(account.displayName)
+      account.linkedProfileId.map(profileId => customerAlias(new CustomerId(profileId.raw))).getOrElse(account.displayName)
     else account.displayName
-  AuthSessionResponse(
+
+  AuthSession(
     token = token,
     user = AuthUser(
       id = account.id,
@@ -103,7 +129,11 @@ private def toSessionResponse(account: AuthAccount, token: SessionToken): AuthSe
   )
 
 private def sanitizeAuthUsername(value: Username): Either[ErrorMessage, Username] =
-  sanitizeAuthRequiredText(value, AuthDefaults.UsernameMaxLength, ValidationMessages.Auth.UsernameRequired).flatMap { username =>
+  sanitizeAuthRequiredText(
+    value,
+    AuthDefaults.UsernameMaxLength,
+    ValidationMessages.Auth.UsernameRequired,
+  ).flatMap { username =>
     Either.cond(
       username.raw.matches(AuthDefaults.UsernamePattern.raw),
       username,
@@ -122,14 +152,14 @@ private def sanitizeAuthRequiredText[T](
 private def sanitizeAuthText[T](value: T, maxLength: EntityCount)(using wrapped: WrappedTextType[T]): DisplayText =
   new DisplayText(
     value.raw
-    .trim
-    .filter(character => !Character.isISOControl(character) || character == '\n' || character == '\t')
-    .replace('\n', ' ')
-    .replace('\t', ' ')
-    .split(' ')
-    .filter(_.nonEmpty)
-    .mkString(" ")
-    .take(maxLength)
+      .trim
+      .filter(character => !Character.isISOControl(character) || character == '\n' || character == '\t')
+      .replace('\n', ' ')
+      .replace('\t', ' ')
+      .split(' ')
+      .filter(_.nonEmpty)
+      .mkString(" ")
+      .take(maxLength)
   )
 
 private def nextAuthId(prefix: DisplayText): AuthUserId =
@@ -138,93 +168,5 @@ private def nextAuthId(prefix: DisplayText): AuthUserId =
 private def nextAuthToken(): SessionToken =
   UUID.randomUUID().toString.replace("-", "")
 
-private def authNow(): IsoDateTime = new IsoDateTime(Instant.now().toString)
-
-private def loadAuthState(): AuthState =
-  loadOrCreateJsonFile(authStateFile, seedAuthState())
-
-private def saveAuthState(state: AuthState): Unit =
-  writeJsonFile(authStateFile, state)
-
-private def updateAuthState[A](
-    mutate: AuthState => Either[ErrorMessage, (AuthState, A)]
-): IO[Either[ErrorMessage, A]] =
-  IO.blocking {
-    authWriteLock.synchronized {
-      mutate(authStateRef.get()).map { case (nextState, result) =>
-        saveAuthState(nextState)
-        authStateRef.set(nextState)
-        result
-      }
-    }
-  }
-
-private def seedAuthState(): AuthState =
-  AuthState(
-    accounts = List(
-      AuthAccount(
-        id = AdminDefaults.PrimaryAdminUserId,
-        username = AdminDefaults.PrimaryAdminUsername,
-        password = AdminDefaults.PrimaryAdminPassword,
-        role = UserRole.admin,
-        displayName = AdminDefaults.PrimaryAdminDisplayName,
-        linkedProfileId = Some(AdminDefaults.PrimaryAdminId),
-        createdAt = authNow(),
-      ),
-      AuthAccount(
-        id = "usr-cust-1",
-        username = new Username("cust_1"),
-        password = new Password("cust123"),
-        role = UserRole.customer,
-        displayName = customerAlias("cust-1"),
-        linkedProfileId = Some("cust-1"),
-        createdAt = authNow(),
-      ),
-      AuthAccount(
-        id = "usr-cust-2",
-        username = new Username("cust_2"),
-        password = new Password("cust123"),
-        role = UserRole.customer,
-        displayName = customerAlias("cust-2"),
-        linkedProfileId = Some("cust-2"),
-        createdAt = authNow(),
-      ),
-      AuthAccount(
-        id = "usr-rider-1",
-        username = new Username("rider_1"),
-        password = new Password("rider123"),
-        role = UserRole.rider,
-        displayName = new PersonName("陈凯"),
-        linkedProfileId = Some("rider-1"),
-        createdAt = authNow(),
-      ),
-      AuthAccount(
-        id = "usr-rider-2",
-        username = new Username("rider_2"),
-        password = new Password("rider123"),
-        role = UserRole.rider,
-        displayName = new PersonName("赵晨"),
-        linkedProfileId = Some("rider-2"),
-        createdAt = authNow(),
-      ),
-      AuthAccount(
-        id = "usr-merchant-1",
-        username = new Username("merchant_wang"),
-        password = new Password("merchant123"),
-        role = UserRole.merchant,
-        displayName = new PersonName("王师傅"),
-        linkedProfileId = None,
-        createdAt = authNow(),
-      ),
-      AuthAccount(
-        id = "usr-merchant-2",
-        username = new Username("merchant_su"),
-        password = new Password("merchant123"),
-        role = UserRole.merchant,
-        displayName = new PersonName("苏宁"),
-        linkedProfileId = None,
-        createdAt = authNow(),
-      ),
-    ),
-    sessions = Map.empty,
-  )
+private def authNow(): IsoDateTime =
+  new IsoDateTime(Instant.now().toString)

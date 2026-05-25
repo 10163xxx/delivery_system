@@ -2,7 +2,7 @@ import type { getTodayDeliveryWindowAction } from '@/shared/app/delivery/Deliver
 import type { getDeliveryConsolePageViewDerived } from '@/shared/app/delivery/DeliveryPageViewDerived'
 import type { getWorkspaceViews } from '@/shared/app/delivery/DeliveryPageViewWorkspace'
 import type { DeliveryPageViewParams } from '@/shared/object/core/DeliveryPageObjects'
-import type { Role } from '@/shared/object/core/SharedObjects'
+import type { MenuItemId, Role } from '@/shared/object/core/SharedObjects'
 type PaymentFieldState = {
   parsedRechargeAmount: number | null
   rechargeAmountError: string | null
@@ -27,10 +27,12 @@ export type PageActionArgsInput = {
   selectedStore: ReturnType<typeof getDeliveryConsolePageViewDerived>['selectedStore']
   selectedCustomer: ReturnType<typeof getDeliveryConsolePageViewDerived>['selectedCustomer']
   selectedStoreIsOpen: boolean
-  quantities: Record<string, number>
+  quantities: Record<MenuItemId, number>
+  selectedMenuItemConfigurations: Record<MenuItemId, import('@/shared/object/core/DeliveryAppObjects').SelectedMenuItemConfiguration>
   scheduledDeliveryTime: string
   pageState: DeliveryPageViewParams['pageState']
   setError: DeliveryPageViewParams['sessionService']['setError']
+  navigate: DeliveryPageViewParams['navigate']
   setSearchParams: DeliveryPageViewParams['setSearchParams']
 }
 

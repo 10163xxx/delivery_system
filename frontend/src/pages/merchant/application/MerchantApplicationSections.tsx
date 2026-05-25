@@ -3,14 +3,17 @@ import { DisplayImageSlot } from '@/shared/components/primitives/DisplayImageSlo
 import type { MerchantApplication } from '@/shared/object/core/SharedObjects'
 import { APPLICATION_STATUS, ROLE } from '@/shared/object/core/SharedObjects'
 import {
+  buildMerchantApplicationSubmitRoute,
   MERCHANT_APPLICATION_VIEW,
   MERCHANT_FORM_FIELD,
+  type MerchantRoutePath,
 } from '@/shared/object/core/DeliveryAppObjects'
 
 type MerchantApplicationView = MerchantRoleProps['merchantApplicationView']
 
 export function getMerchantApplicationPath(view: MerchantApplicationView) {
-  return `/merchant/application?merchantView=${view}`
+  if (view === MERCHANT_APPLICATION_VIEW.submit) return buildMerchantApplicationSubmitRoute()
+  return `/merchant/application?merchantView=${view}` as MerchantRoutePath
 }
 
 export function MerchantApplicationTabs({

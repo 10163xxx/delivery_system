@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { createInitialMerchantDraft, createInitialMerchantProfileDraft } from '@/shared/delivery/DeliveryServices'
 import {
+  CUSTOMER_STORE_VISIBILITY,
   CUSTOMER_ADDRESS_FIELD,
   MERCHANT_APPLICATION_VIEW,
   MERCHANT_WORKSPACE_VIEW,
@@ -25,6 +26,7 @@ function resetSelectionState(selectionState: ReturnType<typeof useSelectionState
 function resetCustomerPageState(customerState: ReturnType<typeof useCustomerPageState>) {
   customerState.setCustomerStoreSearchDraft('')
   customerState.setCustomerStoreSearch('')
+  customerState.setCustomerStoreVisibility(CUSTOMER_STORE_VISIBILITY.orderableOnly)
   customerState.setDeliveryAddress('')
   customerState.setDeliveryAddressError(null)
   customerState.setScheduledDeliveryTime('')

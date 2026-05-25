@@ -1,8 +1,8 @@
-import { deliveryApi } from '@/shared/api/SharedApi'
-import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
+import { createOrder, sendOrderChatMessage } from '@/shared/api/SharedApi'
+import { ROUTE_PATH, type OrderId } from '@/shared/object/core/SharedObjects'
 import type {
   CustomerOrderParams,
-} from '@/customer/object/action/CustomerActionObjects'
+} from '@/pages/customer/object/CustomerActionObjects'
 import { clearDraftError, removeKey, setDraftError } from '@/customer/app/actions/CustomerActionHelpers'
 import {
   buildCustomerOrderChatRequestPayload,
@@ -21,20 +21,18 @@ export function createCustomerOrderActions(params: CustomerOrderParams) {
     if (!validateCustomerOrderSubmission(params).ok) return
     const payload = buildCustomerOrderRequestPayload(params)
     if (!payload) return
-    const success = await params.runAction(() => deliveryApi.order.createOrder(payload))
+    const success = await params.runAction(() => createOrder(payload))
     if (!success) return
     resetCustomerOrderSubmissionState(params)
   }
 
-  async function submitOrderChatMessage(orderId: string) {
+  async function submitOrderChatMessage(orderId: OrderId) {
     const payload = buildCustomerOrderChatRequestPayload(params.orderChatDrafts, orderId)
     if (!payload.body) {
       setDraftError(params.setOrderChatErrors, orderId, '消息内容不能为空')
       return
     }
-    const success = await params.runAction(() =>
-      deliveryApi.order.sendOrderChatMessage(orderId, payload),
-    )
+    const success = await params.runAction(() => sendOrderChatMessage(orderId, payload))
     if (!success) return
     params.setOrderChatDrafts((current) => removeKey(current, orderId))
     clearDraftError(params.setOrderChatErrors, orderId)

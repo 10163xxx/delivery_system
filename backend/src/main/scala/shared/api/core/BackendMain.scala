@@ -9,6 +9,9 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.server.middleware.Logger
 import shared.api.backendApiApp
+import auth.app.initializeAuthPersistence
+import database.initializeDatabaseSession
+import shared.app.initializeDeliveryStatePersistence
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 object BackendMain extends IOApp.Simple:
@@ -32,6 +35,9 @@ object BackendMain extends IOApp.Simple:
 
   private val serverResource: cats.effect.Resource[IO, Server] =
     for
+      _ <- initializeDatabaseSession
+      _ <- cats.effect.Resource.eval(initializeDeliveryStatePersistence)
+      _ <- cats.effect.Resource.eval(initializeAuthPersistence)
       server <- EmberServerBuilder
         .default[IO]
         .withHost(serverHost)

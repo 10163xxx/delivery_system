@@ -17,8 +17,6 @@ object HttpHeaders:
   val SessionToken: CIString = CIString("x-session-token")
 
 object AuthDefaults:
-  val StateFileEnv: EnvVarName = new EnvVarName("AUTH_STATE_FILE")
-  val StateFilePath: Path = Paths.get("data", "auth-state.json")
   val UsernameMaxLength: EntityCount = 24
   val PasswordMaxLength: EntityCount = 64
   val PasswordMinLength: EntityCount = 6
@@ -26,15 +24,54 @@ object AuthDefaults:
   val UserIdPrefix: DisplayText = new DisplayText("usr")
   val GeneratedIdSuffixLength: EntityCount = 8
 
+object AuthPersistenceDefaults:
+  val AccountsTableName: DisplayText = new DisplayText("auth_accounts")
+  val SessionsTableName: DisplayText = new DisplayText("auth_sessions")
+  val AccountIdColumnName: DisplayText = new DisplayText("id")
+  val UsernameColumnName: DisplayText = new DisplayText("username")
+  val PasswordHashColumnName: DisplayText = new DisplayText("password_hash")
+  val RoleColumnName: DisplayText = new DisplayText("role")
+  val DisplayNameColumnName: DisplayText = new DisplayText("display_name")
+  val LinkedProfileIdColumnName: DisplayText = new DisplayText("linked_profile_id")
+  val CreatedAtColumnName: DisplayText = new DisplayText("created_at")
+  val SessionTokenColumnName: DisplayText = new DisplayText("token")
+  val SessionAccountIdColumnName: DisplayText = new DisplayText("account_id")
+  val SeedScriptPath: Path = Paths.get("scripts", "init-demo-auth.sql")
+  val RoleColumnLength: EntityCount = 32
+  val PasswordHashColumnLength: EntityCount = 64
+  val DisplayNameColumnLength: EntityCount = 120
+  val EntityIdColumnLength: EntityCount = 64
+
 object DeliveryRuntimeDefaults:
   val StateFileEnv: EnvVarName = new EnvVarName("DELIVERY_STATE_FILE")
   val StateFilePath: Path = Paths.get("data", "delivery-state.json")
 
+object DeliveryPersistenceDefaults:
+  val SnapshotTableName: DisplayText = new DisplayText("delivery_app_state")
+  val SnapshotStateJsonColumnName: DisplayText = new DisplayText("state_json")
+  val CustomersTableName: DisplayText = new DisplayText("delivery_customers")
+  val StoresTableName: DisplayText = new DisplayText("delivery_stores")
+  val MerchantProfilesTableName: DisplayText = new DisplayText("delivery_merchant_profiles")
+  val RidersTableName: DisplayText = new DisplayText("delivery_riders")
+  val AdminsTableName: DisplayText = new DisplayText("delivery_admins")
+  val MerchantApplicationsTableName: DisplayText = new DisplayText("delivery_merchant_applications")
+  val ReviewAppealsTableName: DisplayText = new DisplayText("delivery_review_appeals")
+  val EligibilityReviewsTableName: DisplayText = new DisplayText("delivery_eligibility_reviews")
+  val OrdersTableName: DisplayText = new DisplayText("delivery_orders")
+  val TicketsTableName: DisplayText = new DisplayText("delivery_tickets")
+  val MetricsTableName: DisplayText = new DisplayText("delivery_system_metrics")
+  val StateKeyColumnName: DisplayText = new DisplayText("state_key")
+  val EntityIdColumnName: DisplayText = new DisplayText("entity_id")
+  val PositionColumnName: DisplayText = new DisplayText("position")
+  val PayloadColumnName: DisplayText = new DisplayText("payload")
+  val UpdatedAtColumnName: DisplayText = new DisplayText("updated_at")
+  val PrimaryStateKey: DisplayText = new DisplayText("primary")
+  val StateKeyColumnLength: EntityCount = 32
+  val EntityIdColumnLength: EntityCount = 64
+
 object AdminDefaults:
   val PrimaryAdminId: AdminId = "admin-1"
   val PrimaryAdminUserId: AuthUserId = "usr-admin-1"
-  val PrimaryAdminUsername: Username = new Username("admin")
-  val PrimaryAdminPassword: Password = new Password("admin123")
   val PrimaryAdminDisplayName: PersonName = new PersonName("总控台管理员")
 
 object UploadDefaults:

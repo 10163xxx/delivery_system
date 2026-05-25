@@ -39,6 +39,11 @@ def validateMenuItemRequest(
   ): Either[ErrorMessage, AddMenuItemRequest] =
     for
       name <- sanitizeRequiredText(request.name, DeliveryValidationDefaults.MenuItemNameMaxLength, ValidationMessages.Merchant.MenuItemNameRequired)
+      category <- sanitizeRequiredText(
+        request.category.getOrElse(new DisplayText("")),
+        DeliveryValidationDefaults.MenuItemCategoryMaxLength,
+        ValidationMessages.Merchant.MenuItemCategoryRequired,
+      )
       description <- sanitizeRequiredText(request.description, DeliveryValidationDefaults.MenuItemDescriptionMaxLength, ValidationMessages.Merchant.MenuItemDescriptionRequired)
       _ <- Either.cond(
         request.priceCents > DeliveryValidationDefaults.MenuItemPriceMinCentsExclusive &&
@@ -55,13 +60,58 @@ def validateMenuItemRequest(
         ValidationMessages.Merchant.MenuItemRemainingQuantityInvalid,
       )
       imageUrl <- sanitizeOptionalText(request.imageUrl, DeliveryValidationDefaults.MenuItemImageUrlMaxLength).toRight(ValidationMessages.Merchant.MenuItemImageRequired)
+      selectionGroups <- validateMenuItemSelectionGroups(request.selectionGroups)
     yield AddMenuItemRequest(
       name = name,
+      category = Some(category),
       description = description,
       priceCents = request.priceCents,
       imageUrl = Some(imageUrl),
       remainingQuantity = request.remainingQuantity,
+      selectionGroups = selectionGroups,
     )
+
+private def validateMenuItemSelectionGroups(
+      groups: List[MenuItemSelectionGroup]
+  ): Either[ErrorMessage, List[MenuItemSelectionGroup]] =
+    Either.cond(
+      groups.length <= DeliveryValidationDefaults.MenuItemSelectionGroupMaxCount,
+      (),
+      ValidationMessages.Merchant.MenuItemSelectionGroupsInvalid,
+    ).flatMap { _ =>
+      groups.foldLeft[Either[ErrorMessage, (List[MenuItemSelectionGroup], Set[String])]](Right((List.empty, Set.empty))) {
+        case (acc, group) =>
+          for
+            tuple <- acc
+            (validated, seenNames) = tuple
+            name <- sanitizeRequiredText(
+              group.name,
+              DeliveryValidationDefaults.MenuItemSelectionGroupNameMaxLength,
+              ValidationMessages.Merchant.MenuItemSelectionGroupsInvalid,
+            )
+            _ <- Either.cond(!seenNames.contains(name.raw), (), ValidationMessages.Merchant.MenuItemSelectionGroupsInvalid)
+            sanitizedOptions = group.options.flatMap(option =>
+              sanitizeOptionalText(Some(option), DeliveryValidationDefaults.MenuItemSelectionOptionMaxLength)
+            )
+            uniqueOptions = sanitizedOptions.distinct
+            _ <- Either.cond(
+              uniqueOptions.nonEmpty &&
+                uniqueOptions.length == sanitizedOptions.length &&
+                uniqueOptions.length <= DeliveryValidationDefaults.MenuItemSelectionOptionMaxCount &&
+                group.minSelections >= NumericDefaults.ZeroCount &&
+                group.maxSelections >= group.minSelections &&
+                group.maxSelections > NumericDefaults.ZeroCount &&
+                group.maxSelections <= uniqueOptions.length &&
+                group.minSelections <= uniqueOptions.length,
+              (),
+              ValidationMessages.Merchant.MenuItemSelectionGroupsInvalid,
+            )
+          yield (
+            validated :+ group.copy(name = name, options = uniqueOptions),
+            seenNames + name.raw,
+          )
+      }.map(_._1)
+    }
 
 def validateMenuItemStockRequest(
       request: UpdateMenuItemStockRequest
@@ -84,6 +134,15 @@ def validateMenuItemPriceRequest(
       request,
       ValidationMessages.Merchant.MenuItemPriceInvalid,
     )
+
+def validateMenuItemCategoryRequest(
+      request: UpdateMenuItemCategoryRequest
+  ): Either[ErrorMessage, UpdateMenuItemCategoryRequest] =
+    sanitizeRequiredText(
+      request.category,
+      DeliveryValidationDefaults.MenuItemCategoryMaxLength,
+      ValidationMessages.Merchant.MenuItemCategoryRequired,
+    ).map(category => request.copy(category = category))
 
 def validateEligibilityTargetState(
       state: DeliveryAppState,

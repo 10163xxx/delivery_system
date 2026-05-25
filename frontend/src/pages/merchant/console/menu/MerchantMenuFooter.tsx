@@ -1,5 +1,5 @@
 import type { MenuComposerOpenState } from '@/merchant/app/state/MerchantConsoleState'
-import type { MerchantMenuComposerFooterProps } from '@/merchant/object/console/MerchantConsoleObjects'
+import type { MerchantMenuComposerFooterProps } from '@/pages/merchant/object/MerchantConsoleObjects'
 
 export function MerchantMenuFooter({
   storeId,

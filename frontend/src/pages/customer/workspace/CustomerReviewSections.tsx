@@ -1,4 +1,5 @@
-import { REVIEW_TARGET } from '@/shared/object/core/SharedObjects'
+import { REVIEW_TARGET, ROUTE_PATH } from '@/shared/object/core/SharedObjects'
+import { buildReviewDraftKey } from '@/shared/object/core/DeliveryAppObjects'
 import {
   DEFAULT_REVIEW_RATING,
   LOW_RATING_MAX,
@@ -10,10 +11,7 @@ import type {
   CustomerReviewOrderContentProps,
   CustomerReviewSectionProps,
 } from '@/pages/customer/object/CustomerPageObjects'
-
-function getReviewDraftKey(orderId: string, suffix: string) {
-  return `${orderId}-${suffix}`
-}
+import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 
 export function CustomerReviewSection({
   actionHint,
@@ -36,7 +34,7 @@ export function CustomerReviewSection({
     submitReview,
     updateReviewDraft,
   } = props
-  const draftKey = getReviewDraftKey(order.id, reviewErrorKey)
+  const draftKey = buildReviewDraftKey(order.id, reviewErrorKey)
   const errorText = reviewErrors[draftKey]
   const draft = reviewDrafts[draftKey]
   const isPending = hasPendingReview(order)
@@ -55,7 +53,7 @@ export function CustomerReviewSection({
       />
       <input
         className={errorText ? 'field-error' : undefined}
-        placeholder={`非 ${MAX_RATING} 星时必须填写理由`}
+        placeholder={ORDER_PAGE_COPY.review.lowRatingReasonPlaceholder(MAX_RATING)}
         value={draft?.comment ?? ''}
         onChange={(event) => updateReviewDraft(draftKey, { comment: event.target.value })}
       />
@@ -115,17 +113,17 @@ export function CustomerReviewOrderContent({ props }: CustomerReviewOrderContent
         <div>
           <h3>{activeReviewOrder.storeName}</h3>
           <p>
-            {activeReviewOrder.id} · {activeReviewOrder.riderName ?? '待分配骑手'}
+            {activeReviewOrder.id} · {activeReviewOrder.riderName ?? ORDER_PAGE_COPY.review.waitingRiderFallback}
           </p>
         </div>
       </div>
       <div className="review-dialog-form">
         <CustomerReviewSection
-          actionHint={`${MAX_RATING} 星可直接提交，${MIN_RATING} 到 ${LOW_RATING_MAX} 星必须填写理由。`}
-          buttonIdleLabel="商家已评价"
-          buttonReadyLabel="提交商家评价"
-          emptyHint="可以点击下方预设理由快速填写。"
-          extraNotePlaceholder="商家补充说明（可选）"
+          actionHint={ORDER_PAGE_COPY.review.sectionActionHint(MAX_RATING, MIN_RATING, LOW_RATING_MAX)}
+          buttonIdleLabel={ORDER_PAGE_COPY.review.storeButtonIdleLabel}
+          buttonReadyLabel={ORDER_PAGE_COPY.review.storeButtonReadyLabel}
+          emptyHint={ORDER_PAGE_COPY.review.storeEmptyHint}
+          extraNotePlaceholder={ORDER_PAGE_COPY.review.storeExtraNotePlaceholder}
           order={activeReviewOrder}
           props={{
             hasPendingReview: hasPendingStoreReview,
@@ -139,18 +137,18 @@ export function CustomerReviewOrderContent({ props }: CustomerReviewOrderContent
           reviewTarget={REVIEW_TARGET.store}
           subtitle={
             activeReviewOrder.storeRating != null
-              ? `已提交 ${activeReviewOrder.storeRating} 星`
-              : '待提交'
+              ? ORDER_PAGE_COPY.review.submittedRatingSubtitle(activeReviewOrder.storeRating)
+              : ORDER_PAGE_COPY.review.pendingSubtitle
           }
-          title="商家评价"
+          title={ORDER_PAGE_COPY.review.storeTitle}
         />
         {activeReviewOrder.riderId ? (
           <CustomerReviewSection
-            actionHint="你不需要和商家评价一起提交，可以分开完成。"
-            buttonIdleLabel="骑手已评价"
-            buttonReadyLabel="提交骑手评价"
-            emptyHint="可以先选预设理由，再补充自己的描述。"
-            extraNotePlaceholder="骑手补充说明（可选）"
+            actionHint={ORDER_PAGE_COPY.review.riderActionHint}
+            buttonIdleLabel={ORDER_PAGE_COPY.review.riderButtonIdleLabel}
+            buttonReadyLabel={ORDER_PAGE_COPY.review.riderButtonReadyLabel}
+            emptyHint={ORDER_PAGE_COPY.review.riderEmptyHint}
+            extraNotePlaceholder={ORDER_PAGE_COPY.review.riderExtraNotePlaceholder}
             order={activeReviewOrder}
             props={{
               hasPendingReview: hasPendingRiderReview,
@@ -164,19 +162,19 @@ export function CustomerReviewOrderContent({ props }: CustomerReviewOrderContent
             reviewTarget={REVIEW_TARGET.rider}
             subtitle={
               activeReviewOrder.riderRating != null
-                ? `已提交 ${activeReviewOrder.riderRating} 星`
-                : '待提交'
+                ? ORDER_PAGE_COPY.review.submittedRatingSubtitle(activeReviewOrder.riderRating)
+                : ORDER_PAGE_COPY.review.pendingSubtitle
             }
-            title="骑手评价"
+            title={ORDER_PAGE_COPY.review.riderTitle}
           />
         ) : null}
         <div className="action-row">
-          <button className="secondary-button" onClick={() => navigate('/customer/orders')} type="button">
-            返回订单
+          <button className="secondary-button" onClick={() => navigate(ROUTE_PATH.customerOrders)} type="button">
+            {ORDER_PAGE_COPY.review.backToOrdersButton}
           </button>
         </div>
       </div>
-      <p className="meta-line">评价入口仅保留到订单完成后 {REVIEW_WINDOW_DAYS} 天内。</p>
+      <p className="meta-line">{ORDER_PAGE_COPY.review.reviewWindowHint(REVIEW_WINDOW_DAYS)}</p>
     </section>
   )
 }

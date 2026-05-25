@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { browserRuntime } from '@/shared/api/SharedApi'
+import { scheduleTimeout } from '@/shared/api/SharedApi'
 import type { DisplayImageSlotProps } from '@/shared/object/core/SharedViewObjects'
 
 const IMAGE_PREVIEW_DELAY_MS = 300
@@ -30,7 +30,7 @@ function useDebouncedImageSrc(src?: string) {
 
   useEffect(() => {
     const delayMs = src?.trim() ? IMAGE_PREVIEW_DELAY_MS : 0
-    return browserRuntime.scheduleTimeout(() => setDebouncedSrc(src), delayMs)
+    return scheduleTimeout(() => setDebouncedSrc(src), delayMs)
   }, [src])
 
   return debouncedSrc

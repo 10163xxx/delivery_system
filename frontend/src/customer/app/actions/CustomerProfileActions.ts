@@ -1,11 +1,16 @@
-import { deliveryApi } from '@/shared/api/SharedApi'
+import {
+  addCustomerAddress as addCustomerAddressApi,
+  removeCustomerAddress as removeCustomerAddressApi,
+  setDefaultCustomerAddress as setDefaultCustomerAddressApi,
+  updateCustomerProfile as updateCustomerProfileApi,
+} from '@/shared/api/SharedApi'
 import {
   buildCustomerAddressPayload,
   buildCustomerProfilePayload,
   DELIVERY_CONSOLE_MESSAGES,
   validateCustomerAddressDraft,
 } from '@/shared/delivery/DeliveryServices'
-import type { CustomerProfileParams } from '@/customer/object/action/CustomerActionObjects'
+import type { CustomerProfileParams } from '@/pages/customer/object/CustomerActionObjects'
 
 export function createCustomerProfileActions(params: CustomerProfileParams) {
   const {
@@ -26,9 +31,7 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
       setError(DELIVERY_CONSOLE_MESSAGES.profile.customerNameRequired)
       return
     }
-    const success = await runAction(() =>
-      deliveryApi.customer.updateCustomerProfile(selectedCustomer.id, payload),
-    )
+    const success = await runAction(() => updateCustomerProfileApi(selectedCustomer.id, payload))
     if (!success) return
     setSession((current) =>
       current
@@ -47,10 +50,7 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
     setAddressFormErrors(nextErrors)
     if (nextErrors.label || nextErrors.address) return
     const success = await runAction(() =>
-      deliveryApi.customer.addCustomerAddress(
-        selectedCustomer.id,
-        buildCustomerAddressPayload(addressDraft),
-      ),
+      addCustomerAddressApi(selectedCustomer.id, buildCustomerAddressPayload(addressDraft)),
     )
     if (!success) return
     setAddressDraft({ label: '', address: '' })
@@ -59,16 +59,12 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
 
   async function removeCustomerAddress(addressId: string) {
     if (!selectedCustomer) return
-    await runAction(() =>
-      deliveryApi.customer.removeCustomerAddress(selectedCustomer.id, { address: addressId }),
-    )
+    await runAction(() => removeCustomerAddressApi(selectedCustomer.id, { address: addressId }))
   }
 
   async function setDefaultCustomerAddress(addressId: string) {
     if (!selectedCustomer) return
-    await runAction(() =>
-      deliveryApi.customer.setDefaultCustomerAddress(selectedCustomer.id, { address: addressId }),
-    )
+    await runAction(() => setDefaultCustomerAddressApi(selectedCustomer.id, { address: addressId }))
   }
 
   return {

@@ -1,5 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { deliveryApi } from '@/shared/api/SharedApi'
+import {
+  addMenuItem,
+  submitMerchantApplication as submitMerchantApplicationApi,
+  uploadMerchantStoreImage,
+} from '@/shared/api/SharedApi'
 import {
   buildMenuItemPayload,
   buildMerchantRegistrationPayload,
@@ -15,6 +19,7 @@ import {
   type MenuItemDraft,
   type MenuItemFormField,
 } from '@/shared/object/core/DeliveryAppObjects'
+import type { StoreId } from '@/shared/object/core/SharedObjects'
 import type { MerchantDraftContext, RunAction } from '@/merchant/object/action/MerchantActionObjects'
 
 const MERCHANT_FORM_FIELDS = [
@@ -28,10 +33,12 @@ const MERCHANT_FORM_FIELDS = [
 
 const MENU_ITEM_FORM_FIELDS = [
   MENU_ITEM_FORM_FIELD.name,
+  MENU_ITEM_FORM_FIELD.category,
   MENU_ITEM_FORM_FIELD.description,
   MENU_ITEM_FORM_FIELD.priceYuan,
   MENU_ITEM_FORM_FIELD.remainingQuantity,
   MENU_ITEM_FORM_FIELD.imageUrl,
+  MENU_ITEM_FORM_FIELD.selectionGroupsText,
 ] as const
 
 function getUploadErrorMessage(error: unknown, fallback: string) {
@@ -47,29 +54,29 @@ function getFirstInvalidField<T extends string>(
 
 function setMenuImageUploading(
   setMenuItemImageUploading: MerchantDraftContext['setMenuItemImageUploading'],
-  storeId: string,
+  storeId: StoreId,
   isUploading: boolean,
 ) {
-  setMenuItemImageUploading((current: Record<string, boolean>) => ({ ...current, [storeId]: isUploading }))
+  setMenuItemImageUploading((current: Record<StoreId, boolean>) => ({ ...current, [storeId]: isUploading }))
 }
 
 export function createMerchantDraftSelectors(draft: MerchantDraftContext) {
   const { menuComposerOpen, menuItemDrafts, menuItemImageUploading, setMenuComposerOpen } = draft
 
-  function getMenuItemDraft(storeId: string) {
+  function getMenuItemDraft(storeId: StoreId) {
     return menuItemDrafts[storeId] ?? createInitialMenuItemDraft()
   }
 
-  function isMenuItemImageUploading(storeId: string) {
+  function isMenuItemImageUploading(storeId: StoreId) {
     return menuItemImageUploading[storeId] ?? false
   }
 
-  function isMenuComposerExpanded(storeId: string) {
+  function isMenuComposerExpanded(storeId: StoreId) {
     return menuComposerOpen[storeId] ?? false
   }
 
-  function closeMenuComposer(storeId: string) {
-    setMenuComposerOpen((current: Record<string, boolean>) => ({ ...current, [storeId]: false }))
+  function closeMenuComposer(storeId: StoreId) {
+    setMenuComposerOpen((current: Record<StoreId, boolean>) => ({ ...current, [storeId]: false }))
   }
 
   return {
@@ -89,9 +96,9 @@ export function createMerchantDraftValidators(draft: MerchantDraftContext) {
     return getFirstInvalidField(MERCHANT_FORM_FIELDS, nextErrors)
   }
 
-  function validateMenuItem(storeId: string, menuDraft: MenuItemDraft) {
+  function validateMenuItem(storeId: StoreId, menuDraft: MenuItemDraft) {
     const nextErrors = validateMenuItemDraft(menuDraft)
-    setMenuItemFormErrors((current: Record<string, Partial<Record<MenuItemFormField, string>>>) => ({
+    setMenuItemFormErrors((current: Record<StoreId, Partial<Record<MenuItemFormField, string>>>) => ({
       ...current,
       [storeId]: nextErrors,
     }))
@@ -125,25 +132,25 @@ export function createMerchantDraftSubmitActions(
     const payload = buildMerchantRegistrationPayload(merchantDraft)
     if (validators.validateMerchantApplication()) return
     if (isMerchantImageUploading) return setError(DELIVERY_CONSOLE_MESSAGES.upload.uploadInProgress)
-    await runAction(() => deliveryApi.merchant.submitMerchantApplication(payload))
+    await runAction(() => submitMerchantApplicationApi(payload))
     setMerchantDraft(createInitialMerchantDraft(currentDisplayName))
     setMerchantFormErrors({})
   }
 
-  async function submitStoreMenuItem(storeId: string) {
+  async function submitStoreMenuItem(storeId: StoreId) {
     const menuDraft = selectors.getMenuItemDraft(storeId)
     const payload = buildMenuItemPayload(menuDraft)
     if (validators.validateMenuItem(storeId, menuDraft)) return
     if (selectors.isMenuItemImageUploading(storeId)) {
       return setError(DELIVERY_CONSOLE_MESSAGES.upload.menuImageUploadInProgress)
     }
-    const success = await runAction(() => deliveryApi.merchant.addStoreMenuItem(storeId, payload))
+    const success = await runAction(() => addMenuItem(storeId, payload))
     if (!success) return
-    setMenuItemDrafts((current: Record<string, MenuItemDraft>) => ({
+    setMenuItemDrafts((current: Record<StoreId, MenuItemDraft>) => ({
       ...current,
       [storeId]: createInitialMenuItemDraft(),
     }))
-    setMenuItemFormErrors((current: Record<string, Partial<Record<MenuItemFormField, string>>>) => ({
+    setMenuItemFormErrors((current: Record<StoreId, Partial<Record<MenuItemFormField, string>>>) => ({
       ...current,
       [storeId]: {},
     }))
@@ -172,7 +179,7 @@ export function createMerchantDraftUploadActions(
     if (!file) return
     setIsMerchantImageUploading(true)
     try {
-      const uploaded = await deliveryApi.merchant.uploadMerchantStoreImage(file)
+      const uploaded = await uploadMerchantStoreImage(file)
       setMerchantDraft((current) => ({ ...current, imageUrl: uploaded.url, uploadedImageName: file.name }))
       setError(null)
     } catch (uploadError) {
@@ -182,12 +189,12 @@ export function createMerchantDraftUploadActions(
     }
   }
 
-  async function uploadStoreMenuImage(storeId: string, file?: File) {
+  async function uploadStoreMenuImage(storeId: StoreId, file?: File) {
     if (!file) return
     setMenuImageUploading(setMenuItemImageUploading, storeId, true)
     try {
-      const uploaded = await deliveryApi.merchant.uploadMerchantStoreImage(file)
-      setMenuItemDrafts((current: Record<string, MenuItemDraft>) => ({
+      const uploaded = await uploadMerchantStoreImage(file)
+      setMenuItemDrafts((current: Record<StoreId, MenuItemDraft>) => ({
         ...current,
         [storeId]: {
           ...(current[storeId] ?? createInitialMenuItemDraft()),
@@ -195,7 +202,7 @@ export function createMerchantDraftUploadActions(
           uploadedImageName: file.name,
         },
       }))
-      setMenuItemFormErrors((current: Record<string, Partial<Record<MenuItemFormField, string>>>) => ({
+      setMenuItemFormErrors((current: Record<StoreId, Partial<Record<MenuItemFormField, string>>>) => ({
         ...current,
         [storeId]: { ...(current[storeId] ?? {}), imageUrl: undefined },
       }))

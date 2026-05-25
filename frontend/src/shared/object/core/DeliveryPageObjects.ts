@@ -5,14 +5,28 @@ import type {
   MerchantApplicationView,
   MerchantWorkspaceView,
 } from '@/shared/object/core/DeliveryAppObjects'
-import type { AuthSession, DeliveryAppState, Customer, MerchantProfile, OrderSummary, Store } from '@/shared/object/core/SharedObjects'
+import type {
+  AuthSession,
+  CouponId,
+  Customer,
+  CustomerId,
+  DeliveryAppState,
+  DisplayText,
+  MenuItemId,
+  MerchantProfile,
+  OrderId,
+  OrderSummary,
+  RiderId,
+  Store,
+  StoreId,
+} from '@/shared/object/core/SharedObjects'
 
 export type DeliveryPageState = ReturnType<typeof useDeliveryConsolePageState>
 
 export type SessionState = {
   session: AuthSession | null
   state: DeliveryAppState | null
-  setError: Dispatch<SetStateAction<string | null>>
+  setError: Dispatch<SetStateAction<DisplayText | null>>
   customerStoreSearchHistory: string[]
   setCustomerStoreSearchHistory: Dispatch<SetStateAction<string[]>>
 }
@@ -22,7 +36,7 @@ export type CustomerProfileNoticeId = string
 export type DeliveryPageViewParams = {
   locationPathname: string
   navigate: (to: string, options?: { replace?: boolean }) => void
-  routeOrderId?: string
+  routeOrderId?: OrderId
   searchParams: URLSearchParams
   setSearchParams: (nextInit: URLSearchParams | Record<string, string>) => void
   sessionService: SessionState
@@ -50,16 +64,16 @@ type DeliveryPageViewEffectsSelectionArgs = {
   selectedCustomer: Customer | undefined
   selectedStore: Store | undefined
   selectedStoreCategory: string
-  selectedStoreId: string
-  selectedMerchantStoreId: string
+  selectedStoreId: StoreId | ''
+  selectedMerchantStoreId: StoreId | ''
   merchantStores: Store[]
-  selectedRiderId: string
+  selectedRiderId: RiderId | ''
   merchantProfile: MerchantProfile | undefined
 }
 
 type DeliveryPageViewEffectsDraftArgs = {
-  quantities: Record<string, number>
-  selectedCouponId: string
+  quantities: Record<MenuItemId, number>
+  selectedCouponId: CouponId | ''
   customerProfileNoticeIds: CustomerProfileNoticeId[]
 }
 
@@ -69,17 +83,17 @@ export type DeliveryPageViewEffectsArgs = DeliveryPageViewEffectsRouteArgs &
   DeliveryPageViewEffectsDraftArgs
 
 type DeliveryPageViewDerivedRouteArgs = {
-  routeOrderId?: string
+  routeOrderId?: OrderId
   sessionService: SessionState
 }
 
 type DeliveryPageViewDerivedSelectionArgs = {
-  selectedCustomerId: string
+  selectedCustomerId: CustomerId | ''
   selectedStoreCategory: string
-  selectedStoreId: string
-  selectedMerchantStoreId: string
-  selectedRiderId: string
-  customerStoreSearch: string
+  selectedStoreId: StoreId | ''
+  selectedMerchantStoreId: StoreId | ''
+  selectedRiderId: RiderId | ''
+  customerStoreSearch: DisplayText
   merchantWorkspaceView: MerchantWorkspaceView
 }
 

@@ -54,5 +54,18 @@ def writeJsonFile[A: Encoder](path: Path, value: A): Unit =
     case _: java.nio.file.AtomicMoveNotSupportedException =>
       Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING)
 
+def loadJsonFileIfExists[A: Decoder](path: Path): Option[A] =
+  if Files.exists(path) then
+    val content = Files.readString(path, StandardCharsets.UTF_8).trim
+    if content.nonEmpty then
+      Some(
+        decode[A](content).fold(
+          error => throw IllegalStateException(s"无法解析状态文件 ${path.toAbsolutePath}: ${error.getMessage}", error),
+          identity,
+        )
+      )
+    else None
+  else None
+
 private def ensureParentDirectory(path: Path): Unit =
   Option(path.getParent).foreach(parent => Files.createDirectories(parent))

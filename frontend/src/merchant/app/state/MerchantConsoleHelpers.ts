@@ -1,10 +1,23 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { deliveryApi } from '@/shared/api/SharedApi'
-import type { MenuItem, Store } from '@/shared/object/core/SharedObjects'
+import {
+  rejectOrder,
+  updateMenuItemCategory,
+  updateMenuItemPrice,
+  updateMenuItemStock,
+  updateStoreOperationalInfo,
+} from '@/shared/api/SharedApi'
+import type {
+  DisplayText,
+  MenuItem,
+  OrderId,
+  Store,
+  StoreId,
+} from '@/shared/object/core/SharedObjects'
 import {
   DELIVERY_CONSOLE_MESSAGES,
   CURRENCY_CENTS_SCALE,
   CURRENCY_DECIMAL_PLACES,
+  MAX_MENU_ITEM_CATEGORY_LENGTH,
   MAX_MENU_ITEM_PRICE_CENTS,
   MAX_MENU_ITEM_STOCK,
   MAX_PREP_MINUTES,
@@ -16,10 +29,16 @@ import {
   normalizeWhitespace,
 } from '@/shared/delivery/DeliveryServices'
 import type {
+  MenuItemCategoryDraftMap,
+  MenuItemPriceDraftMap,
+  MenuItemStockDraftMap,
   MerchantConsoleStateArgs,
+  OrderRejectDraftMap,
   StoreOperationDraft,
+  StoreOperationDraftMap,
+  StoreOperationErrorMap,
   StoreOperationErrors,
-} from '@/merchant/object/console/MerchantConsoleObjects'
+} from '@/pages/merchant/object/MerchantConsoleObjects'
 
 export function buildStoreOperationDraft(store: Store): StoreOperationDraft {
   return {
@@ -58,31 +77,37 @@ export function validateStoreOperationDraft(draft: StoreOperationDraft): StoreOp
 }
 
 export function createMerchantConsoleSelectors({
+  menuItemCategoryDrafts,
   menuItemPriceDrafts,
   menuItemStockDrafts,
   orderRejectDrafts,
   orderRejectErrors,
   storeOperationDrafts,
 }: {
-  menuItemPriceDrafts: Record<string, string>
-  menuItemStockDrafts: Record<string, string>
-  orderRejectDrafts: Record<string, string>
-  orderRejectErrors: Record<string, string>
-  storeOperationDrafts: Record<string, StoreOperationDraft>
+  menuItemCategoryDrafts: MenuItemCategoryDraftMap
+  menuItemPriceDrafts: MenuItemPriceDraftMap
+  menuItemStockDrafts: MenuItemStockDraftMap
+  orderRejectDrafts: OrderRejectDraftMap
+  orderRejectErrors: OrderRejectDraftMap
+  storeOperationDrafts: StoreOperationDraftMap
 }) {
   function getMenuItemStockDraft(item: MenuItem) {
     return menuItemStockDrafts[item.id] ?? (item.remainingQuantity == null ? '' : String(item.remainingQuantity))
+  }
+
+  function getMenuItemCategoryDraft(item: MenuItem) {
+    return menuItemCategoryDrafts[item.id] ?? (item.category ?? '')
   }
 
   function getMenuItemPriceDraft(item: MenuItem) {
     return menuItemPriceDrafts[item.id] ?? (item.priceCents / CURRENCY_CENTS_SCALE).toFixed(CURRENCY_DECIMAL_PLACES)
   }
 
-  function getOrderRejectDraft(orderId: string) {
+  function getOrderRejectDraft(orderId: OrderId) {
     return orderRejectDrafts[orderId] ?? ''
   }
 
-  function getOrderRejectError(orderId: string) {
+  function getOrderRejectError(orderId: OrderId) {
     return orderRejectErrors[orderId] ?? ''
   }
 
@@ -91,6 +116,7 @@ export function createMerchantConsoleSelectors({
   }
 
   return {
+    getMenuItemCategoryDraft,
     getMenuItemPriceDraft,
     getMenuItemStockDraft,
     getOrderRejectDraft,
@@ -120,10 +146,21 @@ export function createMerchantConsoleValidators() {
     return null
   }
 
-  return { getMenuItemPriceError, getMenuItemStockError }
+  function getMenuItemCategoryError(value: string) {
+    const trimmed = normalizeWhitespace(value).trim()
+    if (!trimmed) return DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryRequired
+    if (trimmed.length > MAX_MENU_ITEM_CATEGORY_LENGTH) {
+      return DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryInvalid
+    }
+    return null
+  }
+
+  return { getMenuItemCategoryError, getMenuItemPriceError, getMenuItemStockError }
 }
 
 export function createMerchantConsoleActions({
+  getMenuItemCategoryDraft,
+  getMenuItemCategoryError,
   getMenuItemPriceDraft,
   getMenuItemPriceError,
   getMenuItemStockDraft,
@@ -131,30 +168,34 @@ export function createMerchantConsoleActions({
   getOrderRejectDraft,
   getStoreOperationDraft,
   runAction,
+  setMenuItemCategoryDrafts,
   setMenuItemPriceDrafts,
   setMenuItemStockDrafts,
   setOrderRejectDrafts,
   setOrderRejectErrors,
   setStoreOperationErrors,
 }: Pick<MerchantConsoleStateArgs, 'runAction'> & {
-  getMenuItemPriceDraft: (item: MenuItem) => string
-  getMenuItemPriceError: (value: string) => string | null
-  getMenuItemStockDraft: (item: MenuItem) => string
-  getMenuItemStockError: (value: string) => string | null
-  getOrderRejectDraft: (orderId: string) => string
+  getMenuItemCategoryDraft: (item: MenuItem) => DisplayText
+  getMenuItemCategoryError: (value: DisplayText) => string | null
+  getMenuItemPriceDraft: (item: MenuItem) => DisplayText
+  getMenuItemPriceError: (value: DisplayText) => string | null
+  getMenuItemStockDraft: (item: MenuItem) => DisplayText
+  getMenuItemStockError: (value: DisplayText) => string | null
+  getOrderRejectDraft: (orderId: OrderId) => DisplayText
   getStoreOperationDraft: (store: Store) => StoreOperationDraft
-  setMenuItemPriceDrafts: Dispatch<SetStateAction<Record<string, string>>>
-  setMenuItemStockDrafts: Dispatch<SetStateAction<Record<string, string>>>
-  setOrderRejectDrafts: Dispatch<SetStateAction<Record<string, string>>>
-  setOrderRejectErrors: Dispatch<SetStateAction<Record<string, string>>>
-  setStoreOperationErrors: Dispatch<SetStateAction<Record<string, StoreOperationErrors>>>
+  setMenuItemCategoryDrafts: Dispatch<SetStateAction<MenuItemCategoryDraftMap>>
+  setMenuItemPriceDrafts: Dispatch<SetStateAction<MenuItemPriceDraftMap>>
+  setMenuItemStockDrafts: Dispatch<SetStateAction<MenuItemStockDraftMap>>
+  setOrderRejectDrafts: Dispatch<SetStateAction<OrderRejectDraftMap>>
+  setOrderRejectErrors: Dispatch<SetStateAction<OrderRejectDraftMap>>
+  setStoreOperationErrors: Dispatch<SetStateAction<StoreOperationErrorMap>>
 }) {
-  async function submitMenuItemStock(storeId: string, item: MenuItem) {
+  async function submitMenuItemStock(storeId: StoreId, item: MenuItem) {
     const draft = getMenuItemStockDraft(item)
     if (getMenuItemStockError(draft)) return
     const trimmed = draft.trim()
     const success = await runAction(() =>
-      deliveryApi.merchant.updateStoreMenuItemStock(storeId, item.id, {
+      updateMenuItemStock(storeId, item.id, {
         remainingQuantity: trimmed === '' ? undefined : Number(trimmed),
       }),
     )
@@ -162,12 +203,12 @@ export function createMerchantConsoleActions({
     setMenuItemStockDrafts((current) => ({ ...current, [item.id]: trimmed }))
   }
 
-  async function submitMenuItemPrice(storeId: string, item: MenuItem) {
+  async function submitMenuItemPrice(storeId: StoreId, item: MenuItem) {
     const draft = getMenuItemPriceDraft(item)
     if (getMenuItemPriceError(draft)) return
     const priceCents = Math.round(Number(draft.trim()) * CURRENCY_CENTS_SCALE)
     const success = await runAction(() =>
-      deliveryApi.merchant.updateStoreMenuItemPrice(storeId, item.id, { priceCents }),
+      updateMenuItemPrice(storeId, item.id, { priceCents }),
     )
     if (!success) return
     setMenuItemPriceDrafts((current) => ({
@@ -176,7 +217,17 @@ export function createMerchantConsoleActions({
     }))
   }
 
-  async function submitOrderReject(orderId: string) {
+  async function submitMenuItemCategory(storeId: StoreId, item: MenuItem) {
+    const category = normalizeWhitespace(getMenuItemCategoryDraft(item)).trim()
+    if (getMenuItemCategoryError(category)) return
+    const success = await runAction(() =>
+      updateMenuItemCategory(storeId, item.id, { category }),
+    )
+    if (!success) return
+    setMenuItemCategoryDrafts((current) => ({ ...current, [item.id]: category }))
+  }
+
+  async function submitOrderReject(orderId: OrderId) {
     const reason = normalizeWhitespace(getOrderRejectDraft(orderId)).trim().slice(0, MAX_REJECT_ORDER_REASON_LENGTH)
     if (!reason) {
       setOrderRejectErrors((current) => ({ ...current, [orderId]: DELIVERY_CONSOLE_MESSAGES.merchant.orderRejectReasonRequired }))
@@ -187,7 +238,7 @@ export function createMerchantConsoleActions({
       delete next[orderId]
       return next
     })
-    const success = await runAction(() => deliveryApi.order.rejectOrder(orderId, { reason }))
+    const success = await runAction(() => rejectOrder(orderId, { reason }))
     if (!success) return
     setOrderRejectDrafts((current) => ({ ...current, [orderId]: '' }))
   }
@@ -200,7 +251,7 @@ export function createMerchantConsoleActions({
       return
     }
     const success = await runAction(() =>
-      deliveryApi.merchant.updateStoreOperationalInfo(store.id, {
+      updateStoreOperationalInfo(store.id, {
         businessHours: { openTime: draft.openTime, closeTime: draft.closeTime },
         avgPrepMinutes: Number(draft.avgPrepMinutes.trim()),
       }),
@@ -213,9 +264,9 @@ export function createMerchantConsoleActions({
     })
   }
 
-  async function clearMenuItemStockLimit(storeId: string, item: MenuItem) {
+  async function clearMenuItemStockLimit(storeId: StoreId, item: MenuItem) {
     const success = await runAction(() =>
-      deliveryApi.merchant.updateStoreMenuItemStock(storeId, item.id, {
+      updateMenuItemStock(storeId, item.id, {
         remainingQuantity: undefined,
       }),
     )
@@ -225,6 +276,7 @@ export function createMerchantConsoleActions({
 
   return {
     clearMenuItemStockLimit,
+    submitMenuItemCategory,
     submitMenuItemPrice,
     submitMenuItemStock,
     submitOrderReject,

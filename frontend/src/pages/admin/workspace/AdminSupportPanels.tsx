@@ -1,6 +1,6 @@
 import type { AdminRoleProps } from '@/shared/app/role-props'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { TICKET_KIND, TICKET_STATUS, type AdminTicket } from '@/shared/object/core/SharedObjects'
+import { TICKET_KIND, TICKET_STATUS, type AdminTicket, type OrderId } from '@/shared/object/core/SharedObjects'
 import type { ResolutionDraftMap } from '@/shared/object/core/DeliveryAppObjects'
 import { AfterSalesTicketsPanel } from '@/pages/admin/after-sales/AdminAfterSalesPanel'
 
@@ -56,7 +56,7 @@ function AdminTicketCenterPanel({
                       TICKET_RESOLUTION_DEFAULTS.resolution
                     }
                     onChange={(event) =>
-                      setResolutionDrafts((current: ResolutionDraftMap) => ({
+                      setResolutionDrafts((current: Record<OrderId, ResolutionDraftMap[OrderId]>) => ({
                         ...current,
                         [ticket.orderId]: {
                           ...buildResolutionPayload(current[ticket.orderId]),
@@ -72,7 +72,7 @@ function AdminTicketCenterPanel({
                   <input
                     value={resolutionDrafts[ticket.orderId]?.note ?? TICKET_RESOLUTION_DEFAULTS.note}
                     onChange={(event) =>
-                      setResolutionDrafts((current: ResolutionDraftMap) => ({
+                      setResolutionDrafts((current: Record<OrderId, ResolutionDraftMap[OrderId]>) => ({
                         ...current,
                         [ticket.orderId]: {
                           ...buildResolutionPayload(current[ticket.orderId]),

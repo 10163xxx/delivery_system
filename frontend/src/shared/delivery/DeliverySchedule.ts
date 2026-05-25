@@ -10,10 +10,21 @@ import {
   SECONDS_PER_MINUTE,
 } from './DeliveryConstants'
 import { DELIVERY_CONSOLE_MESSAGES } from './DeliveryMessages'
+import { DELIVERY_DATE_TIME_FORMAT } from './DeliveryPatterns'
 import { isValidBusinessTime } from './DeliveryShared'
 
+const DELIVERY_LOCAL_DATE_TIME_FORMAT_OPTIONS = {
+  month: DELIVERY_DATE_TIME_FORMAT.numeric,
+  day: DELIVERY_DATE_TIME_FORMAT.numeric,
+  hour: DELIVERY_DATE_TIME_FORMAT.twoDigit,
+  minute: DELIVERY_DATE_TIME_FORMAT.twoDigit,
+} as const
+
 function padDateTimePart(value: number) {
-  return String(value).padStart(2, '0')
+  return String(value).padStart(
+    DELIVERY_DATE_TIME_FORMAT.partWidth,
+    DELIVERY_DATE_TIME_FORMAT.zeroPad,
+  )
 }
 
 function businessTimeToMinutes(value: string) {
@@ -55,12 +66,10 @@ function toDateTimeLocalValue(date: Date) {
 export function formatDateTimeLocalValue(value: string) {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return value
-  return new Intl.DateTimeFormat('zh-CN', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(parsed)
+  return new Intl.DateTimeFormat(
+    DELIVERY_DATE_TIME_FORMAT.locale,
+    DELIVERY_LOCAL_DATE_TIME_FORMAT_OPTIONS,
+  ).format(parsed)
 }
 
 function ceilToMinute(date: Date) {

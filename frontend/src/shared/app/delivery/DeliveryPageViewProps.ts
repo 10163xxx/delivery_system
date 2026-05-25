@@ -3,11 +3,16 @@ import type { ReviewDraft, MerchantApplicationView } from '@/shared/object/core/
 import {
   changeMerchantApplicationViewAction,
   chooseStoreCategoryAction,
+  closeMenuItemConfigurationAction,
+  confirmMenuItemConfigurationAction,
   enterMerchantStoreAction,
   enterStoreAction,
   leaveMerchantStoreAction,
   leaveStoreAction,
+  addPreviousOrderToCartAction,
+  openMenuItemConfigurationAction,
   openCheckoutAction,
+  repeatCustomerOrderAction,
   resetStoreCategoryAction,
   updateQuantityAction,
   updateReviewDraftAction,
@@ -44,8 +49,10 @@ export function buildPageActionArgs(input: PageActionArgsInput) {
     selectedCustomer: input.selectedCustomer,
     selectedStoreIsOpen: input.selectedStoreIsOpen,
     quantities: input.quantities,
+    selectedMenuItemConfigurations: input.selectedMenuItemConfigurations,
     scheduledDeliveryTime: input.scheduledDeliveryTime,
     setError: input.setError,
+    navigate: input.navigate,
     setSearchParams: input.setSearchParams,
     ...getPageActionSelectionSetters(input.pageState),
     ...getPageActionCheckoutSetters(input.pageState),
@@ -77,21 +84,10 @@ export function getPageViewActionProps(input: PageViewActionInput) {
   } = input
 
   return {
-    setMerchantWorkspaceViewState: setMerchantWorkspaceState,
-    setMerchantApplicationViewState: setMerchantApplicationState,
-    openCheckout: () => openCheckoutAction(actionArgs, todayDeliveryWindow),
-    updateReviewDraft: (orderId: string, patch: Partial<ReviewDraft>) =>
-      updateReviewDraftAction(actionArgs, orderId, patch),
-    chooseStoreCategory: (category: string) => chooseStoreCategoryAction(actionArgs, category),
-    resetStoreCategory: () => resetStoreCategoryAction(actionArgs),
-    enterStore: (storeId: string) => enterStoreAction(actionArgs, storeId),
-    leaveStore: () => leaveStoreAction(actionArgs),
-    changeMerchantApplicationView: (view: MerchantApplicationView) =>
-      changeMerchantApplicationViewAction(actionArgs, view),
-    leaveMerchantStore: () => leaveMerchantStoreAction(actionArgs),
-    enterMerchantStore: (storeId: string) => enterMerchantStoreAction(actionArgs, storeId),
-    updateQuantity: (menuItem: MenuItem, nextValue: number) =>
-      updateQuantityAction(actionArgs, menuItem, nextValue),
+    ...getPageViewRoutingActionProps(actionArgs, setMerchantWorkspaceState, setMerchantApplicationState),
+    ...getPageViewReviewActionProps(actionArgs),
+    ...getPageViewMerchantActionProps(actionArgs),
+    ...getPageViewMenuActionProps(actionArgs, todayDeliveryWindow),
   }
 }
 
@@ -101,5 +97,59 @@ export function getPageViewConstantProps() {
     ...getPageViewReviewConstants(),
     ...getPageViewFormattingConstants(),
     ...getPageViewStoreConstants(),
+  }
+}
+
+function getPageViewRoutingActionProps(
+  actionArgs: ReturnType<typeof buildPageActionArgs>,
+  setMerchantWorkspaceState: PageViewActionInput['setMerchantWorkspaceState'],
+  setMerchantApplicationState: PageViewActionInput['setMerchantApplicationState'],
+) {
+  return {
+    setMerchantWorkspaceViewState: setMerchantWorkspaceState,
+    setMerchantApplicationViewState: setMerchantApplicationState,
+    chooseStoreCategory: (category: string) => chooseStoreCategoryAction(actionArgs, category),
+    resetStoreCategory: () => resetStoreCategoryAction(actionArgs),
+    enterStore: (storeId: string) => enterStoreAction(actionArgs, storeId),
+    leaveStore: () => leaveStoreAction(actionArgs),
+    changeMerchantApplicationView: (view: MerchantApplicationView) =>
+      changeMerchantApplicationViewAction(actionArgs, view),
+    leaveMerchantStore: () => leaveMerchantStoreAction(actionArgs),
+    enterMerchantStore: (storeId: string) => enterMerchantStoreAction(actionArgs, storeId),
+  }
+}
+
+function getPageViewReviewActionProps(actionArgs: ReturnType<typeof buildPageActionArgs>) {
+  return {
+    updateReviewDraft: (orderId: string, patch: Partial<ReviewDraft>) =>
+      updateReviewDraftAction(actionArgs, orderId, patch),
+  }
+}
+
+function getPageViewMerchantActionProps(actionArgs: ReturnType<typeof buildPageActionArgs>) {
+  return {
+    updateQuantity: (menuItem: MenuItem, nextValue: number) =>
+      updateQuantityAction(actionArgs, menuItem, nextValue),
+    openMenuItemConfiguration: (menuItem: MenuItem) =>
+      openMenuItemConfigurationAction(actionArgs, menuItem),
+    confirmMenuItemConfiguration: (
+      menuItem: MenuItem,
+      quantityAfterConfirm: number,
+      selections: Record<string, string[]>,
+    ) => confirmMenuItemConfigurationAction(actionArgs, menuItem, quantityAfterConfirm, selections),
+    closeMenuItemConfiguration: () => closeMenuItemConfigurationAction(actionArgs),
+  }
+}
+
+function getPageViewMenuActionProps(
+  actionArgs: ReturnType<typeof buildPageActionArgs>,
+  todayDeliveryWindow: PageViewActionInput['todayDeliveryWindow'],
+) {
+  return {
+    openCheckout: () => openCheckoutAction(actionArgs, todayDeliveryWindow),
+    addPreviousOrderToCart: (order: import('@/shared/object/core/SharedObjects').OrderSummary) =>
+      addPreviousOrderToCartAction(actionArgs, order, todayDeliveryWindow),
+    repeatOrder: (order: import('@/shared/object/core/SharedObjects').OrderSummary) =>
+      repeatCustomerOrderAction(actionArgs, order, todayDeliveryWindow),
   }
 }

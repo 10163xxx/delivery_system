@@ -1,6 +1,16 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { MerchantDraft, MerchantProfileDraft, MerchantWorkspaceView } from '@/shared/object/core/DeliveryAppObjects'
-import type { Customer, MerchantPayoutAccountType, Store } from '@/shared/object/core/SharedObjects'
+import type {
+  Customer,
+  CustomerId,
+  EntityId,
+  MenuItemId,
+  MerchantPayoutAccountType,
+  PersonName,
+  RiderId,
+  Store,
+  StoreId,
+} from '@/shared/object/core/SharedObjects'
 
 type SyncPageStateDataArgs = {
   state: {
@@ -11,23 +21,23 @@ type SyncPageStateDataArgs = {
   session: {
     user: {
       role: string
-      linkedProfileId?: string
-      displayName: string
+      linkedProfileId?: EntityId
+      displayName: PersonName
     }
   }
-  selectedCustomerId: string
-  selectedRiderId: string
-  selectedStoreId: string
+  selectedCustomerId: CustomerId | ''
+  selectedRiderId: RiderId | ''
+  selectedStoreId: StoreId | ''
 }
 
 type SyncPageStateSetterArgs = {
   setDeliveryAddress: (value: string) => void
   setDeliveryAddressError: (value: string | null) => void
   setMerchantDraft: Dispatch<SetStateAction<MerchantDraft>>
-  setQuantities: (value: Record<string, number>) => void
-  setSelectedCustomerId: (value: string) => void
-  setSelectedRiderId: (value: string) => void
-  setSelectedStoreId: (value: string) => void
+  setQuantities: (value: Record<MenuItemId, number>) => void
+  setSelectedCustomerId: (value: CustomerId | '') => void
+  setSelectedRiderId: (value: RiderId | '') => void
+  setSelectedStoreId: (value: StoreId | '') => void
 }
 
 export type SyncPageStateArgs = SyncPageStateDataArgs & SyncPageStateSetterArgs
@@ -35,10 +45,10 @@ export type SyncPageStateArgs = SyncPageStateDataArgs & SyncPageStateSetterArgs
 export type SyncStoreRouteArgs = {
   searchParams: URLSearchParams
   selectedStoreCategory: string
-  selectedStoreId: string
-  setQuantities: (value: Record<string, number>) => void
+  selectedStoreId: StoreId | ''
+  setQuantities: (value: Record<MenuItemId, number>) => void
   setSelectedStoreCategory: (value: string) => void
-  setSelectedStoreId: (value: string) => void
+  setSelectedStoreId: (value: StoreId | '') => void
   state: { stores: Store[] }
 }
 
@@ -61,6 +71,6 @@ export type SyncMerchantProfileDraftArgs = {
 export type ResetInvalidMerchantStoreSelectionArgs = {
   merchantStores: Store[]
   merchantWorkspaceView: MerchantWorkspaceView
-  selectedMerchantStoreId: string
-  setSelectedMerchantStoreId: (value: string) => void
+  selectedMerchantStoreId: StoreId | ''
+  setSelectedMerchantStoreId: (value: StoreId | '') => void
 }

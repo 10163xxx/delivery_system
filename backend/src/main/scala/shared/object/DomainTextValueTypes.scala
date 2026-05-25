@@ -20,6 +20,12 @@ final class Password(val value: String) extends AnyVal:
 object Password:
   given WrappedTextType[Password] = wrappedTextType(value => new Password(value), _.value)
 
+final class PasswordHash(val value: String) extends AnyVal:
+  override def toString: String = value
+  def raw: String = value
+object PasswordHash:
+  given WrappedTextType[PasswordHash] = wrappedTextType(value => new PasswordHash(value), _.value)
+
 final class SessionToken(val value: String) extends AnyVal:
   override def toString: String = value
   def raw: String = value

@@ -1,9 +1,16 @@
-import { browserStorage } from '@/shared/api/BrowserStorage'
+import { readSessionToken } from '@/shared/api/BrowserStorage'
+import { API_CLIENT_DEFAULTS, API_HEADER } from '@/shared/api/ApiConstants'
+import type { Decoder } from '@/shared/api/ResponseDecoders'
+import type {
+  JsonGetEndpoint,
+  JsonPostEndpoint,
+  UploadPostEndpoint,
+} from '@/shared/api/TypedApiDefinitions'
 
 const HTTP_CLIENT_DEFAULTS = {
-  backendUrl: 'http://127.0.0.1:8081',
-  noContentStatus: 204,
-  requestTimeoutMs: 8000,
+  backendUrl: API_CLIENT_DEFAULTS.backendUrl,
+  noContentStatus: API_CLIENT_DEFAULTS.noContentStatus,
+  requestTimeoutMs: API_CLIENT_DEFAULTS.requestTimeoutMs,
 } as const
 
 const HTTP_CLIENT_MESSAGES = {
@@ -11,28 +18,6 @@ const HTTP_CLIENT_MESSAGES = {
   uploadTimeout: `上传超时，请确认后端服务已启动在 ${HTTP_CLIENT_DEFAULTS.backendUrl}`,
   backendUnavailable: `无法连接后端服务，请确认后端运行在 ${HTTP_CLIENT_DEFAULTS.backendUrl}`,
 } as const
-
-type JsonGetEndpoint<Response> = {
-  readonly path: string
-  readonly method: 'GET'
-  readonly kind: 'json'
-  readonly __response?: Response
-}
-
-type JsonPostEndpoint<Body, Response> = {
-  readonly path: string
-  readonly method: 'POST'
-  readonly kind: 'json'
-  readonly __request?: Body
-  readonly __response?: Response
-}
-
-type UploadPostEndpoint<Response> = {
-  readonly path: string
-  readonly method: 'POST'
-  readonly kind: 'upload'
-  readonly __response?: Response
-}
 
 export function defineJsonGetEndpoint<Response>(path: string): JsonGetEndpoint<Response> {
   return { path, method: 'GET', kind: 'json' }
@@ -47,7 +32,7 @@ export function defineUploadPostEndpoint<Response>(path: string): UploadPostEndp
 }
 
 async function performRequest(input: string, init: RequestInit, timeoutMessage: string) {
-  const sessionToken = browserStorage.readSessionToken()
+  const sessionToken = readSessionToken()
   const controller = new AbortController()
   const timeoutId = window.setTimeout(
     () => controller.abort(),
@@ -60,7 +45,7 @@ async function performRequest(input: string, init: RequestInit, timeoutMessage: 
     response = await fetch(input, {
       ...init,
       headers: {
-        ...(sessionToken ? { 'x-session-token': sessionToken } : {}),
+        ...(sessionToken ? { [API_HEADER.sessionToken]: sessionToken } : {}),
         ...(init?.headers ?? {}),
       },
       signal: controller.signal,
@@ -78,58 +63,81 @@ async function performRequest(input: string, init: RequestInit, timeoutMessage: 
   return response
 }
 
-async function parseJsonResponse<T>(response: Response): Promise<T> {
+async function parseJsonResponse(response: Response): Promise<unknown> {
   if (!response.ok) {
     const message = await response.text()
     throw new Error(message || `Request failed with status ${response.status}`)
   }
 
   if (response.status === HTTP_CLIENT_DEFAULTS.noContentStatus) {
-    return undefined as T
+    return undefined
   }
 
   const text = await response.text()
   if (!text) {
-    return undefined as T
+    return undefined
   }
 
-  return JSON.parse(text) as T
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error('后端返回了无效的 JSON 响应')
+  }
 }
 
-export const httpClient = {
-  getJson<Response>(endpoint: JsonGetEndpoint<Response>) {
-    return performRequest(endpoint.path, { method: endpoint.method }, HTTP_CLIENT_MESSAGES.requestTimeout)
-      .then((response) => parseJsonResponse<Response>(response))
-  },
-  postJson<Body, Response>(endpoint: JsonPostEndpoint<Body, Response>, body: Body) {
-    return performRequest(
-      endpoint.path,
-      {
-        method: endpoint.method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      },
-      HTTP_CLIENT_MESSAGES.requestTimeout,
-    ).then((response) => parseJsonResponse<Response>(response))
-  },
-  postWithoutBody<Response>(endpoint: JsonPostEndpoint<void, Response>) {
-    return performRequest(
-      endpoint.path,
-      {
-        method: endpoint.method,
-        headers: { 'Content-Type': 'application/json' },
-      },
-      HTTP_CLIENT_MESSAGES.requestTimeout,
-    ).then((response) => parseJsonResponse<Response>(response))
-  },
-  postFormData<Response>(endpoint: UploadPostEndpoint<Response>, body: FormData) {
-    return performRequest(
-      endpoint.path,
-      {
-        method: endpoint.method,
-        body,
-      },
-      HTTP_CLIENT_MESSAGES.uploadTimeout,
-    ).then((response) => parseJsonResponse<Response>(response))
-  },
+export function getJson<Response>(
+  endpoint: JsonGetEndpoint<Response>,
+  decodeResponse: Decoder<Response>,
+) {
+  return performRequest(endpoint.path, { method: endpoint.method }, HTTP_CLIENT_MESSAGES.requestTimeout)
+    .then((response) => parseJsonResponse(response))
+    .then((value) => decodeResponse(value))
+}
+
+export function postJson<Body, Response>(
+  endpoint: JsonPostEndpoint<Body, Response>,
+  body: Body,
+  decodeResponse: Decoder<Response>,
+) {
+  return performRequest(
+    endpoint.path,
+    {
+      method: endpoint.method,
+      headers: { [API_HEADER.contentType]: API_HEADER.jsonContentType },
+      body: JSON.stringify(body),
+    },
+    HTTP_CLIENT_MESSAGES.requestTimeout,
+  ).then((response) => parseJsonResponse(response))
+    .then((value) => decodeResponse(value))
+}
+
+export function postWithoutBody<Response>(
+  endpoint: JsonPostEndpoint<void, Response>,
+  decodeResponse: Decoder<Response>,
+) {
+  return performRequest(
+    endpoint.path,
+    {
+      method: endpoint.method,
+      headers: { [API_HEADER.contentType]: API_HEADER.jsonContentType },
+    },
+    HTTP_CLIENT_MESSAGES.requestTimeout,
+  ).then((response) => parseJsonResponse(response))
+    .then((value) => decodeResponse(value))
+}
+
+export function postFormData<Response>(
+  endpoint: UploadPostEndpoint<Response>,
+  body: FormData,
+  decodeResponse: Decoder<Response>,
+) {
+  return performRequest(
+    endpoint.path,
+    {
+      method: endpoint.method,
+      body,
+    },
+    HTTP_CLIENT_MESSAGES.uploadTimeout,
+  ).then((response) => parseJsonResponse(response))
+    .then((value) => decodeResponse(value))
 }

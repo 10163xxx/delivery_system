@@ -34,10 +34,13 @@ function getCustomerMutableStateProps(
   return {
     customerStoreSearch: pageState.customerStoreSearch,
     customerStoreSearchHistory: sessionService.customerStoreSearchHistory,
+    customerStoreVisibility: pageState.customerStoreVisibility,
     selectedStoreCategory: pageState.selectedStoreCategory,
     deliveryAddress: pageState.deliveryAddress,
     isCheckoutExpanded: pageState.isCheckoutExpanded,
     quantities: pageState.quantities,
+    selectedMenuItemConfigurations: pageState.selectedMenuItemConfigurations,
+    menuItemConfigurationModal: pageState.menuItemConfigurationModal,
     remark: pageState.remark,
     scheduledDeliveryTime: pageState.scheduledDeliveryTime,
     selectedCouponId: pageState.selectedCouponId,
@@ -66,12 +69,15 @@ function getCustomerSetterProps(pageState: PageState, sessionService: SessionSer
     setPartialRefundErrors: pageState.setPartialRefundErrors,
     setDeliveryAddress: pageState.setDeliveryAddress,
     setIsCheckoutExpanded: pageState.setIsCheckoutExpanded,
+    setMenuItemConfigurationModal: pageState.setMenuItemConfigurationModal,
     setScheduledDeliveryTime: pageState.setScheduledDeliveryTime,
     setScheduledDeliveryTouched: pageState.setScheduledDeliveryTouched,
     setSelectedCouponId: pageState.setSelectedCouponId,
+    setSelectedMenuItemConfigurations: pageState.setSelectedMenuItemConfigurations,
     setSelectedRechargeAmount: pageState.setSelectedRechargeAmount,
     setCustomerStoreSearch: pageState.setCustomerStoreSearch,
     setCustomerStoreSearchDraft: pageState.setCustomerStoreSearchDraft,
+    setCustomerStoreVisibility: pageState.setCustomerStoreVisibility,
   }
 }
 

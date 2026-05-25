@@ -2,9 +2,20 @@ import {
   MAX_CUSTOMER_STORE_SEARCH_HISTORY,
   getInitialQuantities,
 } from '@/shared/delivery/DeliveryServices'
-import { browserStorage } from '@/shared/api/SharedApi'
+import {
+  readSeenCustomerProfileNoticeIds as readSeenCustomerProfileNoticeIdsFromStorage,
+  saveCustomerStoreSearchHistory,
+} from '@/shared/api/SharedApi'
 import { MERCHANT_WORKSPACE_VIEW } from '@/shared/object/core/DeliveryAppObjects'
-import { PAYOUT_ACCOUNT_TYPE, ROLE, type Customer, type Store } from '@/shared/object/core/SharedObjects'
+import {
+  PAYOUT_ACCOUNT_TYPE,
+  ROLE,
+  ROUTE_QUERY_KEY,
+  type Customer,
+  type PersonName,
+  type Store,
+  type StoreId,
+} from '@/shared/object/core/SharedObjects'
 import type {
   ResetInvalidMerchantStoreSelectionArgs,
   SyncMerchantProfileDraftArgs,
@@ -13,7 +24,7 @@ import type {
 } from '@/shared/object/core/DeliveryPageViewEffectSupportObjects'
 
 export function readSeenCustomerProfileNoticeIds(userId: string) {
-  return browserStorage.readSeenCustomerProfileNoticeIds(userId)
+  return readSeenCustomerProfileNoticeIdsFromStorage(userId)
 }
 
 export function syncSessionBoundPageState(args: SyncPageStateArgs) {
@@ -54,7 +65,7 @@ export function syncSessionBoundPageState(args: SyncPageStateArgs) {
         ? current
         : {
             ...current,
-            merchantName: session.user.displayName,
+            merchantName: session.user.displayName as PersonName,
           },
     )
   }
@@ -68,7 +79,7 @@ export function syncSessionBoundPageState(args: SyncPageStateArgs) {
   }
 
   if (session.user.role === ROLE.rider && session.user.linkedProfileId) {
-    setSelectedRiderId(session.user.linkedProfileId)
+    setSelectedRiderId(session.user.linkedProfileId as SyncPageStateArgs['selectedRiderId'])
   } else if (!selectedRiderId && state.riders.length > 0) {
     const rider = state.riders[0]
     if (rider) {
@@ -87,7 +98,7 @@ export function syncSelectedStoreFromRoute(args: SyncStoreRouteArgs) {
     setSelectedStoreId,
     state,
   } = args
-  const storeIdFromUrl = searchParams.get('store') ?? ''
+  const storeIdFromUrl = (searchParams.get(ROUTE_QUERY_KEY.store) ?? '') as StoreId | ''
   const store = state.stores.find((entry: Store) => entry.id === storeIdFromUrl)
   const nextStoreId = store?.id ?? ''
 
@@ -132,7 +143,7 @@ export function appendCustomerStoreSearchHistory(
     keyword,
     ...current.filter((entry: string) => entry.toLowerCase() !== normalized),
   ].slice(0, MAX_CUSTOMER_STORE_SEARCH_HISTORY)
-  browserStorage.saveCustomerStoreSearchHistory(next)
+  saveCustomerStoreSearchHistory(next)
   return next
 }
 

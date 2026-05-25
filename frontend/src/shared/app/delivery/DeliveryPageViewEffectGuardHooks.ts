@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import {
   ROLE,
   ROUTE_PATH,
+  ROUTE_QUERY_KEY,
   type Customer,
   type MenuItem,
   type OrderSummary,
@@ -14,6 +15,7 @@ import type {
   SessionState,
 } from '@/shared/object/core/DeliveryPageObjects'
 import {
+  buildCustomerOrderStoreRoute,
   CUSTOMER_WORKSPACE_VIEW,
   type CustomerWorkspaceView,
   type MerchantWorkspaceView,
@@ -82,7 +84,10 @@ export function useCustomerStoreRouteSyncEffect(args: {
 
   useEffect(() => {
     if (!state || !session || session.user.role !== ROLE.customer) return
-    if (locationPathname !== ROUTE_PATH.customerOrder) return
+    if (
+      locationPathname !== ROUTE_PATH.customerOrder &&
+      locationPathname !== ROUTE_PATH.customerCart
+    ) return
     syncSelectedStoreFromRoute({
       searchParams,
       selectedStoreCategory,
@@ -141,9 +146,20 @@ export function useCustomerWorkspaceNavigationGuards(args: {
   customerWorkspaceView: CustomerWorkspaceView
   activeReviewOrder: OrderSummary | null
   activeCustomerOrder: OrderSummary | null
+  searchParams: URLSearchParams
+  selectedStore: Store | undefined
+  quantities: Record<string, number>
   navigate: DeliveryPageViewEffectsArgs['navigate']
 }) {
-  const { customerWorkspaceView, activeReviewOrder, activeCustomerOrder, navigate } = args
+  const {
+    customerWorkspaceView,
+    activeReviewOrder,
+    activeCustomerOrder,
+    searchParams,
+    selectedStore,
+    quantities,
+    navigate,
+  } = args
 
   useEffect(() => {
     if (customerWorkspaceView !== CUSTOMER_WORKSPACE_VIEW.review) return
@@ -156,6 +172,24 @@ export function useCustomerWorkspaceNavigationGuards(args: {
     if (activeCustomerOrder) return
     navigate(ROUTE_PATH.customerOrders, { replace: true })
   }, [activeCustomerOrder, customerWorkspaceView, navigate])
+
+  useEffect(() => {
+    if (customerWorkspaceView !== CUSTOMER_WORKSPACE_VIEW.cart) return
+
+    const storeIdFromRoute = searchParams.get(ROUTE_QUERY_KEY.store) ?? ''
+    if (!selectedStore) {
+      if (!storeIdFromRoute) {
+        navigate(ROUTE_PATH.customerOrder, { replace: true })
+      }
+      return
+    }
+
+    const hasSelectedItems = selectedStore.menu.some(
+      (item: MenuItem) => (quantities[item.id] ?? 0) > 0,
+    )
+    if (hasSelectedItems) return
+    navigate(buildCustomerOrderStoreRoute(selectedStore.id), { replace: true })
+  }, [customerWorkspaceView, navigate, quantities, searchParams, selectedStore])
 }
 
 export function useCheckoutCouponValidationEffect(args: {

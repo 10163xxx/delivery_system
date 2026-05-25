@@ -3,8 +3,8 @@ package shared.app.planner
 import domain.shared.given
 
 import cats.effect.IO
+import database.insertNote
 import domain.shared.{DemoNote, PlannerName, SaveDemoNoteRequest}
-import shared.database.insertNote
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.sql.Connection

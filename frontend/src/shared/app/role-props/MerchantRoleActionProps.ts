@@ -6,7 +6,14 @@ import {
   getMerchantFieldClassName,
   getMerchantFieldId,
 } from '@/shared/delivery/DeliveryServices'
-import { deliveryApi } from '@/shared/api/SharedApi'
+import {
+  acceptOrder,
+  appendStoreReviewReply,
+  readyOrder,
+  removeMenuItem,
+  submitEligibilityReview,
+  submitReviewAppeal,
+} from '@/shared/api/SharedApi'
 import type {
   MerchantActionArgs,
   MerchantPropsArgs,
@@ -43,10 +50,11 @@ export function getMerchantApiActionProps(
 ) {
   return {
     submitOrderChatMessage,
-    submitEligibilityReview: deliveryApi.review.submitEligibilityReview,
-    removeStoreMenuItem: deliveryApi.merchant.removeStoreMenuItem,
-    acceptOrder: deliveryApi.order.acceptOrder,
-    readyOrder: deliveryApi.order.readyOrder,
-    submitReviewAppeal: deliveryApi.review.submitReviewAppeal,
+    submitEligibilityReview,
+    removeMenuItem,
+    acceptOrder,
+    readyOrder,
+    appendStoreReviewReply,
+    submitReviewAppeal,
   }
 }

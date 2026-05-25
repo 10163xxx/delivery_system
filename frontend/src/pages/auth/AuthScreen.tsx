@@ -9,7 +9,12 @@ import {
   type AuthScreenMode,
   type AuthScreenProps,
 } from '@/pages/auth/object/AuthPageObjects'
-import { browserStorage, deliveryApi } from '@/shared/api/SharedApi'
+import {
+  clearSessionToken,
+  login,
+  register,
+  saveSessionToken,
+} from '@/shared/api/SharedApi'
 import { REGISTERABLE_ROLES, ROLE } from '@/shared/object/core/SharedObjects'
 
 const registerRoles: RegisterRequest['role'][] = [...REGISTERABLE_ROLES]
@@ -48,12 +53,12 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
     event.preventDefault()
     setBusy(true)
     try {
-      const session = await deliveryApi.auth.login(loginDraft)
-      browserStorage.saveSessionToken(session.token)
+      const session = await login(loginDraft)
+      saveSessionToken(session.token)
       setError(null)
       onAuthenticated(session)
     } catch (actionError) {
-      browserStorage.clearSessionToken()
+      clearSessionToken()
       setError(actionError instanceof Error ? actionError.message : AUTH_SCREEN_MESSAGES.loginFailed)
     } finally {
       setBusy(false)
@@ -64,12 +69,12 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
     event.preventDefault()
     setBusy(true)
     try {
-      const session = await deliveryApi.auth.register(registerDraft)
-      browserStorage.saveSessionToken(session.token)
+      const session = await register(registerDraft)
+      saveSessionToken(session.token)
       setError(null)
       onAuthenticated(session)
     } catch (actionError) {
-      browserStorage.clearSessionToken()
+      clearSessionToken()
       setError(actionError instanceof Error ? actionError.message : AUTH_SCREEN_MESSAGES.registerFailed)
     } finally {
       setBusy(false)

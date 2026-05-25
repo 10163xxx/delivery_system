@@ -1,5 +1,5 @@
 import type { RiderRoleProps } from '@/shared/app/role-props'
-import { RIDER_CONSOLE_COPY } from '@/rider/object/profile/RiderWorkspaceObjects'
+import { RIDER_CONSOLE_COPY } from '@/pages/rider/object/RiderWorkspaceObjects'
 import { OrderChatPanel } from '@/pages/order/OrderChatPanel'
 import {
   APPEAL_ROLE,
@@ -7,6 +7,8 @@ import {
   ORDER_STATUS,
   REVIEW_STATUS,
   ROLE,
+  type DisplayText,
+  type OrderId,
 } from '@/shared/object/core/SharedObjects'
 
 function RiderOrderActionButtons({ order, props }: { order: RiderRoleProps['riderOrders'][number], props: RiderRoleProps }) {
@@ -65,7 +67,7 @@ function RiderReviewAppealAction({ order, props }: { order: RiderRoleProps['ride
         placeholder={RIDER_CONSOLE_COPY.consolePanel.appealPlaceholder}
         value={riderAppealDrafts[order.id] ?? ''}
         onChange={(event) =>
-          setRiderAppealDrafts((current: Record<string, string>) => ({
+          setRiderAppealDrafts((current: Record<OrderId, DisplayText>) => ({
             ...current,
             [order.id]: event.target.value,
           }))
@@ -106,8 +108,8 @@ export function RiderOrderFooter({ order, props }: { order: RiderRoleProps['ride
         formatTime={props.formatTime}
         order={order}
         onChangeDraft={(value) => {
-          props.setOrderChatDrafts((current: Record<string, string>) => ({ ...current, [order.id]: value }))
-          props.setOrderChatErrors((current: Record<string, string>) => {
+          props.setOrderChatDrafts((current: Record<OrderId, DisplayText>) => ({ ...current, [order.id]: value }))
+          props.setOrderChatErrors((current: Record<OrderId, DisplayText>) => {
             if (!current[order.id]) return current
             const next = { ...current }
             delete next[order.id]

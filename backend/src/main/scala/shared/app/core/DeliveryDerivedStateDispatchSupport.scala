@@ -10,6 +10,7 @@ import java.time.Instant
 
 val riderAvailable = RiderAvailableStatus
 val riderOnDelivery = RiderOnDeliveryStatus
+val riderUnavailable = RiderUnavailableStatus
 val riderSuspended = RiderSuspendedStatus
 val storeRevoked = StoreRevokedStatus
 val storeBusy = StoreBusyStatus

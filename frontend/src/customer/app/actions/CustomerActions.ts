@@ -3,7 +3,7 @@ import { createCustomerProfileActions } from '@/customer/app/actions/CustomerPro
 import { createCustomerRechargeActions } from '@/customer/app/actions/CustomerRechargeActions'
 import { createCustomerSearchActions } from '@/customer/app/actions/CustomerSearchActions'
 import { createCustomerSupportActions } from '@/customer/app/actions/CustomerSupportActions'
-import type { CustomerActionContexts } from '@/customer/object/action/CustomerActionObjects'
+import type { CustomerActionContexts } from '@/pages/customer/object/CustomerActionObjects'
 
 export function createCustomerActions(contexts: CustomerActionContexts) {
   return {

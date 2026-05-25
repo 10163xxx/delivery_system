@@ -1,19 +1,20 @@
 import type { getDeliveryConsolePageViewDerived } from '@/shared/app/delivery/DeliveryPageViewDerived'
+import type { CouponId, DisplayText, MenuItemId } from '@/shared/object/core/SharedObjects'
 
 export type CheckoutSummaryArgs = {
   selectedStore: ReturnType<typeof getDeliveryConsolePageViewDerived>['selectedStore']
   selectedCustomer: ReturnType<typeof getDeliveryConsolePageViewDerived>['selectedCustomer']
   selectedStoreIsOpen: boolean
   customerRequiresDefaultAddressUpdate: boolean
-  quantities: Record<string, number>
-  selectedCouponId: string
+  quantities: Record<MenuItemId, number>
+  selectedCouponId: CouponId | ''
 }
 
 export type PaymentFieldStateArgs = {
-  customRechargeAmount: string
+  customRechargeAmount: DisplayText
   selectedRechargeAmount: number | null
-  rechargeFieldError: string | null
-  merchantWithdrawAmount: string
-  merchantWithdrawFieldError: string | null
+  rechargeFieldError: DisplayText | null
+  merchantWithdrawAmount: DisplayText
+  merchantWithdrawFieldError: DisplayText | null
   merchantProfile: ReturnType<typeof getDeliveryConsolePageViewDerived>['merchantProfile']
 }

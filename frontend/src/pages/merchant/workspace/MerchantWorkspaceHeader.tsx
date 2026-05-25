@@ -1,26 +1,26 @@
 import type { MerchantRoleProps } from '@/shared/app/role-props'
 import {
+  buildMerchantApplicationSubmitRoute,
   MERCHANT_WORKSPACE_VIEW,
+  type MerchantWorkspaceRouteMeta,
   type MerchantWorkspaceView,
 } from '@/shared/object/core/DeliveryAppObjects'
+import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 
-const MERCHANT_WORKSPACE_VIEW_META: Record<
-  MerchantWorkspaceView,
-  { title: string; path: string; resetStoreSelection: boolean }
-> = {
+const MERCHANT_WORKSPACE_VIEW_META: Record<MerchantWorkspaceView, MerchantWorkspaceRouteMeta> = {
   [MERCHANT_WORKSPACE_VIEW.application]: {
     title: '店家申请',
-    path: '/merchant/application?merchantView=submit',
+    path: buildMerchantApplicationSubmitRoute(),
     resetStoreSelection: true,
   },
   [MERCHANT_WORKSPACE_VIEW.console]: {
     title: '控制台',
-    path: '/merchant/console',
+    path: ROUTE_PATH.merchantConsole,
     resetStoreSelection: false,
   },
   [MERCHANT_WORKSPACE_VIEW.profile]: {
     title: '个人信息',
-    path: '/merchant/profile',
+    path: ROUTE_PATH.merchantProfile,
     resetStoreSelection: true,
   },
 }

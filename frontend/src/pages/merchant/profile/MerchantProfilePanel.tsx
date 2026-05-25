@@ -2,11 +2,12 @@ import { useLocation } from 'react-router-dom'
 import type { MerchantRoleProps } from '@/shared/app/role-props'
 import { MerchantProfileAnalyticsPage } from '@/pages/merchant/profile/MerchantProfileAnalyticsPage'
 import { MerchantProfileOverviewPanel } from '@/pages/merchant/profile/MerchantProfileOverviewPanel'
+import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 
 export function MerchantProfilePanel(props: MerchantRoleProps) {
   const location = useLocation()
 
-  if (location.pathname === '/merchant/profile/analytics') {
+  if (location.pathname === ROUTE_PATH.merchantProfileAnalytics) {
     return <MerchantProfileAnalyticsPage {...props} />
   }
 

@@ -1,11 +1,12 @@
 import type { Role } from '@/shared/object/core/SharedObjects'
 import type { OrderChatPanelProps } from '@/pages/order/object/OrderPageObjects'
+import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 
 const roleLabelMap: Record<Role, string> = {
-  customer: '顾客',
-  merchant: '商家',
-  rider: '骑手',
-  admin: '管理员',
+  customer: ORDER_PAGE_COPY.chat.roleCustomer,
+  merchant: ORDER_PAGE_COPY.chat.roleMerchant,
+  rider: ORDER_PAGE_COPY.chat.roleRider,
+  admin: ORDER_PAGE_COPY.chat.roleAdmin,
 }
 
 export function OrderChatPanel({
@@ -24,17 +25,19 @@ export function OrderChatPanel({
     <section className="order-chat-panel">
       <div className="order-chat-header">
         <div>
-          <p className="ticket-kind">订单沟通</p>
-          <h4>顾客 / 商家 / 骑手群聊</h4>
+          <p className="ticket-kind">{ORDER_PAGE_COPY.chat.ticketKind}</p>
+          <h4>{ORDER_PAGE_COPY.chat.title}</h4>
         </div>
         <span className="badge">
-          {roleLabelMap[currentRole]} · {currentDisplayName}
+          {roleLabelMap[currentRole]}
+          {ORDER_PAGE_COPY.chat.badgeSeparator}
+          {currentDisplayName}
         </span>
       </div>
       <div className="order-chat-history">
         {order.chatMessages.length === 0 ? (
           <div className="empty-card order-chat-empty">
-            当前还没有沟通消息，可以先说明出餐、取餐或送达要求。
+            {ORDER_PAGE_COPY.chat.emptyHint}
           </div>
         ) : (
           order.chatMessages.map((message) => {
@@ -49,7 +52,9 @@ export function OrderChatPanel({
                 <div className="order-chat-meta">
                   <strong>{message.senderName}</strong>
                   <span>
-                    {roleLabelMap[message.senderRole]} · {formatTime(message.sentAt)}
+                    {roleLabelMap[message.senderRole]}
+                    {ORDER_PAGE_COPY.chat.badgeSeparator}
+                    {formatTime(message.sentAt)}
                   </span>
                 </div>
                 <p>{message.body}</p>
@@ -63,7 +68,7 @@ export function OrderChatPanel({
         <input
           className={errorText ? 'field-error' : undefined}
           disabled={disabled}
-          placeholder="输入消息，例如请放门口、餐已备好、我已到店门口"
+          placeholder={ORDER_PAGE_COPY.chat.inputPlaceholder}
           value={draft}
           onChange={(event) => onChangeDraft(event.target.value)}
         />
@@ -73,7 +78,7 @@ export function OrderChatPanel({
           onClick={onSubmit}
           type="button"
         >
-          发送
+          {ORDER_PAGE_COPY.chat.submitButton}
         </button>
       </div>
       {errorText ? <small className="field-error-text">{errorText}</small> : null}

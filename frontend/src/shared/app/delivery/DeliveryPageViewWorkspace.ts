@@ -2,7 +2,7 @@ import {
   getCustomerWorkspaceView,
   getMerchantApplicationViewFromUrl,
   getMerchantWorkspaceViewFromUrl,
-} from '@/pages/router/DeliveryPageViewRoutes'
+} from '@/shared/route/DeliveryPageViewRoutes'
 
 export function getWorkspaceViews(
   locationPathname: string,

@@ -3,25 +3,26 @@ import type { CustomerRoleProps } from '@/shared/app/role-props'
 import { DisplayImageSlot } from '@/shared/components/primitives/DisplayImageSlot'
 import { STORE_STATUS, type Store } from '@/shared/object/core/SharedObjects'
 import type { CustomerStoreBrowseResultCardProps } from '@/pages/customer/object/CustomerPageObjects'
+import { CUSTOMER_STORE_RESULT_COPY } from '@/shared/delivery/DeliveryMessages'
 
 function getStoreBrowseHint(store: Store, isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen']) {
   if (store.status === STORE_STATUS.revoked) {
-    return '当前店铺不可下单，详情进入店铺后可查看。'
+    return CUSTOMER_STORE_RESULT_COPY.unavailableStoreHint
   }
   if (!isStoreCurrentlyOpen(store)) {
-    return '当前不在营业时间内，更多营业信息进入店铺后查看。'
+    return CUSTOMER_STORE_RESULT_COPY.closedStoreHint
   }
   if (store.menu.length === 0) {
-    return '当前暂未上架菜品，详细信息进入店铺后查看。'
+    return CUSTOMER_STORE_RESULT_COPY.emptyMenuHint
   }
-  return '更多营业时间、商家信息和完整菜单需进入店铺后查看。'
+  return CUSTOMER_STORE_RESULT_COPY.availableStoreHint
 }
 
 function getStoreBrowseButtonLabel(store: Store, isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen']) {
-  if (store.status === STORE_STATUS.revoked) return '当前不可下单'
-  if (!isStoreCurrentlyOpen(store)) return '非营业时间'
-  if (store.menu.length === 0) return '待上架菜品'
-  return '进入店铺'
+  if (store.status === STORE_STATUS.revoked) return CUSTOMER_STORE_RESULT_COPY.unavailableStoreButton
+  if (!isStoreCurrentlyOpen(store)) return CUSTOMER_STORE_RESULT_COPY.closedStoreButton
+  if (store.menu.length === 0) return CUSTOMER_STORE_RESULT_COPY.emptyMenuButton
+  return CUSTOMER_STORE_RESULT_COPY.enterStoreButton
 }
 
 export function CustomerStoreResultCard({
@@ -36,16 +37,18 @@ export function CustomerStoreResultCard({
     formatTime,
     isStoreCurrentlyOpen,
     monthlyOrdersByStore,
+    storeBrowseHighlights,
   } = props
   const disabled =
     store.status === STORE_STATUS.revoked || !isStoreCurrentlyOpen(store) || store.menu.length === 0
+  const highlights: string[] = storeBrowseHighlights[store.id] ?? []
 
   return (
     <article className="store-card compact-store-card">
       <DisplayImageSlot
-        alt={`${store.name} 展示图`}
+        alt={CUSTOMER_STORE_RESULT_COPY.storeImageAlt(store.name)}
         className="store-image compact-store-image"
-        label="餐厅展示图"
+        label={CUSTOMER_STORE_RESULT_COPY.storeImageLabel}
         src={store.imageUrl}
       />
       <div className="compact-store-content">
@@ -60,26 +63,40 @@ export function CustomerStoreResultCard({
         </div>
         <div className="summary-bar compact-store-summary">
           <div>
-            <p>店铺评分</p>
+            <p>{CUSTOMER_STORE_RESULT_COPY.storeRatingLabel}</p>
             <strong>{formatAggregateRating(store.averageRating, store.ratingCount)}</strong>
           </div>
           <div>
-            <p>可点菜品</p>
-            <strong>{store.menu.length} 道</strong>
+            <p>{CUSTOMER_STORE_RESULT_COPY.menuCountLabel}</p>
+            <strong>{`${store.menu.length}${CUSTOMER_STORE_RESULT_COPY.menuCountSuffix}`}</strong>
           </div>
           <div>
-            <p>近 30 天</p>
-            <strong>{monthlyOrdersByStore[store.id] ?? 0} 单</strong>
+            <p>{CUSTOMER_STORE_RESULT_COPY.recentMonthOrderLabel}</p>
+            <strong>
+              {`${monthlyOrdersByStore[store.id] ?? 0}${CUSTOMER_STORE_RESULT_COPY.recentMonthOrderSuffix}`}
+            </strong>
           </div>
           <div>
-            <p>出餐速度</p>
-            <strong>{store.avgPrepMinutes} 分钟</strong>
+            <p>{CUSTOMER_STORE_RESULT_COPY.prepSpeedLabel}</p>
+            <strong>{`${store.avgPrepMinutes}${CUSTOMER_STORE_RESULT_COPY.prepSpeedSuffix}`}</strong>
           </div>
         </div>
+        {highlights.length > 0 ? (
+          <div
+            className="store-highlight-list"
+            aria-label={CUSTOMER_STORE_RESULT_COPY.highlightListAriaLabel(store.name)}
+          >
+            {highlights.map((highlight: string) => (
+              <span key={highlight} className="store-highlight-chip">
+                {highlight}
+              </span>
+            ))}
+          </div>
+        ) : null}
         <div className="compact-store-reviews">
-          <p className="ticket-kind">顾客评价</p>
+          <p className="ticket-kind">{CUSTOMER_STORE_RESULT_COPY.reviewSectionLabel}</p>
           <StoreReviewList
-            emptyText="暂无顾客评价。"
+            emptyText={CUSTOMER_STORE_RESULT_COPY.reviewEmptyText}
             formatTime={formatTime}
             reviews={reviews}
             variant="compact"

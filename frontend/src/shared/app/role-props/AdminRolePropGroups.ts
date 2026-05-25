@@ -5,7 +5,14 @@ import {
   buildResolutionPayload,
   buildReviewApplicationPayload,
 } from '@/shared/delivery/DeliveryServices'
-import { deliveryApi } from '@/shared/api/SharedApi'
+import {
+  approveMerchantApplication,
+  rejectMerchantApplication,
+  resolveAfterSalesTicket,
+  resolveEligibilityReview,
+  resolveReviewAppeal,
+  resolveTicket,
+} from '@/shared/api/SharedApi'
 import type { PageState, PageView, SessionService } from '@/shared/object/core/AppBuildRolePropsObjects'
 
 export function getAdminViewProps(pageView: PageView) {
@@ -53,11 +60,11 @@ export function getAdminActionProps() {
     buildResolutionPayload,
     buildReviewApplicationPayload,
     buildEligibilityReviewPayload,
-    approveMerchantApplication: deliveryApi.admin.approveMerchantApplication,
-    rejectMerchantApplication: deliveryApi.admin.rejectMerchantApplication,
-    resolveReviewAppeal: deliveryApi.admin.resolveReviewAppeal,
-    resolveEligibilityReview: deliveryApi.admin.resolveEligibilityReview,
-    resolveAfterSalesTicket: deliveryApi.order.resolveAfterSalesTicket,
-    resolveTicket: deliveryApi.admin.resolveTicket,
+    approveMerchantApplication,
+    rejectMerchantApplication,
+    resolveReviewAppeal,
+    resolveEligibilityReview,
+    resolveAfterSalesTicket,
+    resolveTicket,
   }
 }

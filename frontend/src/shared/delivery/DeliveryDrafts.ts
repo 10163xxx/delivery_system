@@ -23,15 +23,9 @@ export function getInitialQuantities(store?: Store): Record<string, number> {
 
 export function createInitialMerchantDraft(merchantName = ''): MerchantDraft {
   return {
-    merchantName,
-    storeName: '',
-    category: '',
-    openTime: DEFAULT_STORE_OPEN_TIME,
-    closeTime: DEFAULT_STORE_CLOSE_TIME,
-    avgPrepMinutes: DEFAULT_MERCHANT_PREP_MINUTES,
-    imageUrl: '',
-    uploadedImageName: '',
-    note: '',
+    ...createInitialMerchantIdentityDraft(merchantName),
+    ...createInitialMerchantScheduleDraft(),
+    ...createInitialMerchantAssetDraft(),
   }
 }
 
@@ -41,12 +35,9 @@ export function createInitialReviewDraft(): ReviewDraft {
 
 export function createInitialMenuItemDraft(): MenuItemDraft {
   return {
-    name: '',
-    description: '',
-    priceYuan: '',
-    remainingQuantity: '',
-    imageUrl: '',
-    uploadedImageName: '',
+    ...createInitialMenuItemContentDraft(),
+    ...createInitialMenuItemPricingDraft(),
+    ...createInitialMenuItemAssetDraft(),
   }
 }
 
@@ -78,5 +69,52 @@ export function createInitialMerchantProfileDraft(): MerchantProfileDraft {
     bankName: '',
     accountNumber: '',
     accountHolder: '',
+  }
+}
+
+function createInitialMerchantIdentityDraft(merchantName = '') {
+  return {
+    merchantName,
+    storeName: '',
+    category: '',
+  }
+}
+
+function createInitialMerchantScheduleDraft() {
+  return {
+    openTime: DEFAULT_STORE_OPEN_TIME,
+    closeTime: DEFAULT_STORE_CLOSE_TIME,
+    avgPrepMinutes: DEFAULT_MERCHANT_PREP_MINUTES,
+  }
+}
+
+function createInitialMerchantAssetDraft() {
+  return {
+    imageUrl: '',
+    uploadedImageName: '',
+    note: '',
+  }
+}
+
+function createInitialMenuItemContentDraft() {
+  return {
+    name: '',
+    category: '',
+    description: '',
+  }
+}
+
+function createInitialMenuItemPricingDraft() {
+  return {
+    priceYuan: '',
+    remainingQuantity: '',
+  }
+}
+
+function createInitialMenuItemAssetDraft() {
+  return {
+    imageUrl: '',
+    uploadedImageName: '',
+    selectionGroupsText: '',
   }
 }

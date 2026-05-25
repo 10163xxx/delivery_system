@@ -1,153 +1,340 @@
 import type {
+  AddMenuItemRequest,
+  AddCustomerAddressRequest,
+  AppendStoreReviewReplyRequest,
+  AssignRiderRequest,
+  AuthSession,
+  CreateOrderRequest,
   CustomerId,
+  DeliveryAppState,
   EligibilityReviewId,
-  MerchantApplicationId,
+  EligibilityReviewRequest,
+  ImageUploadResponse,
+  LoginRequest,
   MenuItemId,
+  MerchantApplicationId,
+  MerchantRegistrationRequest,
   OrderId,
+  RechargeBalanceRequest,
   RefundRequestId,
+  RegisterRequest,
+  RejectOrderRequest,
+  RemoveCustomerAddressRequest,
+  ResolveAfterSalesRequest,
+  ResolveEligibilityReviewRequest,
+  ResolvePartialRefundRequest,
+  ResolveReviewAppealRequest,
+  ResolveTicketRequest,
   ReviewAppealId,
+  ReviewAppealRequest,
+  ReviewMerchantApplicationRequest,
+  ReviewOrderRequest,
   RiderId,
+  SendOrderChatMessageRequest,
+  SetDefaultCustomerAddressRequest,
   StoreId,
+  SubmitAfterSalesRequest,
+  SubmitPartialRefundRequest,
   TicketId,
+  UpdateCustomerProfileRequest,
+  UpdateMenuItemCategoryRequest,
+  UpdateMenuItemPriceRequest,
+  UpdateMenuItemStockRequest,
+  UpdateMerchantProfileRequest,
+  UpdateRiderAvailabilityRequest,
+  UpdateRiderProfileRequest,
+  UpdateStoreOperationalRequest,
+  WithdrawMerchantIncomeRequest,
+  WithdrawRiderIncomeRequest,
 } from '@/shared/object/core/SharedObjects'
+import {
+  defineJsonGetApi0,
+  defineJsonPostApi0,
+  defineJsonPostApi1,
+  defineJsonPostApi2,
+  defineUploadPostApi0,
+  routeSegment,
+} from '@/shared/api/TypedApiDefinitions'
 
-const API_BASE_PATH = '/api'
-const DELIVERY_BASE_PATH = `${API_BASE_PATH}/delivery`
-const AUTH_BASE_PATH = `${API_BASE_PATH}/auth`
+const apiSegment = routeSegment('api')
+const authSegment = routeSegment('auth')
+const deliverySegment = routeSegment('delivery')
+const customersSegment = routeSegment('customers')
+const ridersSegment = routeSegment('riders')
+const merchantApplicationsSegment = routeSegment('merchant-applications')
+const reviewAppealsSegment = routeSegment('review-appeals')
+const eligibilityReviewsSegment = routeSegment('eligibility-reviews')
+const storesSegment = routeSegment('stores')
+const ordersSegment = routeSegment('orders')
+const ticketsSegment = routeSegment('tickets')
+const partialRefundsSegment = routeSegment('partial-refunds')
 
-export const AUTH_LOGIN_API_ROUTE = `${AUTH_BASE_PATH}/login`
-export const AUTH_REGISTER_API_ROUTE = `${AUTH_BASE_PATH}/register`
-export const AUTH_SESSION_API_ROUTE = `${AUTH_BASE_PATH}/session`
-export const AUTH_LOGOUT_API_ROUTE = `${AUTH_BASE_PATH}/logout`
+export const loginApiDefinition = defineJsonPostApi0<LoginRequest, AuthSession>([
+  apiSegment,
+  authSegment,
+  routeSegment('login'),
+])
 
-export const DELIVERY_STATE_API_ROUTE = `${DELIVERY_BASE_PATH}/state`
-export const DELIVERY_MERCHANT_PROFILE_API_ROUTE = `${DELIVERY_BASE_PATH}/merchant-profile`
-export const DELIVERY_MERCHANT_WITHDRAW_API_ROUTE = `${DELIVERY_BASE_PATH}/merchant-profile/withdraw`
-export const DELIVERY_MERCHANT_APPLICATIONS_API_ROUTE = `${DELIVERY_BASE_PATH}/merchant-applications`
-export const DELIVERY_ELIGIBILITY_REVIEWS_API_ROUTE = `${DELIVERY_BASE_PATH}/eligibility-reviews`
-export const DELIVERY_ORDERS_API_ROUTE = `${DELIVERY_BASE_PATH}/orders`
-export const DELIVERY_STORE_IMAGE_UPLOAD_API_ROUTE = `${DELIVERY_BASE_PATH}/uploads/store-image`
+export const registerApiDefinition = defineJsonPostApi0<RegisterRequest, AuthSession>([
+  apiSegment,
+  authSegment,
+  routeSegment('register'),
+])
 
-export function getCustomerProfileApiRoute(customerId: CustomerId) {
-  return `${DELIVERY_BASE_PATH}/customers/${customerId}/profile`
-}
+export const getSessionApiDefinition = defineJsonGetApi0<AuthSession>([
+  apiSegment,
+  authSegment,
+  routeSegment('session'),
+])
 
-export function getCustomerAddressesApiRoute(customerId: CustomerId) {
-  return `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses`
-}
+export const logoutApiDefinition = defineJsonPostApi0<void, void>([
+  apiSegment,
+  authSegment,
+  routeSegment('logout'),
+])
 
-export function getCustomerAddressRemoveApiRoute(customerId: CustomerId) {
-  return `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses/remove`
-}
+export const getStateApiDefinition = defineJsonGetApi0<DeliveryAppState>([
+  apiSegment,
+  deliverySegment,
+  routeSegment('state'),
+])
 
-export function getCustomerAddressDefaultApiRoute(customerId: CustomerId) {
-  return `${DELIVERY_BASE_PATH}/customers/${customerId}/addresses/default`
-}
+export const updateMerchantProfileApiDefinition =
+  defineJsonPostApi0<UpdateMerchantProfileRequest, DeliveryAppState>([
+    apiSegment,
+    deliverySegment,
+    routeSegment('merchant-profile'),
+  ])
 
-export function getCustomerRechargeApiRoute(customerId: CustomerId) {
-  return `${DELIVERY_BASE_PATH}/customers/${customerId}/recharge`
-}
+export const withdrawMerchantIncomeApiDefinition =
+  defineJsonPostApi0<WithdrawMerchantIncomeRequest, DeliveryAppState>([
+    apiSegment,
+    deliverySegment,
+    routeSegment('merchant-profile'),
+    routeSegment('withdraw'),
+  ])
 
-export function getRiderProfileApiRoute(riderId: RiderId) {
-  return `${DELIVERY_BASE_PATH}/riders/${riderId}/profile`
-}
+export const submitMerchantApplicationApiDefinition =
+  defineJsonPostApi0<MerchantRegistrationRequest, DeliveryAppState>([
+    apiSegment,
+    deliverySegment,
+    merchantApplicationsSegment,
+  ])
 
-export function getRiderWithdrawApiRoute(riderId: RiderId) {
-  return `${DELIVERY_BASE_PATH}/riders/${riderId}/withdraw`
-}
+export const submitEligibilityReviewApiDefinition =
+  defineJsonPostApi0<EligibilityReviewRequest, DeliveryAppState>([
+    apiSegment,
+    deliverySegment,
+    eligibilityReviewsSegment,
+  ])
 
-export function getMerchantApplicationApproveApiRoute(applicationId: MerchantApplicationId) {
-  return `${DELIVERY_BASE_PATH}/merchant-applications/${applicationId}/approve`
-}
+export const createOrderApiDefinition = defineJsonPostApi0<CreateOrderRequest, DeliveryAppState>([
+  apiSegment,
+  deliverySegment,
+  ordersSegment,
+])
 
-export function getMerchantApplicationRejectApiRoute(applicationId: MerchantApplicationId) {
-  return `${DELIVERY_BASE_PATH}/merchant-applications/${applicationId}/reject`
-}
+export const uploadMerchantStoreImageApiDefinition = defineUploadPostApi0<ImageUploadResponse>([
+  apiSegment,
+  deliverySegment,
+  routeSegment('uploads'),
+  routeSegment('store-image'),
+])
 
-export function getReviewAppealReviewApiRoute(appealId: ReviewAppealId) {
-  return `${DELIVERY_BASE_PATH}/review-appeals/${appealId}/review`
-}
+export const updateCustomerProfileApiDefinition =
+  defineJsonPostApi1<CustomerId, UpdateCustomerProfileRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, customersSegment],
+    [routeSegment('profile')],
+  )
 
-export function getEligibilityReviewApiRoute(reviewId: EligibilityReviewId) {
-  return `${DELIVERY_BASE_PATH}/eligibility-reviews/${reviewId}/review`
-}
+export const addCustomerAddressApiDefinition =
+  defineJsonPostApi1<CustomerId, AddCustomerAddressRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, customersSegment],
+    [routeSegment('addresses')],
+  )
 
-export function getStoreMenuApiRoute(storeId: StoreId) {
-  return `${DELIVERY_BASE_PATH}/stores/${storeId}/menu`
-}
+export const removeCustomerAddressApiDefinition =
+  defineJsonPostApi1<CustomerId, RemoveCustomerAddressRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, customersSegment],
+    [routeSegment('addresses'), routeSegment('remove')],
+  )
 
-export function getStoreMenuItemRemoveApiRoute(storeId: StoreId, menuItemId: MenuItemId) {
-  return `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/remove`
-}
+export const setDefaultCustomerAddressApiDefinition =
+  defineJsonPostApi1<CustomerId, SetDefaultCustomerAddressRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, customersSegment],
+    [routeSegment('addresses'), routeSegment('default')],
+  )
 
-export function getStoreMenuItemStockApiRoute(storeId: StoreId, menuItemId: MenuItemId) {
-  return `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/stock`
-}
+export const rechargeCustomerBalanceApiDefinition =
+  defineJsonPostApi1<CustomerId, RechargeBalanceRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, customersSegment],
+    [routeSegment('recharge')],
+  )
 
-export function getStoreMenuItemPriceApiRoute(storeId: StoreId, menuItemId: MenuItemId) {
-  return `${DELIVERY_BASE_PATH}/stores/${storeId}/menu/${menuItemId}/price`
-}
+export const updateRiderProfileApiDefinition =
+  defineJsonPostApi1<RiderId, UpdateRiderProfileRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ridersSegment],
+    [routeSegment('profile')],
+  )
 
-export function getStoreOperationsApiRoute(storeId: StoreId) {
-  return `${DELIVERY_BASE_PATH}/stores/${storeId}/operations`
-}
+export const withdrawRiderIncomeApiDefinition =
+  defineJsonPostApi1<RiderId, WithdrawRiderIncomeRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ridersSegment],
+    [routeSegment('withdraw')],
+  )
 
-export function getOrderApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}`
-}
+export const updateRiderAvailabilityApiDefinition =
+  defineJsonPostApi1<RiderId, UpdateRiderAvailabilityRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ridersSegment],
+    [routeSegment('availability')],
+  )
 
-export function getOrderAcceptApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/accept`
-}
+export const approveMerchantApplicationApiDefinition =
+  defineJsonPostApi1<MerchantApplicationId, ReviewMerchantApplicationRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, merchantApplicationsSegment],
+    [routeSegment('approve')],
+  )
 
-export function getOrderRejectApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/reject`
-}
+export const rejectMerchantApplicationApiDefinition =
+  defineJsonPostApi1<MerchantApplicationId, ReviewMerchantApplicationRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, merchantApplicationsSegment],
+    [routeSegment('reject')],
+  )
 
-export function getOrderReadyApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/ready`
-}
+export const resolveReviewAppealApiDefinition =
+  defineJsonPostApi1<ReviewAppealId, ResolveReviewAppealRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, reviewAppealsSegment],
+    [routeSegment('review')],
+  )
 
-export function getOrderAssignRiderApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/assign-rider`
-}
+export const resolveEligibilityReviewApiDefinition =
+  defineJsonPostApi1<EligibilityReviewId, ResolveEligibilityReviewRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, eligibilityReviewsSegment],
+    [routeSegment('review')],
+  )
 
-export function getOrderPickupApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/pickup`
-}
+export const addMenuItemApiDefinition =
+  defineJsonPostApi1<StoreId, AddMenuItemRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, storesSegment],
+    [routeSegment('menu')],
+  )
 
-export function getOrderDeliverApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/deliver`
-}
+export const updateStoreOperationalInfoApiDefinition =
+  defineJsonPostApi1<StoreId, UpdateStoreOperationalRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, storesSegment],
+    [routeSegment('operations')],
+  )
 
-export function getOrderReviewApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/review`
-}
+export const acceptOrderApiDefinition = defineJsonPostApi1<OrderId, void, DeliveryAppState>(
+  [apiSegment, deliverySegment, ordersSegment],
+  [routeSegment('accept')],
+)
 
-export function getOrderChatApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/chat`
-}
+export const rejectOrderApiDefinition =
+  defineJsonPostApi1<OrderId, RejectOrderRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('reject')],
+  )
 
-export function getOrderPartialRefundsApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/partial-refunds`
-}
+export const readyOrderApiDefinition = defineJsonPostApi1<OrderId, void, DeliveryAppState>(
+  [apiSegment, deliverySegment, ordersSegment],
+  [routeSegment('ready')],
+)
 
-export function getOrderAfterSalesApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/after-sales`
-}
+export const assignRiderApiDefinition =
+  defineJsonPostApi1<OrderId, AssignRiderRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('assign-rider')],
+  )
 
-export function getOrderReviewAppealsApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/review-appeals`
-}
+export const pickupOrderApiDefinition = defineJsonPostApi1<OrderId, void, DeliveryAppState>(
+  [apiSegment, deliverySegment, ordersSegment],
+  [routeSegment('pickup')],
+)
 
-export function getOrderResolveApiRoute(orderId: OrderId) {
-  return `${DELIVERY_BASE_PATH}/orders/${orderId}/resolve`
-}
+export const deliverOrderApiDefinition = defineJsonPostApi1<OrderId, void, DeliveryAppState>(
+  [apiSegment, deliverySegment, ordersSegment],
+  [routeSegment('deliver')],
+)
 
-export function getPartialRefundReviewApiRoute(refundId: RefundRequestId) {
-  return `${DELIVERY_BASE_PATH}/partial-refunds/${refundId}/review`
-}
+export const reviewOrderApiDefinition =
+  defineJsonPostApi1<OrderId, ReviewOrderRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('review')],
+  )
 
-export function getAfterSalesReviewApiRoute(ticketId: TicketId) {
-  return `${DELIVERY_BASE_PATH}/tickets/${ticketId}/after-sales/review`
-}
+export const appendStoreReviewReplyApiDefinition =
+  defineJsonPostApi1<OrderId, AppendStoreReviewReplyRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('store-review-reply')],
+  )
+
+export const sendOrderChatMessageApiDefinition =
+  defineJsonPostApi1<OrderId, SendOrderChatMessageRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('chat')],
+  )
+
+export const submitPartialRefundRequestApiDefinition =
+  defineJsonPostApi1<OrderId, SubmitPartialRefundRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('partial-refunds')],
+  )
+
+export const submitAfterSalesRequestApiDefinition =
+  defineJsonPostApi1<OrderId, SubmitAfterSalesRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('after-sales')],
+  )
+
+export const submitReviewAppealApiDefinition =
+  defineJsonPostApi1<OrderId, ReviewAppealRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('review-appeals')],
+  )
+
+export const resolveTicketApiDefinition =
+  defineJsonPostApi1<OrderId, ResolveTicketRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ordersSegment],
+    [routeSegment('resolve')],
+  )
+
+export const resolvePartialRefundRequestApiDefinition =
+  defineJsonPostApi1<RefundRequestId, ResolvePartialRefundRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, partialRefundsSegment],
+    [routeSegment('review')],
+  )
+
+export const resolveAfterSalesTicketApiDefinition =
+  defineJsonPostApi1<TicketId, ResolveAfterSalesRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, ticketsSegment],
+    [routeSegment('after-sales'), routeSegment('review')],
+  )
+
+export const removeMenuItemApiDefinition =
+  defineJsonPostApi2<StoreId, MenuItemId, void, DeliveryAppState>(
+    [apiSegment, deliverySegment, storesSegment],
+    [routeSegment('menu')],
+    [routeSegment('remove')],
+  )
+
+export const updateMenuItemStockApiDefinition =
+  defineJsonPostApi2<StoreId, MenuItemId, UpdateMenuItemStockRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, storesSegment],
+    [routeSegment('menu')],
+    [routeSegment('stock')],
+  )
+
+export const updateMenuItemPriceApiDefinition =
+  defineJsonPostApi2<StoreId, MenuItemId, UpdateMenuItemPriceRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, storesSegment],
+    [routeSegment('menu')],
+    [routeSegment('price')],
+  )
+
+export const updateMenuItemCategoryApiDefinition =
+  defineJsonPostApi2<StoreId, MenuItemId, UpdateMenuItemCategoryRequest, DeliveryAppState>(
+    [apiSegment, deliverySegment, storesSegment],
+    [routeSegment('menu')],
+    [routeSegment('category')],
+  )

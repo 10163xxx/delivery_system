@@ -12,6 +12,7 @@ final case class OrderLineItem(
     quantity: Quantity,
     unitPriceCents: CurrencyCents,
     refundedQuantity: Quantity,
+    selections: List[OrderItemSelection],
 )
 object OrderLineItem:
   given Encoder[OrderLineItem] = deriveEncoder
@@ -22,11 +23,13 @@ object OrderLineItem:
       quantity <- cursor.get[Quantity]("quantity")
       unitPriceCents <- cursor.get[CurrencyCents]("unitPriceCents")
       refundedQuantity <- cursor.getOrElse[Quantity]("refundedQuantity")(NumericDefaults.ZeroQuantity)
+      selections <- cursor.getOrElse[List[OrderItemSelection]]("selections")(List.empty)
     yield OrderLineItem(
       menuItemId = menuItemId,
       name = name,
       quantity = quantity,
       unitPriceCents = unitPriceCents,
       refundedQuantity = refundedQuantity,
+      selections = selections,
     )
   }

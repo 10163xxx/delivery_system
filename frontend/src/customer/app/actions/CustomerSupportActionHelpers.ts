@@ -1,4 +1,4 @@
-import type { OrderSummary } from '@/shared/object/core/SharedObjects'
+import type { MenuItemId, OrderId, OrderSummary } from '@/shared/object/core/SharedObjects'
 import {
   AFTER_SALES_REQUEST_TYPE,
   APPLICATION_STATUS,
@@ -16,13 +16,17 @@ import {
   formatMaxPartialRefundQuantityMessage,
   LOW_RATING_MAX,
 } from '@/shared/delivery/DeliveryServices'
+import {
+  buildPartialRefundDraftKey,
+  buildReviewDraftKey,
+} from '@/shared/object/core/DeliveryAppObjects'
 import type {
   CustomerSupportParams,
   ReviewSubmissionValidationResult,
-} from '@/customer/object/action/CustomerActionObjects'
+} from '@/pages/customer/object/CustomerActionObjects'
 import { setDraftError } from '@/customer/app/actions/CustomerActionHelpers'
 
-export function getRemainingRefundableQuantity(order: OrderSummary, menuItemId: string) {
+export function getRemainingRefundableQuantity(order: OrderSummary, menuItemId: MenuItemId) {
   const orderItem = order.items.find((item) => item.menuItemId === menuItemId)
   if (!orderItem) return 0
 
@@ -47,10 +51,10 @@ export function canSubmitPartialRefund(order: OrderSummary) {
 
 export function validateCustomerReviewSubmission(
   params: CustomerSupportParams,
-  orderId: string,
+  orderId: OrderId,
   target: typeof REVIEW_TARGET.store | typeof REVIEW_TARGET.rider,
 ): ReviewSubmissionValidationResult {
-  const draftKey = `${orderId}-${target}`
+  const draftKey = buildReviewDraftKey(orderId, target)
   const draft = params.reviewDrafts[draftKey] ?? createInitialReviewDraft()
   const payload = buildReviewPayload(target, draft)
   const order = params.state?.orders.find((entry) => entry.id === orderId)
@@ -67,8 +71,12 @@ export function validateCustomerReviewSubmission(
   return { ok: true, payload }
 }
 
-export function validatePartialRefundDraft(params: CustomerSupportParams, order: OrderSummary, menuItemId: string) {
-  const draftKey = `${order.id}-${menuItemId}`
+export function validatePartialRefundDraft(
+  params: CustomerSupportParams,
+  order: OrderSummary,
+  menuItemId: MenuItemId,
+) {
+  const draftKey = buildPartialRefundDraftKey(order.id, menuItemId)
   const remainingRefundableQuantity = getRemainingRefundableQuantity(order, menuItemId)
   if (remainingRefundableQuantity <= 0) {
     setDraftError(params.setPartialRefundErrors, draftKey, formatMaxPartialRefundQuantityMessage(remainingRefundableQuantity))
@@ -86,7 +94,7 @@ export function validatePartialRefundDraft(params: CustomerSupportParams, order:
   return { draftKey, payload }
 }
 
-export function validateAfterSalesDraft(params: CustomerSupportParams, orderId: string) {
+export function validateAfterSalesDraft(params: CustomerSupportParams, orderId: OrderId) {
   const payload = buildAfterSalesPayload(params.afterSalesDrafts[orderId] ?? createInitialAfterSalesDraft())
   if (!payload.reason) {
     setDraftError(params.setAfterSalesErrors, orderId, DELIVERY_CONSOLE_MESSAGES.order.afterSalesReasonRequired)

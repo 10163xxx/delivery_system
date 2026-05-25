@@ -1,12 +1,12 @@
 import type {
   CurrencyCents,
   DisplayText,
-  ExternalUrl,
   IsoDateTime,
+  MerchantWithdrawalId,
 } from '@/shared/object/domain/DomainObjects'
 
 export type MerchantWithdrawal = {
-  id: ExternalUrl
+  id: MerchantWithdrawalId
   amountCents: CurrencyCents
   accountLabel: DisplayText
   requestedAt: IsoDateTime

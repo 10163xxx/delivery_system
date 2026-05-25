@@ -4,7 +4,11 @@ import type {
   MerchantProfileWithdrawalSectionProps,
 } from '@/pages/merchant/object/MerchantPageObjects'
 import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery/DeliveryServices'
-import { PAYOUT_ACCOUNT_TYPE, type MerchantWithdrawal } from '@/shared/object/core/SharedObjects'
+import {
+  PAYOUT_ACCOUNT_TYPE,
+  ROUTE_PATH,
+  type MerchantWithdrawal,
+} from '@/shared/object/core/SharedObjects'
 
 function getMerchantTrendSummary(merchantMonthlyTrend: MerchantProfileOverviewSidebarProps['merchantMonthlyTrend']) {
   return {
@@ -93,7 +97,7 @@ export function MerchantProfileOverviewSidebar(props: MerchantProfileOverviewSid
           <div><p>订单数</p><strong>{monthlyOrderCount} 单</strong></div>
           <div><p>收入</p><strong>{formatPrice(monthlyIncomeCents)}</strong></div>
         </div>
-        <button className="primary-button" onClick={() => navigate('/merchant/profile/analytics')} type="button">查看趋势图</button>
+        <button className="primary-button" onClick={() => navigate(ROUTE_PATH.merchantProfileAnalytics)} type="button">查看趋势图</button>
       </section>
     </aside>
   )

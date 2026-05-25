@@ -4,19 +4,25 @@ import {
   CURRENCY_DECIMAL_PLACES,
   storeStatusLabels,
 } from './DeliveryConstants'
+import { DELIVERY_DATE_TIME_FORMAT } from './DeliveryPatterns'
 import { isStoreCurrentlyOpen } from './DeliverySchedule'
+
+const DELIVERY_TIME_FORMAT_OPTIONS = {
+  month: DELIVERY_DATE_TIME_FORMAT.numeric,
+  day: DELIVERY_DATE_TIME_FORMAT.numeric,
+  hour: DELIVERY_DATE_TIME_FORMAT.twoDigit,
+  minute: DELIVERY_DATE_TIME_FORMAT.twoDigit,
+} as const
 
 export function formatPrice(priceCents: number) {
   return `¥${(priceCents / CURRENCY_CENTS_SCALE).toFixed(CURRENCY_DECIMAL_PLACES)}`
 }
 
 export function formatTime(value: string) {
-  return new Intl.DateTimeFormat('zh-CN', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
+  return new Intl.DateTimeFormat(
+    DELIVERY_DATE_TIME_FORMAT.locale,
+    DELIVERY_TIME_FORMAT_OPTIONS,
+  ).format(new Date(value))
 }
 
 export function getCategoryMeta(category: StoreCategory | string) {

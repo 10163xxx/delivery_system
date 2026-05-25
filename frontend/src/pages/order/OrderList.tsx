@@ -1,4 +1,5 @@
 import type { OrderListProps } from '@/pages/order/object/OrderPageObjects'
+import { ORDER_LIST_COPY } from '@/shared/delivery/DeliveryMessages'
 
 export function OrderList({
   orders,
@@ -41,7 +42,7 @@ export function OrderList({
                   ) : null}
                   <h3>
                     {order.storeName}
-                    {' -> '}
+                    {ORDER_LIST_COPY.storeToCustomerSeparator}
                     {order.customerName}
                   </h3>
                 </div>
@@ -54,21 +55,35 @@ export function OrderList({
                       onClick={() => onOpenOrder(order.id)}
                       type="button"
                     >
-                      查看详情
+                      {ORDER_LIST_COPY.viewDetailButton}
                     </button>
                   ) : null}
                 </div>
               </div>
               <div className="order-card-brief">
                 <p className="meta-line">
-                  下单于 {formatTime(order.createdAt)} · 预约送达 {formatTime(order.scheduledDeliveryAt)}
+                  {ORDER_LIST_COPY.createdAtPrefix}
+                  {formatTime(order.createdAt)}
+                  {' · '}
+                  {ORDER_LIST_COPY.scheduledDeliveryPrefix}
+                  {formatTime(order.scheduledDeliveryAt)}
                 </p>
                 <p className="meta-line">
-                  配送地址 {order.deliveryAddress} · {totalItemCount} 件商品
+                  {ORDER_LIST_COPY.deliveryAddressPrefix}
+                  {order.deliveryAddress}
+                  {' · '}
+                  {totalItemCount}
+                  {ORDER_LIST_COPY.totalItemCountSuffix}
                 </p>
                 {order.storeRating !== undefined || order.riderRating !== undefined ? (
                   <p className="meta-line">
-                    商家 {order.storeRating ?? '-'} 星 / 骑手 {order.riderRating ?? '-'} 星
+                    {ORDER_LIST_COPY.storeRatingPrefix}
+                    {order.storeRating ?? ORDER_LIST_COPY.missingRating}
+                    {ORDER_LIST_COPY.starSuffix}
+                    {ORDER_LIST_COPY.ratingSeparator}
+                    {ORDER_LIST_COPY.riderRatingPrefix}
+                    {order.riderRating ?? ORDER_LIST_COPY.missingRating}
+                    {ORDER_LIST_COPY.starSuffix}
                   </p>
                 ) : null}
               </div>

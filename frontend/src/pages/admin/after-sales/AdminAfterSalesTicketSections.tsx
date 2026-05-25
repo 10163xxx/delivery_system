@@ -1,5 +1,5 @@
 import type { AdminRoleProps } from '@/shared/app/role-props'
-import type { AdminTicket } from '@/shared/object/core/SharedObjects'
+import type { AdminTicket, TicketId } from '@/shared/object/core/SharedObjects'
 import {
   AFTER_SALES_REQUEST_TYPE,
   AFTER_SALES_RESOLUTION_MODE,
@@ -69,7 +69,7 @@ export function AdminAfterSalesOpenActions({
       <select
         value={resolutionMode}
         onChange={(event) =>
-          props.setAfterSalesResolutionDrafts((current: Record<string, AfterSalesResolutionDraft>) =>
+          props.setAfterSalesResolutionDrafts((current: Record<TicketId, AfterSalesResolutionDraft>) =>
             updateAfterSalesResolutionDraft(current, ticket.id, {
               resolutionMode: getAfterSalesResolutionMode(event.target.value),
             }),
@@ -88,7 +88,7 @@ export function AdminAfterSalesOpenActions({
           type="number"
           value={draft?.actualCompensationYuan ?? ''}
           onChange={(event) =>
-            props.setAfterSalesResolutionDrafts((current: Record<string, AfterSalesResolutionDraft>) =>
+            props.setAfterSalesResolutionDrafts((current: Record<TicketId, AfterSalesResolutionDraft>) =>
               updateAfterSalesResolutionDraft(current, ticket.id, {
                 actualCompensationYuan: event.target.value,
               }),
@@ -99,7 +99,7 @@ export function AdminAfterSalesOpenActions({
       <input
         value={draft?.resolutionNote ?? AFTER_SALES_DEFAULTS.approvedNote}
         onChange={(event) =>
-          props.setAfterSalesResolutionDrafts((current: Record<string, AfterSalesResolutionDraft>) =>
+          props.setAfterSalesResolutionDrafts((current: Record<TicketId, AfterSalesResolutionDraft>) =>
             updateAfterSalesResolutionDraft(current, ticket.id, {
               resolutionNote: event.target.value,
             }),

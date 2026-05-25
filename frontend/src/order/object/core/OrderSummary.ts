@@ -72,6 +72,8 @@ export type OrderSummaryReviewContent = {
   reviewExtraNote?: NoteText
   storeReviewComment?: DescriptionText
   storeReviewExtraNote?: NoteText
+  storeMerchantReply?: NoteText
+  storeMerchantReplyAt?: IsoDateTime
   riderReviewComment?: DescriptionText
   riderReviewExtraNote?: NoteText
 }

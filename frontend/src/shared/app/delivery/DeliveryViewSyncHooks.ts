@@ -1,6 +1,16 @@
 import { useEffect } from 'react'
-import { browserStorage } from '@/shared/api/SharedApi'
-import { ROLE, type Customer, type MerchantProfile } from '@/shared/object/core/SharedObjects'
+import {
+  clearSeenCustomerProfileNoticeIds,
+  saveSeenCustomerProfileNoticeIds,
+} from '@/shared/api/SharedApi'
+import {
+  ROLE,
+  type Customer,
+  type CustomerId,
+  type MerchantProfile,
+  type RiderId,
+  type StoreId,
+} from '@/shared/object/core/SharedObjects'
 import type {
   DeliveryPageState,
   SessionState,
@@ -34,7 +44,7 @@ export function useCustomerProfileNoticeStorageEffects(
     try {
       setSeenCustomerProfileNoticeIds(readSeenCustomerProfileNoticeIds(session.user.id))
     } catch {
-      browserStorage.clearSeenCustomerProfileNoticeIds(session.user.id)
+      clearSeenCustomerProfileNoticeIds(session.user.id)
       setSeenCustomerProfileNoticeIds([])
     }
   }, [session, setSeenCustomerProfileNoticeIds])
@@ -42,7 +52,7 @@ export function useCustomerProfileNoticeStorageEffects(
   useEffect(() => {
     if (!session || session.user.role !== ROLE.customer) return
 
-    browserStorage.saveSeenCustomerProfileNoticeIds(session.user.id, seenCustomerProfileNoticeIds)
+    saveSeenCustomerProfileNoticeIds(session.user.id, seenCustomerProfileNoticeIds)
   }, [seenCustomerProfileNoticeIds, session])
 }
 
@@ -64,9 +74,9 @@ export function useMerchantWorkspaceUrlSyncEffects(
 export function useSessionBoundStateSyncEffect(args: {
   state: SessionState['state']
   session: SessionState['session']
-  selectedCustomerId: string
-  selectedRiderId: string
-  selectedStoreId: string
+  selectedCustomerId: CustomerId | ''
+  selectedRiderId: RiderId | ''
+  selectedStoreId: StoreId | ''
   setDeliveryAddress: DeliveryPageState['setDeliveryAddress']
   setDeliveryAddressError: DeliveryPageState['setDeliveryAddressError']
   setMerchantDraft: DeliveryPageState['setMerchantDraft']

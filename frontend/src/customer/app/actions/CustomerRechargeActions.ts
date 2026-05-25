@@ -1,4 +1,4 @@
-import { deliveryApi } from '@/shared/api/SharedApi'
+import { rechargeCustomerBalance } from '@/shared/api/SharedApi'
 import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 import {
   buildRechargePayload,
@@ -8,7 +8,7 @@ import {
   parseRechargeAmount,
   RECHARGE_PRESET_AMOUNTS,
 } from '@/shared/delivery/DeliveryServices'
-import type { CustomerRechargeParams } from '@/customer/object/action/CustomerActionObjects'
+import type { CustomerRechargeParams } from '@/pages/customer/object/CustomerActionObjects'
 
 export function createCustomerRechargeActions(params: CustomerRechargeParams) {
   const {
@@ -39,7 +39,7 @@ export function createCustomerRechargeActions(params: CustomerRechargeParams) {
       return
     }
     const success = await runAction(() =>
-      deliveryApi.customer.rechargeCustomerBalance(selectedCustomer.id, buildRechargePayload(amount)),
+      rechargeCustomerBalance(selectedCustomer.id, buildRechargePayload(amount)),
     )
     if (!success) return
     setRechargeFieldError(null)

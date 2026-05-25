@@ -1,5 +1,6 @@
 import type {
   AddMenuItemRequest,
+  MenuItemSelectionGroup,
   MerchantRegistrationRequest,
   ResolveAfterSalesRequest,
   ResolvePartialRefundRequest,
@@ -17,9 +18,14 @@ import {
   MAX_ACCOUNT_HOLDER_LENGTH,
   MAX_ACCOUNT_NUMBER_LENGTH,
   MAX_BANK_NAME_LENGTH,
+  MAX_MENU_ITEM_CATEGORY_LENGTH,
   MAX_CONTACT_PHONE_LENGTH,
   MAX_MENU_ITEM_DESCRIPTION_LENGTH,
   MAX_MENU_ITEM_NAME_LENGTH,
+  MAX_MENU_ITEM_SELECTION_GROUP_COUNT,
+  MAX_MENU_ITEM_SELECTION_GROUP_NAME_LENGTH,
+  MAX_MENU_ITEM_SELECTION_OPTION_COUNT,
+  MAX_MENU_ITEM_SELECTION_OPTION_LENGTH,
   MAX_MERCHANT_NAME_LENGTH,
   MAX_PREP_MINUTES,
   MAX_STORE_CATEGORY_LENGTH,
@@ -29,11 +35,13 @@ import {
   PARTIAL_REFUND_APPROVED_NOTE,
   PARTIAL_REFUND_REJECTED_NOTE,
 } from './DeliveryConstants'
+import { DELIVERY_CONSOLE_MESSAGES } from './DeliveryMessages'
 import { normalizeTextInput, parseCurrencyAmount } from './DeliveryShared'
 import type {
   AfterSalesResolutionDraft,
   MenuItemDraft,
   MerchantDraft,
+  ParsedMenuItemSelectionGroups,
   MerchantProfileDraft,
 } from '@/shared/object/core/DeliveryAppObjects'
 import { createInitialAfterSalesResolutionDraft } from './DeliveryDrafts'
@@ -63,6 +71,7 @@ export function buildMerchantRegistrationPayload(
 
 export function buildMenuItemPayload(draft: MenuItemDraft): AddMenuItemRequest {
   const name = normalizeTextInput(draft.name, MAX_MENU_ITEM_NAME_LENGTH)
+  const category = normalizeTextInput(draft.category, MAX_MENU_ITEM_CATEGORY_LENGTH)
   const description = normalizeTextInput(
     draft.description,
     MAX_MENU_ITEM_DESCRIPTION_LENGTH,
@@ -71,9 +80,11 @@ export function buildMenuItemPayload(draft: MenuItemDraft): AddMenuItemRequest {
   const price = Number(draft.priceYuan.trim())
   const remainingQuantity = draft.remainingQuantity.trim()
   const parsedRemainingQuantity = Number(remainingQuantity)
+  const selectionGroups = parseMenuItemSelectionGroups(draft.selectionGroupsText).groups
 
   return {
     name,
+    category: category || undefined,
     description,
     priceCents: Number.isFinite(price) ? Math.round(price * CURRENCY_CENTS_SCALE) : 0,
     imageUrl: imageUrl || undefined,
@@ -83,7 +94,83 @@ export function buildMenuItemPayload(draft: MenuItemDraft): AddMenuItemRequest {
         : Number.isInteger(parsedRemainingQuantity)
           ? parsedRemainingQuantity
           : undefined,
+    selectionGroups,
   }
+}
+
+function normalizeSelectionLinePart(value: string, maxLength: number) {
+  return normalizeTextInput(value, maxLength)
+}
+
+function parseSelectionCountRange(rawRule: string) {
+  const trimmed = rawRule.trim()
+  if (!trimmed) return { minSelections: 1, maxSelections: 1, ok: true as const }
+  const match = trimmed.match(/^\[(\d+)-(\d+)\]$/)
+  if (!match) return { minSelections: 0, maxSelections: 0, ok: false as const }
+  const minSelections = Number(match[1])
+  const maxSelections = Number(match[2])
+  if (!Number.isInteger(minSelections) || !Number.isInteger(maxSelections) || minSelections < 0 || maxSelections < minSelections) {
+    return { minSelections: 0, maxSelections: 0, ok: false as const }
+  }
+  return { minSelections, maxSelections, ok: true as const }
+}
+
+export function parseMenuItemSelectionGroups(
+  value: string,
+): ParsedMenuItemSelectionGroups {
+  const lines = value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  if (lines.length === 0) return { groups: [], errorText: null }
+  if (lines.length > MAX_MENU_ITEM_SELECTION_GROUP_COUNT) {
+    return { groups: [], errorText: DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid }
+  }
+
+  const groups: MenuItemSelectionGroup[] = []
+  const usedNames = new Set<string>()
+
+  for (const line of lines) {
+    const [leftPart, rightPart, ...rest] = line.split(':')
+    if (!leftPart || !rightPart || rest.length > 0) {
+      return { groups: [], errorText: DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid }
+    }
+    const nameRuleMatch = leftPart.trim().match(/^([^[\]]+?)(\[\d+-\d+\])?$/)
+    if (!nameRuleMatch) {
+      return { groups: [], errorText: DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid }
+    }
+    const name = normalizeSelectionLinePart(nameRuleMatch[1] ?? '', MAX_MENU_ITEM_SELECTION_GROUP_NAME_LENGTH)
+    const range = parseSelectionCountRange(nameRuleMatch[2] ?? '')
+    const options = rightPart
+      .split(',')
+      .map((option) => normalizeSelectionLinePart(option, MAX_MENU_ITEM_SELECTION_OPTION_LENGTH))
+      .filter(Boolean)
+
+    if (
+      !name ||
+      usedNames.has(name) ||
+      !range.ok ||
+      options.length === 0 ||
+      options.length > MAX_MENU_ITEM_SELECTION_OPTION_COUNT ||
+      new Set(options).size !== options.length ||
+      range.maxSelections === 0 ||
+      range.maxSelections > options.length ||
+      range.minSelections > options.length
+    ) {
+      return { groups: [], errorText: DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid }
+    }
+
+    usedNames.add(name)
+    groups.push({
+      name,
+      minSelections: range.minSelections,
+      maxSelections: range.maxSelections,
+      options,
+    })
+  }
+
+  return { groups, errorText: null }
 }
 
 export function buildPartialRefundResolutionPayload(

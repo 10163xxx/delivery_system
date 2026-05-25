@@ -2,15 +2,15 @@ package shared.api
 
 import domain.shared.given
 
-import admin.api.adminRoutes
+import admin.route.adminRoutes
 import cats.effect.IO
 import cats.syntax.semigroupk.*
-import customer.api.customerRoutes
-import merchant.api.merchantRoutes
-import order.api.orderRoutes
+import customer.route.customerRoutes
+import merchant.route.merchantRoutes
+import order.route.orderRoutes
 import org.http4s.HttpRoutes
-import review.api.reviewRoutes
-import rider.api.riderRoutes
+import review.route.reviewRoutes
+import rider.route.riderRoutes
 
 val deliveryRoutes: HttpRoutes[IO] =
   customerRoutes <+> merchantRoutes <+> riderRoutes <+> orderRoutes <+> reviewRoutes <+> adminRoutes

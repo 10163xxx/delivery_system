@@ -26,6 +26,7 @@ export function getPageActionSelectionSetters(pageState: PageActionArgsInput['pa
   return {
     setMerchantApplicationState: pageState.setMerchantApplicationState,
     setQuantities: pageState.setQuantities,
+    setSelectedMenuItemConfigurations: pageState.setSelectedMenuItemConfigurations,
     setSelectedStoreCategory: pageState.setSelectedStoreCategory,
     setSelectedMerchantStoreId: pageState.setSelectedMerchantStoreId,
     setSelectedStoreId: pageState.setSelectedStoreId,
@@ -35,9 +36,12 @@ export function getPageActionSelectionSetters(pageState: PageActionArgsInput['pa
 export function getPageActionCheckoutSetters(pageState: PageActionArgsInput['pageState']) {
   return {
     setIsCheckoutExpanded: pageState.setIsCheckoutExpanded,
+    setMenuItemConfigurationModal: pageState.setMenuItemConfigurationModal,
+    setRemark: pageState.setRemark,
     setScheduledDeliveryError: pageState.setScheduledDeliveryError,
     setScheduledDeliveryTime: pageState.setScheduledDeliveryTime,
     setScheduledDeliveryTouched: pageState.setScheduledDeliveryTouched,
+    setSelectedCouponId: pageState.setSelectedCouponId,
   }
 }
 
@@ -117,6 +121,8 @@ export function getPageViewAnalyticsDataProps(derived: PageViewDataInput['derive
     monthlySalesByMenuItem: derived.monthlySalesByMenuItem,
     monthlyOrdersByStore: derived.monthlyOrdersByStore,
     merchantMonthlyTrend: derived.merchantMonthlyTrend,
+    recentFrequentStores: derived.recentFrequentStores,
+    storeBrowseHighlights: derived.storeBrowseHighlights,
     visibleStores: derived.visibleStores,
     storeCustomerReviews: derived.storeCustomerReviews,
     storeCategories: derived.storeCategories,
@@ -128,7 +134,9 @@ export function getPageViewCustomerStateDataProps(pageState: PageViewDataInput['
   return {
     deliveryAddress: pageState.deliveryAddress,
     isCheckoutExpanded: pageState.isCheckoutExpanded,
+    menuItemConfigurationModal: pageState.menuItemConfigurationModal,
     selectedCouponId: pageState.selectedCouponId,
+    selectedMenuItemConfigurations: pageState.selectedMenuItemConfigurations,
     customerNameDraft: pageState.customerNameDraft,
     customerStoreSearch: pageState.customerStoreSearch,
     scheduledDeliveryTime: pageState.scheduledDeliveryTime,

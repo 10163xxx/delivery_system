@@ -1,12 +1,13 @@
 import type { CustomerRoleProps } from '@/shared/app/role-props'
 import type { CustomerRolePanelProps } from '@/pages/customer/object/CustomerPageObjects'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import type { AddressEntry } from '@/shared/object/core/SharedObjects'
+import { ROUTE_PATH, type AddressEntry } from '@/shared/object/core/SharedObjects'
+import { CUSTOMER_PROFILE_COPY } from '@/pages/customer/profile/CustomerProfileCopy'
 
 function ReturnToProfileButton({ navigate }: Pick<CustomerRoleProps, 'navigate'>) {
   return (
-    <button className="secondary-button" onClick={() => navigate('/customer/profile')} type="button">
-      返回个人信息
+    <button className="secondary-button" onClick={() => navigate(ROUTE_PATH.customerProfile)} type="button">
+      {CUSTOMER_PROFILE_COPY.returnToProfileButton}
     </button>
   )
 }
@@ -33,7 +34,7 @@ function AddressActions({
             onClick={() => void setDefaultCustomerAddress(address.address)}
             type="button"
           >
-            设为默认
+            {CUSTOMER_PROFILE_COPY.addressSetDefaultButton}
           </button>
         ) : null}
         <button
@@ -42,12 +43,12 @@ function AddressActions({
           onClick={() => void removeCustomerAddress(address.address)}
           type="button"
         >
-          删除地址
+          {CUSTOMER_PROFILE_COPY.addressDeleteButton}
         </button>
       </div>
       {isDefaultAddress ? (
         <p className="meta-line" style={{ marginTop: '12px' }}>
-          如需删除当前默认地址，请先把其他地址设为默认。
+          {CUSTOMER_PROFILE_COPY.addressDefaultDeleteHint}
         </p>
       ) : null}
     </>
@@ -71,10 +72,14 @@ function AddressCards({
         <article key={`${address.label}-${address.address}`} className="ticket-card">
           <div className="ticket-header">
             <div>
-              <p className="ticket-kind">地址簿</p>
+              <p className="ticket-kind">{CUSTOMER_PROFILE_COPY.addressBookTicketKind}</p>
               <h3>{address.label}</h3>
             </div>
-            <span className="badge">{address.address === defaultAddress ? '默认' : '已保存'}</span>
+            <span className="badge">
+              {address.address === defaultAddress
+                ? CUSTOMER_PROFILE_COPY.defaultBadge
+                : CUSTOMER_PROFILE_COPY.addressSavedBadge}
+            </span>
           </div>
           <p>{address.address}</p>
           <AddressActions
@@ -103,23 +108,26 @@ export function CustomerProfileAddressesPanel({ props }: CustomerRolePanelProps)
   } = props
 
   return (
-    <Panel title="地址管理" description="把常用地址维护独立出来，个人信息页只保留摘要。">
+    <Panel
+      title={CUSTOMER_PROFILE_COPY.addressPageTitle}
+      description={CUSTOMER_PROFILE_COPY.addressDescription}
+    >
       {selectedCustomer ? (
         <>
           <div className="summary-bar">
             <div>
-              <p>默认地址</p>
+              <p>{CUSTOMER_PROFILE_COPY.defaultAddressLabel}</p>
               <strong>{selectedCustomer.defaultAddress}</strong>
             </div>
             <div>
-              <p>地址数量</p>
+              <p>{CUSTOMER_PROFILE_COPY.addressCountLabel}</p>
               <strong>{selectedCustomer.addresses.length}</strong>
             </div>
             <ReturnToProfileButton navigate={navigate} />
           </div>
           <div className="form-grid">
             <label>
-              <span>地址标签</span>
+              <span>{CUSTOMER_PROFILE_COPY.addressLabelField}</span>
               <input
                 className={addressFormErrors.label ? 'field-error' : undefined}
                 value={addressDraft.label}
@@ -133,7 +141,7 @@ export function CustomerProfileAddressesPanel({ props }: CustomerRolePanelProps)
               ) : null}
             </label>
             <label className="full">
-              <span>新增地址</span>
+              <span>{CUSTOMER_PROFILE_COPY.addressNewField}</span>
               <input
                 className={addressFormErrors.address ? 'field-error' : undefined}
                 value={addressDraft.address}
@@ -149,7 +157,7 @@ export function CustomerProfileAddressesPanel({ props }: CustomerRolePanelProps)
           </div>
           <div className="summary-bar">
             <button className="secondary-button" onClick={() => void addCustomerAddress()} type="button">
-              添加地址
+              {CUSTOMER_PROFILE_COPY.addressAddButton}
             </button>
           </div>
           <div className="ticket-grid">

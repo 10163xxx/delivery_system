@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react'
 import type { AuthSession, DeliveryAppState } from '@/shared/object/core/SharedObjects'
 import { STATE_POLL_INTERVAL_MS } from '@/shared/delivery/DeliveryServices'
 import type { HeaderAction } from '@/shared/object/core/DeliveryAppObjects'
-import { browserRuntime, browserStorage } from '@/shared/api/SharedApi'
+import {
+  clearCustomerStoreSearchHistory,
+  startInterval,
+} from '@/shared/api/SharedApi'
 import {
   buildSessionServiceResult,
-  createSessionActionRunner,
-  createSessionLoadActions,
+  loadState,
   readStoredCustomerSearchHistory,
+  restoreSession,
+  runAction,
+  runLogout,
+  syncStateSilently,
 } from '@/shared/app/delivery/DeliverySessionResult'
 
 export function useDeliveryConsoleSessionService() {
@@ -21,40 +27,34 @@ export function useDeliveryConsoleSessionService() {
     try {
       return readStoredCustomerSearchHistory()
     } catch {
-      browserStorage.clearCustomerStoreSearchHistory()
+      clearCustomerStoreSearchHistory()
       return []
     }
   })
-  const loadActions = createSessionLoadActions({
-    setSession,
-    setState,
-    setError,
-    setBusy,
-    setHeaderAction,
-  })
-  const actionRunner = createSessionActionRunner({
-    setSession,
-    setState,
-    setError,
-    setBusy,
-    setHeaderAction,
-    setShowLogoutModal,
-  })
-
   useEffect(() => {
-    void loadActions.restoreSession()
+    void restoreSession({
+      setSession,
+      setError,
+    })
   }, [])
 
   useEffect(() => {
     if (!session) return
-    void loadActions.loadState()
+    void loadState({
+      setState,
+      setError,
+      setBusy,
+      setHeaderAction,
+    })
   }, [session])
 
   useEffect(() => {
     if (!session) return
 
-    const stopPolling = browserRuntime.startInterval(() => {
-      void loadActions.syncStateSilently()
+    const stopPolling = startInterval(() => {
+      void syncStateSilently({
+        setState,
+      })
     }, STATE_POLL_INTERVAL_MS)
 
     return stopPolling
@@ -73,8 +73,25 @@ export function useDeliveryConsoleSessionService() {
     showLogoutModal,
     customerStoreSearchHistory,
     setCustomerStoreSearchHistory,
-    loadState: loadActions.loadState,
-    logout: actionRunner.logout,
-    runAction: actionRunner.runAction,
+    loadState: () => loadState({
+      setState,
+      setError,
+      setBusy,
+      setHeaderAction,
+    }),
+    logout: () => runLogout({
+      setSession,
+      setState,
+      setError,
+      setBusy,
+      setHeaderAction,
+      setShowLogoutModal,
+    }),
+    runAction: (action) => runAction({
+      action,
+      setState,
+      setError,
+      setBusy,
+    }),
   })
 }

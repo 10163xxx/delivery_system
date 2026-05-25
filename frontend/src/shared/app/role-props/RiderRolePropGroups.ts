@@ -1,5 +1,14 @@
 import { BANK_OPTIONS, buildEligibilityReviewPayload, buildReviewAppealPayload } from '@/shared/delivery/DeliveryServices'
-import { deliveryApi } from '@/shared/api/SharedApi'
+import {
+  assignRider,
+  deliverOrder,
+  pickupOrder,
+  submitEligibilityReview,
+  submitReviewAppeal,
+  updateRiderAvailability,
+  updateRiderProfile,
+  withdrawRiderIncome,
+} from '@/shared/api/SharedApi'
 import type { PageState, PageView, RiderPropsArgs, SessionService } from '@/shared/object/core/AppBuildRolePropsObjects'
 
 export function getRiderUtilityProps() {
@@ -54,12 +63,13 @@ export function getRiderSetterProps(pageState: PageState) {
 export function getRiderActionProps(submitOrderChatMessage: RiderPropsArgs['submitOrderChatMessage']) {
   return {
     submitOrderChatMessage,
-    updateRiderProfile: deliveryApi.rider.updateRiderProfile,
-    withdrawRiderIncome: deliveryApi.rider.withdrawRiderIncome,
-    submitEligibilityReview: deliveryApi.review.submitEligibilityReview,
-    assignRider: deliveryApi.order.assignRider,
-    pickupOrder: deliveryApi.order.pickupOrder,
-    deliverOrder: deliveryApi.order.deliverOrder,
-    submitReviewAppeal: deliveryApi.review.submitReviewAppeal,
+    updateRiderAvailability,
+    updateRiderProfile,
+    withdrawRiderIncome,
+    submitEligibilityReview,
+    assignRider,
+    pickupOrder,
+    deliverOrder,
+    submitReviewAppeal,
   }
 }

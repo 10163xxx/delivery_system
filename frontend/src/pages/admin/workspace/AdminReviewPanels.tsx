@@ -1,7 +1,15 @@
 import type { AdminRoleProps } from '@/shared/app/role-props'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
 import type { AppealResolutionDraft } from '@/shared/object/core/DeliveryAppObjects'
-import type { EligibilityReview, MerchantApplication, ReviewAppeal } from '@/shared/object/core/SharedObjects'
+import type {
+  DisplayText,
+  EligibilityReview,
+  EligibilityReviewId,
+  MerchantApplication,
+  MerchantApplicationId,
+  ReviewAppeal,
+  ReviewAppealId,
+} from '@/shared/object/core/SharedObjects'
 
 const APPLICATION_REVIEW_DEFAULTS = {
   approve: '资料已核验',
@@ -57,7 +65,7 @@ function MerchantApplicationReviewPanel({ props }: { props: AdminRoleProps }) {
                 <input
                   value={applicationReviewDrafts[application.id] ?? APPLICATION_REVIEW_DEFAULTS.approve}
                   onChange={(event) =>
-                    setApplicationReviewDrafts((current: Record<string, string>) => ({
+                    setApplicationReviewDrafts((current: Record<MerchantApplicationId, DisplayText>) => ({
                       ...current,
                       [application.id]: event.target.value,
                     }))
@@ -142,7 +150,7 @@ function AppealReviewPanel({ props }: { props: AdminRoleProps }) {
                     APPEAL_RESOLUTION_DEFAULTS.approve
                   }
                   onChange={(event) =>
-                    setAppealResolutionDrafts((current: Record<string, AppealResolutionDraft>) => ({
+                    setAppealResolutionDrafts((current: Record<ReviewAppealId, AppealResolutionDraft>) => ({
                       ...current,
                       [appeal.id]: {
                         ...(current[appeal.id] ?? buildAppealResolutionPayload()),
@@ -231,7 +239,7 @@ function EligibilityReviewPanel({ props }: { props: AdminRoleProps }) {
                     ELIGIBILITY_RESOLUTION_DEFAULTS.approve
                   }
                   onChange={(event) =>
-                    setEligibilityResolutionDrafts((current: Record<string, AppealResolutionDraft>) => ({
+                    setEligibilityResolutionDrafts((current: Record<EligibilityReviewId, AppealResolutionDraft>) => ({
                       ...current,
                       [review.id]: {
                         ...(current[review.id] ?? buildAppealResolutionPayload()),

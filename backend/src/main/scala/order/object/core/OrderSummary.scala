@@ -51,6 +51,8 @@ final case class OrderSummaryReviewContent(
     reviewExtraNote: Option[NoteText],
     storeReviewComment: Option[ReasonText],
     storeReviewExtraNote: Option[NoteText],
+    storeMerchantReply: Option[NoteText],
+    storeMerchantReplyAt: Option[IsoDateTime],
     riderReviewComment: Option[ReasonText],
     riderReviewExtraNote: Option[NoteText],
 )
@@ -97,6 +99,8 @@ object OrderSummary:
       reviewExtraNote: Option[NoteText],
       storeReviewComment: Option[ReasonText],
       storeReviewExtraNote: Option[NoteText],
+      storeMerchantReply: Option[NoteText],
+      storeMerchantReplyAt: Option[IsoDateTime],
       riderReviewComment: Option[ReasonText],
       riderReviewExtraNote: Option[NoteText],
       merchantRejectReason: Option[ReasonText],
@@ -148,6 +152,8 @@ object OrderSummary:
         reviewExtraNote = reviewExtraNote,
         storeReviewComment = storeReviewComment,
         storeReviewExtraNote = storeReviewExtraNote,
+        storeMerchantReply = storeMerchantReply,
+        storeMerchantReplyAt = storeMerchantReplyAt,
         riderReviewComment = riderReviewComment,
         riderReviewExtraNote = riderReviewExtraNote,
       ),
@@ -184,6 +190,8 @@ object OrderSummary:
     def reviewExtraNote: Option[NoteText] = order.reviewContent.reviewExtraNote
     def storeReviewComment: Option[ReasonText] = order.reviewContent.storeReviewComment
     def storeReviewExtraNote: Option[NoteText] = order.reviewContent.storeReviewExtraNote
+    def storeMerchantReply: Option[NoteText] = order.reviewContent.storeMerchantReply
+    def storeMerchantReplyAt: Option[IsoDateTime] = order.reviewContent.storeMerchantReplyAt
     def riderReviewComment: Option[ReasonText] = order.reviewContent.riderReviewComment
     def riderReviewExtraNote: Option[NoteText] = order.reviewContent.riderReviewExtraNote
     def merchantRejectReason: Option[ReasonText] = order.reviewState.merchantRejectReason
@@ -221,6 +229,8 @@ object OrderSummary:
       "reviewExtraNote" -> Encoder.encodeOption[NoteText].apply(order.reviewContent.reviewExtraNote),
       "storeReviewComment" -> Encoder.encodeOption[ReasonText].apply(order.reviewContent.storeReviewComment),
       "storeReviewExtraNote" -> Encoder.encodeOption[NoteText].apply(order.reviewContent.storeReviewExtraNote),
+      "storeMerchantReply" -> Encoder.encodeOption[NoteText].apply(order.reviewContent.storeMerchantReply),
+      "storeMerchantReplyAt" -> Encoder.encodeOption[IsoDateTime].apply(order.reviewContent.storeMerchantReplyAt),
       "riderReviewComment" -> Encoder.encodeOption[ReasonText].apply(order.reviewContent.riderReviewComment),
       "riderReviewExtraNote" -> Encoder.encodeOption[NoteText].apply(order.reviewContent.riderReviewExtraNote),
       "merchantRejectReason" -> Encoder.encodeOption[ReasonText].apply(order.reviewState.merchantRejectReason),
@@ -259,6 +269,8 @@ object OrderSummary:
       reviewExtraNote <- cursor.get[Option[NoteText]]("reviewExtraNote")
       storeReviewComment <- cursor.get[Option[ReasonText]]("storeReviewComment")
       storeReviewExtraNote <- cursor.get[Option[NoteText]]("storeReviewExtraNote")
+      storeMerchantReply <- cursor.getOrElse[Option[NoteText]]("storeMerchantReply")(None)
+      storeMerchantReplyAt <- cursor.getOrElse[Option[IsoDateTime]]("storeMerchantReplyAt")(None)
       riderReviewComment <- cursor.get[Option[ReasonText]]("riderReviewComment")
       riderReviewExtraNote <- cursor.get[Option[NoteText]]("riderReviewExtraNote")
       merchantRejectReason <- cursor.get[Option[ReasonText]]("merchantRejectReason")
@@ -294,6 +306,8 @@ object OrderSummary:
       reviewExtraNote = reviewExtraNote,
       storeReviewComment = storeReviewComment,
       storeReviewExtraNote = storeReviewExtraNote,
+      storeMerchantReply = storeMerchantReply,
+      storeMerchantReplyAt = storeMerchantReplyAt,
       riderReviewComment = riderReviewComment,
       riderReviewExtraNote = riderReviewExtraNote,
       merchantRejectReason = merchantRejectReason,

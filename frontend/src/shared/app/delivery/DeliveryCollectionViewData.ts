@@ -1,10 +1,14 @@
 import type {
   Customer,
+  CustomerId,
   DeliveryAppState,
   MerchantProfile,
+  OrderId,
   OrderSummary,
+  RiderId,
   Rider,
   Store,
+  StoreId,
 } from '@/shared/object/core/SharedObjects'
 import {
   APPLICATION_STATUS,
@@ -26,19 +30,19 @@ const CUSTOMER_PROFILE_PENDING_ADDRESS = '请先完善默认地址'
 
 export function getActiveCustomerId(
   session: SessionState['session'],
-  selectedCustomerId: string,
+  selectedCustomerId: CustomerId | '',
 ) {
   return session?.user.role === ROLE.customer && session.user.linkedProfileId
-    ? session.user.linkedProfileId
+    ? (session.user.linkedProfileId as CustomerId)
     : selectedCustomerId
 }
 
 export function getSelectedEntities(input: {
   state: DeliveryPageDerivedState
   session: SessionState['session']
-  activeCustomerId: string
-  selectedStoreId: string
-  selectedRiderId: string
+  activeCustomerId: CustomerId | ''
+  selectedStoreId: StoreId | ''
+  selectedRiderId: RiderId | ''
 }) {
   const { state, session, activeCustomerId, selectedStoreId, selectedRiderId } = input
 
@@ -68,7 +72,7 @@ export function getMerchantStores(
 export function getRiderOrders(
   state: DeliveryPageDerivedState,
   session: SessionState['session'],
-  selectedRiderId: string,
+  selectedRiderId: RiderId | '',
 ) {
   return (
     state?.orders.filter((order: OrderSummary) =>
@@ -81,8 +85,8 @@ export function getRiderOrders(
 
 export function getCustomerOrderCollections(
   state: DeliveryPageDerivedState,
-  activeCustomerId: string,
-  routeOrderId?: string,
+  activeCustomerId: CustomerId | '',
+  routeOrderId?: OrderId,
 ) {
   const customerOrders =
     state?.orders.filter((order: OrderSummary) => order.customerId === activeCustomerId) ?? []
@@ -200,7 +204,7 @@ export function getDerivedCollections(
   state: DeliveryPageDerivedState,
   session: SessionState['session'],
   activeCustomerId: string,
-  routeOrderId: string | undefined,
+  routeOrderId: OrderId | undefined,
   customerStoreSearch: string,
   selectedStoreCategory: string,
   selectedStore: Store | undefined,

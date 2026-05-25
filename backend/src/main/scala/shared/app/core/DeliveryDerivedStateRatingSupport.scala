@@ -7,13 +7,13 @@ import domain.review.*
 import domain.rider.*
 import domain.shared.*
 
-def ratingsForId(
-    entries: List[(EntityId, RatingValue)],
-    id: EntityId,
+def ratingsForId[T](
+    entries: List[(T, RatingValue)],
+    id: T,
 ): List[RatingValue] =
   entries.collect { case (`id`, rating) => rating }
 
-def countById(entries: List[EntityId], id: EntityId): EntityCount =
+def countById[T](entries: List[T], id: T): EntityCount =
   entries.count(_ == id)
 
 def applyRatingToStore(
@@ -47,6 +47,7 @@ def applyRatingToRider(
     availability =
       if oneStarCount > OneStarRevocationThreshold then riderSuspended
       else if rider.availability == riderOnDelivery then riderOnDelivery
+      else if rider.availability == riderUnavailable then riderUnavailable
       else riderAvailable,
     performance = rider.performance.copy(
       averageRating = roundAverage(ratings),

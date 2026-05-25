@@ -1,6 +1,6 @@
 import type { RiderRoleProps } from '@/shared/app/role-props'
 import type { Rider } from '@/shared/object/core/SharedObjects'
-import type { RiderProfileDraft, RiderProfileErrors } from '@/rider/object/profile/RiderWorkspaceObjects'
+import type { RiderProfileDraft, RiderProfileErrors } from '@/pages/rider/object/RiderWorkspaceObjects'
 import type { Dispatch, SetStateAction } from 'react'
 
 export type RiderProfileWorkspaceProps = Pick<

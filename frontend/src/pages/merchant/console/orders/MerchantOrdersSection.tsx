@@ -1,4 +1,4 @@
-import type { MerchantStorePanelProps } from '@/merchant/object/console/MerchantConsoleObjects'
+import type { MerchantStorePanelProps } from '@/pages/merchant/object/MerchantConsoleObjects'
 import { OrderList } from '@/pages/order/OrderList'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/merchant/console/shell/MerchantConsoleCopy'
 import {

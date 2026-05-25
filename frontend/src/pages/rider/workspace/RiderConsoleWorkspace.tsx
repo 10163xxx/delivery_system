@@ -1,9 +1,9 @@
 import type { RiderRoleProps } from '@/shared/app/role-props'
-import { RIDER_CONSOLE_COPY } from '@/rider/object/profile/RiderWorkspaceObjects'
+import { RIDER_CONSOLE_COPY } from '@/pages/rider/object/RiderWorkspaceObjects'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
 import {
-  ACCOUNT_STATUS,
   ELIGIBILITY_REVIEW_TARGET,
+  RIDER_AVAILABILITY,
   ROLE,
   type Rider,
 } from '@/shared/object/core/SharedObjects'
@@ -40,14 +40,32 @@ function RiderSelector({
 
 function RiderMetrics({
   selectedRider,
+  runAction,
+  updateRiderAvailability,
   formatAggregateRating,
   formatPrice,
 }: {
   selectedRider: Rider | undefined
+  runAction: RiderRoleProps['runAction']
+  updateRiderAvailability: RiderRoleProps['updateRiderAvailability']
   formatAggregateRating: RiderRoleProps['formatAggregateRating']
   formatPrice: RiderRoleProps['formatPrice']
 }) {
   if (!selectedRider) return null
+
+  const isOnDelivery = selectedRider.availability === RIDER_AVAILABILITY.onDelivery
+  const isAcceptingOrders = selectedRider.availability === RIDER_AVAILABILITY.available
+  const canStopAccepting = !isOnDelivery && selectedRider.availability !== RIDER_AVAILABILITY.suspended
+  const canStartAccepting = !isOnDelivery && selectedRider.availability === RIDER_AVAILABILITY.unavailable
+
+  const availabilityLabel =
+    selectedRider.availability === RIDER_AVAILABILITY.available
+      ? RIDER_CONSOLE_COPY.consolePanel.availabilityAvailable
+      : selectedRider.availability === RIDER_AVAILABILITY.onDelivery
+        ? RIDER_CONSOLE_COPY.consolePanel.availabilityOnDelivery
+        : selectedRider.availability === RIDER_AVAILABILITY.unavailable
+          ? RIDER_CONSOLE_COPY.consolePanel.availabilityUnavailable
+          : RIDER_CONSOLE_COPY.consolePanel.availabilitySuspended
 
   return (
     <div className="metrics-grid">
@@ -57,7 +75,7 @@ function RiderMetrics({
       </div>
       <div className="metric-card">
         <span>当前状态</span>
-        <strong>{selectedRider.availability}</strong>
+        <strong>{availabilityLabel}</strong>
       </div>
       <div className="metric-card">
         <span>累计收入</span>
@@ -66,6 +84,40 @@ function RiderMetrics({
       <div className="metric-card">
         <span>1 星差评数</span>
         <strong>{selectedRider.oneStarRatingCount}</strong>
+      </div>
+      <div className="metric-card">
+        <span>接单开关</span>
+        <div className="action-row">
+          <button
+            className="primary-button"
+            disabled={!canStartAccepting}
+            onClick={() =>
+              void runAction(() =>
+                updateRiderAvailability(selectedRider.id, {
+                  availability: RIDER_AVAILABILITY.available,
+                }),
+              )
+            }
+            type="button"
+          >
+            {RIDER_CONSOLE_COPY.consolePanel.startAccepting}
+          </button>
+          <button
+            className="secondary-button"
+            disabled={!canStopAccepting || !isAcceptingOrders}
+            onClick={() =>
+              void runAction(() =>
+                updateRiderAvailability(selectedRider.id, {
+                  availability: RIDER_AVAILABILITY.unavailable,
+                }),
+              )
+            }
+            type="button"
+          >
+            {RIDER_CONSOLE_COPY.consolePanel.stopAccepting}
+          </button>
+        </div>
+        {isOnDelivery ? <p className="meta-line">{RIDER_CONSOLE_COPY.consolePanel.onDeliveryLocked}</p> : null}
       </div>
     </div>
   )
@@ -86,7 +138,7 @@ function RiderEligibilityReviewBar({
   buildEligibilityReviewPayload: RiderRoleProps['buildEligibilityReviewPayload']
   submitEligibilityReview: RiderRoleProps['submitEligibilityReview']
 }) {
-  if (selectedRider?.availability !== ACCOUNT_STATUS.suspended) return null
+  if (selectedRider?.availability !== RIDER_AVAILABILITY.suspended) return null
 
   return (
     <div className="ticket-actions">
@@ -133,11 +185,12 @@ export function RiderConsoleWorkspace({
     selectedRiderId,
     setSelectedRiderId,
     selectedRider,
+    runAction,
+    updateRiderAvailability,
     formatAggregateRating,
     formatPrice,
     eligibilityReviewDrafts,
     setEligibilityReviewDrafts,
-    runAction,
     buildEligibilityReviewPayload,
     submitEligibilityReview,
   } = props
@@ -155,6 +208,8 @@ export function RiderConsoleWorkspace({
       />
       <RiderMetrics
         selectedRider={selectedRider}
+        runAction={runAction}
+        updateRiderAvailability={updateRiderAvailability}
         formatAggregateRating={formatAggregateRating}
         formatPrice={formatPrice}
       />

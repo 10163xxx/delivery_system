@@ -40,6 +40,9 @@ export function useDeliveryConsoleGuardEffects(args: DeliveryPageViewEffectsArgs
     customerWorkspaceView: args.customerWorkspaceView,
     activeReviewOrder: args.activeReviewOrder,
     activeCustomerOrder: args.activeCustomerOrder,
+    searchParams: args.searchParams,
+    selectedStore: args.selectedStore,
+    quantities: args.quantities,
     navigate: args.navigate,
   })
   useCheckoutCouponValidationEffect({

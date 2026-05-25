@@ -2,6 +2,7 @@ import {
   CUSTOMER_WORKSPACE_VIEW,
   type CustomerWorkspaceView,
 } from '@/shared/object/core/DeliveryAppObjects'
+import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 import type {
   CustomerWorkspaceHeaderTab,
   CustomerWorkspaceViewMeta,
@@ -42,22 +43,26 @@ export const DELIVERY_CONSOLE_COPY = {
 
 export const CUSTOMER_WORKSPACE_HEADER_TABS = {
   order: {
-    route: '/customer/order',
+    route: ROUTE_PATH.customerOrder,
     label: '点餐',
   },
   orders: {
-    route: '/customer/orders',
+    route: ROUTE_PATH.customerOrders,
     label: '订单',
   },
   profile: {
-    route: '/customer/profile',
+    route: ROUTE_PATH.customerProfile,
     label: '个人信息',
   },
 } as const satisfies Record<string, CustomerWorkspaceHeaderTab>
 
-export const CUSTOMER_WORKSPACE_VIEW_META = {
+const CUSTOMER_ORDER_WORKSPACE_VIEW_META = {
   [CUSTOMER_WORKSPACE_VIEW.order]: {
     title: '点餐',
+    activeTab: CUSTOMER_WORKSPACE_VIEW.order,
+  },
+  [CUSTOMER_WORKSPACE_VIEW.cart]: {
+    title: '购物车',
     activeTab: CUSTOMER_WORKSPACE_VIEW.order,
   },
   [CUSTOMER_WORKSPACE_VIEW.orders]: {
@@ -72,6 +77,9 @@ export const CUSTOMER_WORKSPACE_VIEW_META = {
     title: '订单',
     activeTab: CUSTOMER_WORKSPACE_VIEW.orders,
   },
+} as const satisfies Partial<Record<CustomerWorkspaceView, CustomerWorkspaceViewMeta>>
+
+const CUSTOMER_PROFILE_WORKSPACE_VIEW_META = {
   [CUSTOMER_WORKSPACE_VIEW.profile]: {
     title: '个人信息',
     activeTab: CUSTOMER_WORKSPACE_VIEW.profile,
@@ -88,4 +96,13 @@ export const CUSTOMER_WORKSPACE_VIEW_META = {
     title: '优惠券',
     activeTab: CUSTOMER_WORKSPACE_VIEW.profile,
   },
+  [CUSTOMER_WORKSPACE_VIEW.refunds]: {
+    title: '退款记录',
+    activeTab: CUSTOMER_WORKSPACE_VIEW.profile,
+  },
+} as const satisfies Partial<Record<CustomerWorkspaceView, CustomerWorkspaceViewMeta>>
+
+export const CUSTOMER_WORKSPACE_VIEW_META = {
+  ...CUSTOMER_ORDER_WORKSPACE_VIEW_META,
+  ...CUSTOMER_PROFILE_WORKSPACE_VIEW_META,
 } as const satisfies Record<CustomerWorkspaceView, CustomerWorkspaceViewMeta>

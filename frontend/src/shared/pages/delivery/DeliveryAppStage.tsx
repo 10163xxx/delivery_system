@@ -5,7 +5,27 @@ import { MetricCard } from '@/shared/components/primitives/LayoutPrimitives'
 import { MerchantRoleView } from '@/pages/merchant/workspace/MerchantRoleView'
 import { RiderRoleView } from '@/pages/rider/workspace/RiderRoleView'
 import { ROLE } from '@/shared/object/core/SharedObjects'
+import { FEEDBACK_PREFIX, FEEDBACK_TONE } from '@/shared/object/core/DeliveryAppObjects'
 import type { DeliveryConsoleStageProps } from '@/shared/object/core/SharedViewObjects'
+
+function getFeedbackState(message: string | null) {
+  if (!message) return null
+
+  if (message.startsWith(FEEDBACK_PREFIX[FEEDBACK_TONE.success])) {
+    return { tone: FEEDBACK_TONE.success, text: message.slice(FEEDBACK_PREFIX[FEEDBACK_TONE.success].length) }
+  }
+  if (message.startsWith(FEEDBACK_PREFIX[FEEDBACK_TONE.info])) {
+    return { tone: FEEDBACK_TONE.info, text: message.slice(FEEDBACK_PREFIX[FEEDBACK_TONE.info].length) }
+  }
+  if (message.startsWith(FEEDBACK_PREFIX[FEEDBACK_TONE.warning])) {
+    return { tone: FEEDBACK_TONE.warning, text: message.slice(FEEDBACK_PREFIX[FEEDBACK_TONE.warning].length) }
+  }
+  if (message.startsWith(FEEDBACK_PREFIX[FEEDBACK_TONE.error])) {
+    return { tone: FEEDBACK_TONE.error, text: message.slice(FEEDBACK_PREFIX[FEEDBACK_TONE.error].length) }
+  }
+
+  return { tone: FEEDBACK_TONE.error, text: message }
+}
 
 export function DeliveryAppStage(props: DeliveryConsoleStageProps) {
   const {
@@ -21,6 +41,7 @@ export function DeliveryAppStage(props: DeliveryConsoleStageProps) {
     roleLabels,
     showLogoutModal,
   } = props
+  const feedbackState = getFeedbackState(error)
 
   return (
     <main className={`delivery-app delivery-app--${role}`}>
@@ -83,7 +104,7 @@ export function DeliveryAppStage(props: DeliveryConsoleStageProps) {
         </aside>
 
         <section className="role-stage">
-          {error ? <div className="banner error">{error}</div> : null}
+          {feedbackState ? <div className={`banner ${feedbackState.tone}`}>{feedbackState.text}</div> : null}
           {busy ? <div className="banner info">{DELIVERY_CONSOLE_COPY.banners.syncing}</div> : null}
 
           {role === ROLE.customer && state ? <CustomerRoleView {...props.customerProps} /> : null}

@@ -8,7 +8,7 @@ import type {
   CustomerRechargeParams,
   CustomerSearchParams,
   CustomerSupportParams,
-} from '@/customer/object/action/CustomerActionObjects'
+} from '@/pages/customer/object/CustomerActionObjects'
 import type {
   DeliveryConsolePageState as PageState,
   DeliveryConsolePageViewState as PageViewState,
@@ -119,6 +119,8 @@ function getCustomerOrderContext(
     customerRequiresDefaultAddressUpdate:
       pageView.customerRequiresDefaultAddressUpdate,
     quantities: pageState.quantities,
+    selectedMenuItemConfigurations: pageState.selectedMenuItemConfigurations,
+    menuItemConfigurationModal: pageState.menuItemConfigurationModal,
     deliveryAddress: pageState.deliveryAddress,
     scheduledDeliveryTime: pageState.scheduledDeliveryTime,
     scheduledDeliveryTouched: pageState.scheduledDeliveryTouched,
@@ -133,6 +135,8 @@ function getCustomerOrderContext(
     setScheduledDeliveryTouched: pageState.setScheduledDeliveryTouched,
     setRemark: pageState.setRemark,
     setQuantities: pageState.setQuantities,
+    setSelectedMenuItemConfigurations: pageState.setSelectedMenuItemConfigurations,
+    setMenuItemConfigurationModal: pageState.setMenuItemConfigurationModal,
     setIsCheckoutExpanded: pageState.setIsCheckoutExpanded,
     setSelectedCouponId: pageState.setSelectedCouponId,
     setError: sessionState.setError,

@@ -1,7 +1,10 @@
-import { browserStorage } from '@/shared/api/SharedApi'
-import type { CustomerActionParams } from '@/customer/object/action/CustomerActionTypes'
+import type { Dispatch, SetStateAction } from 'react'
+import {
+  clearCustomerStoreSearchHistory,
+  saveCustomerStoreSearchHistory,
+} from '@/shared/api/SharedApi'
 
-export function removeKey<T>(record: Record<string, T>, key: string) {
+export function removeKey<K extends string, T>(record: Record<K, T>, key: K) {
   const next = { ...record }
   delete next[key]
   return next
@@ -9,31 +12,24 @@ export function removeKey<T>(record: Record<string, T>, key: string) {
 
 export function persistCustomerStoreSearchHistory(next: string[]) {
   if (next.length === 0) {
-    browserStorage.clearCustomerStoreSearchHistory()
+    clearCustomerStoreSearchHistory()
     return
   }
 
-  browserStorage.saveCustomerStoreSearchHistory(next)
+  saveCustomerStoreSearchHistory(next)
 }
 
-export function clearDraftError(
-  setter:
-    | CustomerActionParams['setPartialRefundErrors']
-    | CustomerActionParams['setAfterSalesErrors']
-    | CustomerActionParams['setReviewErrors'],
-  key: string,
+export function clearDraftError<K extends string, V extends string>(
+  setter: Dispatch<SetStateAction<Record<K, V>>>,
+  key: K,
 ) {
   setter((current) => removeKey(current, key))
 }
 
-export function setDraftError(
-  setter:
-    | CustomerActionParams['setPartialRefundErrors']
-    | CustomerActionParams['setAfterSalesErrors']
-    | CustomerActionParams['setReviewErrors']
-    | CustomerActionParams['setOrderChatErrors'],
-  key: string,
+export function setDraftError<K extends string, V extends string>(
+  setter: Dispatch<SetStateAction<Record<K, V>>>,
+  key: K,
   message: string,
 ) {
-  setter((current) => ({ ...current, [key]: message }))
+  setter((current) => ({ ...current, [key]: message as V }))
 }

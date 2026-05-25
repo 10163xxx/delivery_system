@@ -37,7 +37,10 @@ function normalizeStoreOperations(store: Store): StoreOperations {
     businessHours: store.businessHours,
     avgPrepMinutes: store.avgPrepMinutes,
     imageUrl: store.imageUrl,
-    menu: store.menu,
+    menu: store.menu.map((item) => ({
+      ...item,
+      selectionGroups: item.selectionGroups ?? [],
+    })),
   }
 }
 
@@ -113,7 +116,10 @@ function normalizeOrderFulfillment(order: OrderSummary): OrderSummaryFulfillment
     deliveryAddress: order.deliveryAddress,
     scheduledDeliveryAt: order.scheduledDeliveryAt,
     remark: order.remark,
-    items: order.items,
+    items: order.items.map((item) => ({
+      ...item,
+      selections: item.selections ?? [],
+    })),
   }
 }
 
@@ -151,6 +157,8 @@ function normalizeOrderReviewContent(order: OrderSummary): OrderSummaryReviewCon
     reviewExtraNote: order.reviewExtraNote,
     storeReviewComment: order.storeReviewComment,
     storeReviewExtraNote: order.storeReviewExtraNote,
+    storeMerchantReply: order.storeMerchantReply,
+    storeMerchantReplyAt: order.storeMerchantReplyAt,
     riderReviewComment: order.riderReviewComment,
     riderReviewExtraNote: order.riderReviewExtraNote,
   }

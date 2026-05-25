@@ -47,6 +47,7 @@ function getPageViewServiceCheckoutState(pageState: DeliveryPageViewParams['page
     customerStoreSearch: pageState.customerStoreSearch,
     scheduledDeliveryTime: pageState.scheduledDeliveryTime,
     quantities: pageState.quantities,
+    selectedMenuItemConfigurations: pageState.selectedMenuItemConfigurations,
     selectedCouponId: pageState.selectedCouponId,
     customRechargeAmount: pageState.customRechargeAmount,
     selectedRechargeAmount: pageState.selectedRechargeAmount,
@@ -143,9 +144,11 @@ function getPageViewComputedState(args: {
     selectedCustomer: derived.selectedCustomer,
     selectedStoreIsOpen: derived.selectedStoreIsOpen,
     quantities: checkoutState.quantities,
+    selectedMenuItemConfigurations: checkoutState.selectedMenuItemConfigurations,
     scheduledDeliveryTime: checkoutState.scheduledDeliveryTime,
     pageState: params.pageState,
     setError: sessionBits.setError,
+    navigate: params.navigate,
     setSearchParams: params.setSearchParams,
   })
   const paymentFieldState = getPaymentFieldState({

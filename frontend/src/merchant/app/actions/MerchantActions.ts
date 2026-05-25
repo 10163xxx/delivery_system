@@ -1,4 +1,8 @@
-import { deliveryApi } from '@/shared/api/SharedApi'
+import {
+  resolvePartialRefundRequest as resolvePartialRefundRequestApi,
+  updateMerchantProfile as updateMerchantProfileApi,
+  withdrawMerchantIncome as withdrawMerchantIncomeApi,
+} from '@/shared/api/SharedApi'
 import {
   CURRENCY_CENTS_SCALE,
   buildMerchantProfilePayload,
@@ -32,9 +36,7 @@ function createMerchantSupportActions(support: MerchantSupportContext, runAction
       approved,
       partialRefundResolutionDrafts[refundId] ?? '',
     )
-    const success = await runAction(() =>
-      deliveryApi.order.resolvePartialRefundRequest(refundId, payload),
-    )
+    const success = await runAction(() => resolvePartialRefundRequestApi(refundId, payload))
     if (!success) return
     setPartialRefundResolutionDrafts((current: Record<string, string>) => removeKey(current, refundId))
   }
@@ -50,7 +52,7 @@ function createMerchantProfileActions(profile: MerchantProfileContext, runAction
     const nextErrors = validateMerchantProfileDraft(merchantProfileDraft)
     setMerchantProfileFormErrors(nextErrors)
     if (nextErrors.contactPhone || nextErrors.bankName || nextErrors.accountNumber || nextErrors.accountHolder) return
-    await runAction(() => deliveryApi.merchant.updateMerchantProfile(payload))
+    await runAction(() => updateMerchantProfileApi(payload))
   }
 
   return { saveMerchantProfile }
@@ -80,7 +82,7 @@ function createMerchantWithdrawActions(withdraw: MerchantWithdrawContext, runAct
     }
     setMerchantWithdrawFieldError(null)
     const success = await runAction(() =>
-      deliveryApi.merchant.withdrawMerchantIncome(buildMerchantWithdrawPayload(amount)),
+      withdrawMerchantIncomeApi(buildMerchantWithdrawPayload(amount)),
     )
     if (!success) return
     setMerchantWithdrawAmount('')

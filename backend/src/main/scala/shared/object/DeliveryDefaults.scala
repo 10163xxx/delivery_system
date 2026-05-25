@@ -10,8 +10,13 @@ object DeliveryValidationDefaults:
   val ImageUrlMaxLength: EntityCount = 500
 
   val MenuItemNameMaxLength: EntityCount = 40
+  val MenuItemCategoryMaxLength: EntityCount = 20
   val MenuItemDescriptionMaxLength: EntityCount = 160
   val MenuItemImageUrlMaxLength: EntityCount = 500
+  val MenuItemSelectionGroupNameMaxLength: EntityCount = 20
+  val MenuItemSelectionOptionMaxLength: EntityCount = 20
+  val MenuItemSelectionGroupMaxCount: EntityCount = 6
+  val MenuItemSelectionOptionMaxCount: EntityCount = 8
   val MenuItemPriceMinCentsExclusive: CurrencyCents = NumericDefaults.ZeroCurrencyCents
   val MenuItemPriceMaxCents: CurrencyCents = 999999
   val MenuItemQuantityMin: Quantity = 1
@@ -75,6 +80,7 @@ object DeliveryBusinessDefaults:
   val StoreRevokedStatus: DisplayText = new DisplayText("Revoked")
   val RiderAvailableStatus: AvailabilityLabel = new AvailabilityLabel("Available")
   val RiderOnDeliveryStatus: AvailabilityLabel = new AvailabilityLabel("OnDelivery")
+  val RiderUnavailableStatus: AvailabilityLabel = new AvailabilityLabel("Unavailable")
   val RiderSuspendedStatus: AvailabilityLabel = new AvailabilityLabel("Suspended")
   val OrderIdPrefix: DisplayText = new DisplayText("ord")
   val MerchantAcceptedTimelineNote: DisplayText = new DisplayText("商家已接单，开始备餐")

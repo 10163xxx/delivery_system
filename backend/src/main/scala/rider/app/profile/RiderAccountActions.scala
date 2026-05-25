@@ -18,6 +18,15 @@ private def validateWithdrawalAmount(
       ValidationMessages.Merchant.WithdrawAmountInvalid,
     )
 
+private def validateRiderAvailability(
+      availability: AvailabilityLabel
+  ): Either[ErrorMessage, AvailabilityLabel] =
+    Either.cond(
+      availability == RiderAvailableStatus || availability == RiderUnavailableStatus,
+      availability,
+      ValidationMessages.Order.RiderUnavailable,
+    )
+
 private def buildWithdrawal(
       prefix: DisplayText,
       amountCents: CurrencyCents,
@@ -84,6 +93,28 @@ def withdrawRiderIncome(
               ),
             ),
             timestamp,
+          )
+      }
+    }
+
+def updateRiderAvailability(
+      riderId: RiderId,
+      request: UpdateRiderAvailabilityRequest,
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          rider <- current.riders.find(_.id == riderId).toRight(ValidationMessages.Merchant.RiderNotFound)
+          _ <- Either.cond(rider.availability != RiderOnDeliveryStatus, (), ValidationMessages.Order.RiderAvailabilityLocked)
+          availability <- validateRiderAvailability(request.availability)
+        yield
+          withDerivedData(
+            current.copy(
+              riders = current.riders.map(entry =>
+                if entry.id == rider.id then entry.copy(availability = availability) else entry
+              ),
+            ),
+            now(),
           )
       }
     }

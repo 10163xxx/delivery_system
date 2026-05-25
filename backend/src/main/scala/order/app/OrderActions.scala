@@ -44,6 +44,7 @@ def assignRider(orderId: OrderId, request: AssignRiderRequest): IO[Either[ErrorM
           _ <- Either.cond(order.riderId.isEmpty, (), ValidationMessages.Order.OrderAlreadyAssignedRider)
           rider <- findRider(current, request.riderId)
           _ <- Either.cond(rider.availability != riderSuspended, (), ValidationMessages.Order.RiderSuspended)
+          _ <- Either.cond(rider.availability == riderAvailable, (), ValidationMessages.Order.RiderUnavailable)
         yield
           val timestamp = now()
           val nextOrders = current.orders.map(entry =>
@@ -109,5 +110,18 @@ def reviewOrder(orderId: OrderId, request: ReviewOrderRequest): IO[Either[ErrorM
         validateReviewOrderRequest(current, orderId, request).map(context =>
           applyReviewedOrderState(current, orderId, context)
         )
+      }
+    }
+
+def appendStoreReviewReply(
+    orderId: OrderId,
+    request: AppendStoreReviewReplyRequest,
+): IO[Either[ErrorMessage, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        validateStoreReviewReplyRequest(current, orderId, request).map {
+          case (_, reply, timestamp) =>
+            applyStoreReviewReplyState(current, orderId, reply, timestamp)
+        }
       }
     }

@@ -8,10 +8,12 @@ import io.circe.generic.semiauto.*
 
 final case class AddMenuItemRequest(
     name: DisplayText,
+    category: Option[DisplayText],
     description: DescriptionText,
     priceCents: CurrencyCents,
     imageUrl: Option[ImageUrl],
     remainingQuantity: Option[Quantity],
+    selectionGroups: List[MenuItemSelectionGroup],
 )
 object AddMenuItemRequest:
   given Encoder[AddMenuItemRequest] = deriveEncoder

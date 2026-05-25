@@ -1,12 +1,13 @@
 import type { CustomerRoleProps } from '@/shared/app/role-props'
 import type { CustomerRolePanelProps } from '@/pages/customer/object/CustomerPageObjects'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import type { Coupon } from '@/shared/object/core/SharedObjects'
+import { ROUTE_PATH, type Coupon } from '@/shared/object/core/SharedObjects'
+import { CUSTOMER_PROFILE_COPY } from '@/pages/customer/profile/CustomerProfileCopy'
 
 function ReturnToProfileButton({ navigate }: Pick<CustomerRoleProps, 'navigate'>) {
   return (
-    <button className="secondary-button" onClick={() => navigate('/customer/profile')} type="button">
-      返回个人信息
+    <button className="secondary-button" onClick={() => navigate(ROUTE_PATH.customerProfile)} type="button">
+      {CUSTOMER_PROFILE_COPY.returnToProfileButton}
     </button>
   )
 }
@@ -20,7 +21,7 @@ function CouponCards({
   formatPrice: CustomerRoleProps['formatPrice']
   formatTime: CustomerRoleProps['formatTime']
 }) {
-  if (coupons.length === 0) return <div className="empty-card">当前没有可用优惠券。</div>
+  if (coupons.length === 0) return <div className="empty-card">{CUSTOMER_PROFILE_COPY.couponEmptyState}</div>
 
   return (
     <>
@@ -28,14 +29,19 @@ function CouponCards({
         <article key={coupon.id} className="ticket-card">
           <div className="ticket-header">
             <div>
-              <p className="ticket-kind">优惠券</p>
+              <p className="ticket-kind">{CUSTOMER_PROFILE_COPY.couponTicketKind}</p>
               <h3>{coupon.title}</h3>
             </div>
             <span className="badge success">{formatPrice(coupon.discountCents)}</span>
           </div>
           <p>{coupon.description}</p>
           <p className="meta-line">
-            满 {formatPrice(coupon.minimumSpendCents)} 可用 · 到期 {formatTime(coupon.expiresAt)}
+            {CUSTOMER_PROFILE_COPY.couponMinSpendPrefix}
+            {formatPrice(coupon.minimumSpendCents)}
+            {CUSTOMER_PROFILE_COPY.couponUsableSuffix}
+            {' · '}
+            {CUSTOMER_PROFILE_COPY.couponExpiresPrefix}
+            {formatTime(coupon.expiresAt)}
           </p>
         </article>
       ))}
@@ -47,20 +53,23 @@ export function CustomerProfileCouponsPanel({ props }: CustomerRolePanelProps) {
   const { formatPrice, formatTime, navigate, selectedCustomer } = props
 
   return (
-    <Panel title="我的优惠券" description="在个人信息内查看可用优惠券与使用门槛。">
+    <Panel
+      title={CUSTOMER_PROFILE_COPY.couponPageTitle}
+      description={CUSTOMER_PROFILE_COPY.couponDescription}
+    >
       {selectedCustomer ? (
         <>
           <div className="summary-bar">
             <div>
-              <p>当前账号</p>
+              <p>{CUSTOMER_PROFILE_COPY.currentAccountLabel}</p>
               <strong>{selectedCustomer.name}</strong>
             </div>
             <div>
-              <p>优惠券数量</p>
+              <p>{CUSTOMER_PROFILE_COPY.couponCountLabel}</p>
               <strong>{selectedCustomer.coupons.length}</strong>
             </div>
             <div>
-              <p>账户余额</p>
+              <p>{CUSTOMER_PROFILE_COPY.balanceLabel}</p>
               <strong>{formatPrice(selectedCustomer.balanceCents)}</strong>
             </div>
             <ReturnToProfileButton navigate={navigate} />

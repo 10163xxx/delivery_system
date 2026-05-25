@@ -6,6 +6,10 @@ import {
   type OrderSummary,
 } from '@/shared/object/core/SharedObjects'
 import {
+  buildCustomerReviewRoute,
+  buildPartialRefundDraftKey,
+} from '@/shared/object/core/DeliveryAppObjects'
+import {
   DEFAULT_PARTIAL_REFUND_QUANTITY,
   createInitialPartialRefundDraft,
 } from '@/shared/delivery/DeliveryServices'
@@ -14,6 +18,7 @@ import type {
   PartialRefundActionRowProps,
 } from '@/pages/order/object/OrderPageObjects'
 import { clearRecordError, renderOrderChat } from '@/pages/order/CustomerOrderDisplayParts'
+import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 
 function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowProps) {
   const {
@@ -24,7 +29,7 @@ function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowPr
     setPartialRefundErrors,
     submitPartialRefundRequest,
   } = props
-  const draftKey = `${order.id}-${item.menuItemId}`
+  const draftKey = buildPartialRefundDraftKey(order.id, item.menuItemId)
   const draft = partialRefundDrafts[draftKey] ?? createInitialPartialRefundDraft()
   const refundError = partialRefundErrors[draftKey]
   const remainingRefundableQuantity = getRemainingRefundableQuantity(order, item.menuItemId)
@@ -43,7 +48,7 @@ function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowPr
       className={`ticket-actions refund-request-row${refundError ? ' has-error' : ''}`}
     >
       <span className="meta-line">
-        {item.name} 可退 {remainingRefundableQuantity} 份
+        {ORDER_PAGE_COPY.partialRefund.refundableQuantityLabel(item.name, remainingRefundableQuantity)}
       </span>
       <input
         max={Math.max(DEFAULT_PARTIAL_REFUND_QUANTITY, remainingRefundableQuantity)}
@@ -62,7 +67,7 @@ function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowPr
       />
       <input
         className={refundError ? 'field-error' : undefined}
-        placeholder="例如：这个菜没货就退掉"
+        placeholder={ORDER_PAGE_COPY.partialRefund.reasonPlaceholder}
         value={draft.reason}
         onChange={(event) => {
           setPartialRefundDrafts((current) => ({
@@ -81,7 +86,9 @@ function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowPr
         onClick={() => void submitPartialRefundRequest(order.id, item.menuItemId)}
         type="button"
       >
-        {hasPendingRefund ? '退款申请处理中' : '申请退这件商品'}
+        {hasPendingRefund
+          ? ORDER_PAGE_COPY.partialRefund.pendingButtonLabel
+          : ORDER_PAGE_COPY.partialRefund.submitButtonLabel}
       </button>
       {refundError ? (
         <span className="field-error-text refund-error-text">{refundError}</span>
@@ -112,14 +119,14 @@ export function renderCustomerOrderFooter(
   const reviewAction = props.canReviewOrder(order) ? (
     <div className="inline-form">
       <p className="meta-line">
-        该订单仍在评价时限内，还剩 {props.getRemainingReviewDays(order)} 天可评价商家和骑手。
+        {ORDER_PAGE_COPY.footer.reviewActionHint(props.getRemainingReviewDays(order))}
       </p>
       <button
         className="secondary-button"
-        onClick={() => props.navigate(`/customer/review/${order.id}`)}
+        onClick={() => props.navigate(buildCustomerReviewRoute(order.id))}
         type="button"
       >
-        去评价
+        {ORDER_PAGE_COPY.footer.reviewActionButton}
       </button>
     </div>
   ) : null
@@ -166,13 +173,17 @@ export function AfterSalesActionPanel({
           clearRecordError(order.id, setAfterSalesErrors)
         }}
       >
-        <option value={AFTER_SALES_REQUEST_TYPE.returnRequest}>退货申请</option>
-        <option value={AFTER_SALES_REQUEST_TYPE.compensationRequest}>赔偿申请</option>
+        <option value={AFTER_SALES_REQUEST_TYPE.returnRequest}>
+          {ORDER_PAGE_COPY.afterSales.returnRequestOption}
+        </option>
+        <option value={AFTER_SALES_REQUEST_TYPE.compensationRequest}>
+          {ORDER_PAGE_COPY.afterSales.compensationRequestOption}
+        </option>
       </select>
       {afterSalesDraft.requestType === AFTER_SALES_REQUEST_TYPE.compensationRequest ? (
         <input
           min="0"
-          placeholder="期望赔偿金额（元）"
+          placeholder={ORDER_PAGE_COPY.afterSales.compensationAmountPlaceholder}
           step="0.01"
           type="number"
           value={afterSalesDraft.expectedCompensationYuan}
@@ -191,8 +202,8 @@ export function AfterSalesActionPanel({
         className={afterSalesError ? 'field-error' : undefined}
         placeholder={
           afterSalesDraft.requestType === AFTER_SALES_REQUEST_TYPE.returnRequest
-            ? '请描述退货原因，例如商品破损、严重变质'
-            : '请描述赔偿原因，例如漏送、错送、超时严重'
+            ? ORDER_PAGE_COPY.afterSales.returnReasonPlaceholder
+            : ORDER_PAGE_COPY.afterSales.compensationReasonPlaceholder
         }
         value={afterSalesDraft.reason}
         onChange={(event) => {
@@ -212,7 +223,9 @@ export function AfterSalesActionPanel({
         onClick={() => void submitAfterSalesRequest(order.id)}
         type="button"
       >
-        {orderTicket?.status === TICKET_STATUS.open ? '已有售后处理中' : '提交售后申请'}
+        {orderTicket?.status === TICKET_STATUS.open
+          ? ORDER_PAGE_COPY.afterSales.existingTicketButton
+          : ORDER_PAGE_COPY.afterSales.submitButton}
       </button>
       {afterSalesError ? (
         <span className="field-error-text refund-error-text">{afterSalesError}</span>

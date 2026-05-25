@@ -13,6 +13,8 @@ import java.time.{Duration, Instant, LocalTime}
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
+private val requiredOrderCategoryName = "必选品"
+
 val validationStoreRevoked = StoreRevokedStatus
 val validationRiderSuspended = RiderSuspendedStatus
 val validationStoreOpen = StoreOpenStatus
@@ -85,6 +87,7 @@ def buildLineItems(
       for
         lineItems <- acc
         menuItem <- store.menu.find(_.id == item.menuItemId).toRight(joinValidationError(validationText("菜品不存在: "), validationShowValue(item.menuItemId)))
+        selections <- validateOrderItemSelections(menuItem, item.selections)
         _ <- Either.cond(
           menuItem.remainingQuantity.forall(_ >= item.quantity),
           (),
@@ -99,7 +102,62 @@ def buildLineItems(
         item.quantity,
         menuItem.priceCents,
         NumericDefaults.ZeroQuantity,
+        selections,
       )
+    }
+  }.flatMap(validateRequiredOrderCategory(store, _))
+
+private def validateRequiredOrderCategory(
+    store: Store,
+    lineItems: List[OrderLineItem],
+): Either[ErrorMessage, List[OrderLineItem]] =
+  val requiredCategoryItems = store.menu.filter(_.category.exists(_.raw == requiredOrderCategoryName))
+  if requiredCategoryItems.isEmpty then Right(lineItems)
+  else
+    Either.cond(
+      lineItems.exists(lineItem => requiredCategoryItems.exists(_.id == lineItem.menuItemId)),
+      lineItems,
+      requiredCategoryItemMissing(new DisplayText(requiredOrderCategoryName)),
+    )
+
+private def validateOrderItemSelections(
+    menuItem: MenuItem,
+    requestSelections: List[OrderItemSelection],
+): Either[ErrorMessage, List[OrderItemSelection]] =
+  val groupMap = menuItem.selectionGroups.map(group => group.name.raw -> group).toMap
+  val requestMap = requestSelections.map(selection => selection.groupName.raw -> selection).toMap
+  val hasDuplicateGroups = requestMap.size != requestSelections.length
+
+  Either.cond(!hasDuplicateGroups, (), ValidationMessages.Order.MenuItemSelectionsRequired).flatMap { _ =>
+    Either.cond(
+      requestSelections.forall(selection => groupMap.contains(selection.groupName.raw)),
+      (),
+      ValidationMessages.Order.MenuItemSelectionsRequired,
+    ).flatMap { _ =>
+      menuItem.selectionGroups.foldLeft[Either[ErrorMessage, List[OrderItemSelection]]](Right(List.empty)) {
+        case (acc, group) =>
+          val requested = requestMap.get(group.name.raw)
+          val selectedOptions = requested.map(_.selectedOptions).getOrElse(List.empty)
+          val sanitizedOptions = selectedOptions.flatMap(option =>
+            sanitizeOptionalText(Some(option), DeliveryValidationDefaults.MenuItemSelectionOptionMaxLength)
+          )
+          val uniqueOptions = sanitizedOptions.distinct
+
+          for
+            validated <- acc
+            _ <- Either.cond(
+              uniqueOptions.length == sanitizedOptions.length &&
+                uniqueOptions.length >= group.minSelections &&
+                uniqueOptions.length <= group.maxSelections &&
+                uniqueOptions.forall(option => group.options.contains(option)),
+              (),
+              ValidationMessages.Order.MenuItemSelectionsRequired,
+            )
+          yield
+            if group.maxSelections > NumericDefaults.ZeroCount || uniqueOptions.nonEmpty then
+              validated :+ OrderItemSelection(group.name, uniqueOptions)
+            else validated
+      }
     }
   }
 
@@ -176,7 +234,7 @@ def validateOrderCoupon(
     couponId: Option[CouponId],
     itemSubtotalCents: CurrencyCents,
 ): Either[ErrorMessage, Option[Coupon]] =
-  couponId.map(value => new EntityId(value.raw.trim)).filter(_.nonEmpty) match
+  couponId.map(value => new CouponId(value.raw.trim)).filter(_.nonEmpty) match
     case None => Right(None)
     case Some(requestedCouponId) =>
       for
@@ -194,7 +252,7 @@ def calculateCouponDiscount(
     case None => NumericDefaults.ZeroCurrencyCents
 
 def createApprovedStore(application: MerchantApplication): Store =
-  val storeId = new EntityId(List("store-", application.id.raw.takeRight(IdentifierDefaults.ApprovedStoreIdSuffixLength)).mkString)
+  val storeId = new StoreId(List("store-", application.id.raw.takeRight(IdentifierDefaults.ApprovedStoreIdSuffixLength)).mkString)
   Store(
     id = storeId,
     merchantName = application.merchantName,

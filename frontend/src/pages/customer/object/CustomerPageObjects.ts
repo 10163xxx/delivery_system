@@ -41,7 +41,10 @@ type CustomerStoreBrowseCardBindings = Pick<
   | 'formatTime'
   | 'isStoreCurrentlyOpen'
   | 'monthlyOrdersByStore'
+  | 'storeBrowseHighlights'
 >
+
+export type RecentFrequentStore = CustomerRoleProps['recentFrequentStores'][number]
 
 export type CustomerStoreBrowseResultCardProps = {
   store: Store
@@ -61,7 +64,9 @@ export type CheckoutPanelProps = Pick<
   | 'formatPrice'
   | 'isCheckoutExpanded'
   | 'monthlySalesByMenuItem'
+  | 'menuItemConfigurationModal'
   | 'openCheckout'
+  | 'openMenuItemConfiguration'
   | 'openRechargePage'
   | 'payableTotalCents'
   | 'quantities'
@@ -72,9 +77,12 @@ export type CheckoutPanelProps = Pick<
   | 'selectedCoupon'
   | 'selectedCouponId'
   | 'selectedCustomer'
+  | 'selectedMenuItemConfigurations'
   | 'selectedStore'
   | 'selectedStoreCanOrder'
   | 'selectedStoreHasMenu'
+  | 'closeMenuItemConfiguration'
+  | 'confirmMenuItemConfiguration'
   | 'setDeliveryAddress'
   | 'setDeliveryAddressError'
   | 'setError'

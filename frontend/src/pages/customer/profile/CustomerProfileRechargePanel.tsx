@@ -1,5 +1,6 @@
 import type { CustomerRoleProps } from '@/shared/app/role-props'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 import {
   CUSTOMER_PROFILE_COPY,
   CUSTOMER_PROFILE_RULES,
@@ -7,8 +8,8 @@ import {
 
 function ReturnToProfileButton({ navigate }: Pick<CustomerRoleProps, 'navigate'>) {
   return (
-    <button className="secondary-button" onClick={() => navigate('/customer/profile')} type="button">
-      返回个人信息
+    <button className="secondary-button" onClick={() => navigate(ROUTE_PATH.customerProfile)} type="button">
+      {CUSTOMER_PROFILE_COPY.returnToProfileButton}
     </button>
   )
 }
@@ -25,17 +26,19 @@ function RechargeBalancePreview({
 
   return (
     <p className="meta-line" style={{ marginTop: CUSTOMER_PROFILE_COPY.rechargePreviewMarginTop }}>
-      本次将充值{' '}
+      {CUSTOMER_PROFILE_COPY.rechargeConfirmPreview}
+      {' '}
       <strong>
         {rechargeCents !== null ? formatPrice(rechargeCents) : CUSTOMER_PROFILE_COPY.noneDisplay}
       </strong>
-      ，充值后余额预计为{' '}
+      {CUSTOMER_PROFILE_COPY.rechargeEstimatedBalanceSuffix}
+      {' '}
       <strong>
         {rechargeCents !== null
           ? formatPrice(balanceCents + rechargeCents)
           : CUSTOMER_PROFILE_COPY.noneDisplay}
       </strong>
-      。
+      {CUSTOMER_PROFILE_COPY.previewSentenceSuffix}
     </p>
   )
 }
@@ -58,17 +61,23 @@ export function CustomerProfileRechargePanel({ props }: { props: CustomerRolePro
   } = props
 
   return (
-    <Panel title="账户充值" description="选择快捷金额或输入自定义金额，充值成功后将返回顾客信息页。">
+    <Panel
+      title={CUSTOMER_PROFILE_COPY.rechargeTitle}
+      description={CUSTOMER_PROFILE_COPY.rechargeDescription}
+    >
       {selectedCustomer ? (
         <section className="review-page-panel">
           <div className="summary-bar">
             <div>
-              <p>当前余额</p>
+              <p>{CUSTOMER_PROFILE_COPY.currentBalanceLabel}</p>
               <strong>{formatPrice(selectedCustomer.balanceCents)}</strong>
             </div>
             <div>
-              <p>快捷金额</p>
-              <strong>{RECHARGE_PRESET_AMOUNTS.join(' / ')} 元</strong>
+              <p>{CUSTOMER_PROFILE_COPY.quickAmountsLabel}</p>
+              <strong>
+                {RECHARGE_PRESET_AMOUNTS.join(' / ')}
+                {CUSTOMER_PROFILE_COPY.rechargePresetAmountSuffix}
+              </strong>
             </div>
           </div>
           <div
@@ -82,17 +91,22 @@ export function CustomerProfileRechargePanel({ props }: { props: CustomerRolePro
                 onClick={() => selectRechargeAmount(amount)}
                 type="button"
               >
-                {selectedRechargeAmount === amount ? '已选' : '选择'} {amount} 元
+                {selectedRechargeAmount === amount
+                  ? CUSTOMER_PROFILE_COPY.rechargeSelectSelectedPrefix
+                  : CUSTOMER_PROFILE_COPY.rechargeSelectIdlePrefix}
+                {' '}
+                {amount}
+                {CUSTOMER_PROFILE_COPY.rechargePresetAmountSuffix}
               </button>
             ))}
           </div>
           <div className="form-grid" style={{ marginTop: CUSTOMER_PROFILE_COPY.sectionSpacing }}>
             <label className="full">
-              <span>自定义金额</span>
+              <span>{CUSTOMER_PROFILE_COPY.customAmountLabel}</span>
               <input
                 className={rechargeAmountError ? 'field-error' : undefined}
                 inputMode="decimal"
-                placeholder="输入充值金额，例如 88.8"
+                placeholder={CUSTOMER_PROFILE_COPY.customAmountPlaceholder}
                 value={customRechargeAmount}
                 onChange={(event) => {
                   setCustomRechargeAmount(event.target.value)
@@ -118,7 +132,7 @@ export function CustomerProfileRechargePanel({ props }: { props: CustomerRolePro
               onClick={() => void submitRechargeFromPage()}
               type="button"
             >
-              确认充值
+              {CUSTOMER_PROFILE_COPY.rechargeConfirmButton}
             </button>
           </div>
         </section>

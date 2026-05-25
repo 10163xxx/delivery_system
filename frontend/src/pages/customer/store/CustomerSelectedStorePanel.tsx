@@ -6,6 +6,7 @@ import {
   SelectedStoreTabs,
   SelectedStoreToolbar,
 } from '@/pages/customer/store/CustomerSelectedStoreSections'
+import { SELECTED_STORE_COPY } from '@/shared/delivery/DeliveryMessages'
 
 export function StoreReviewList({
   emptyText,
@@ -30,10 +31,30 @@ export function StoreReviewList({
             <strong>{review.customerName}</strong>
             <span>{review.rating} 星</span>
           </div>
-          <p>{review.comment ?? '顾客没有填写文字评价。'}</p>
-          {review.extraNote ? <p className="meta-line">补充：{review.extraNote}</p> : null}
+          <p>{review.comment ?? SELECTED_STORE_COPY.reviewCommentFallback}</p>
+          {review.extraNote ? (
+            <p className="meta-line">
+              {SELECTED_STORE_COPY.reviewExtraNotePrefix}
+              {review.extraNote}
+            </p>
+          ) : null}
+          {review.merchantReply ? (
+            <div className="banner info">
+              <strong>{SELECTED_STORE_COPY.reviewMerchantReplyTitle}</strong>
+              <p>{review.merchantReply}</p>
+              {review.merchantReplyAt ? (
+                <p className="meta-line">
+                  {SELECTED_STORE_COPY.reviewReplyTimePrefix}
+                  {formatTime(review.merchantReplyAt)}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           {variant === STORE_REVIEW_LIST_VARIANT.full ? (
-            <p className="meta-line">订单完成于 {formatTime(review.completedAt)}</p>
+            <p className="meta-line">
+              {SELECTED_STORE_COPY.reviewCompletedAtPrefix}
+              {formatTime(review.completedAt)}
+            </p>
           ) : null}
         </article>
       ))}
@@ -72,7 +93,7 @@ export function SelectedStoreBanner({
 
       {!isStoreCurrentlyOpen(selectedStore) ? (
         <div className="banner warning">
-          当前不在营业时间内，店铺营业时间为 {formatBusinessHours(selectedStore.businessHours)}。
+          {SELECTED_STORE_COPY.closedBanner(formatBusinessHours(selectedStore.businessHours))}
         </div>
       ) : null}
 
@@ -81,9 +102,9 @@ export function SelectedStoreBanner({
 
         {selectedStoreTab === CUSTOMER_STORE_TAB.menu ? (
           <div className="store-detail-summary">
-            <p className="ticket-kind">店内点餐</p>
+            <p className="ticket-kind">{SELECTED_STORE_COPY.menuTicketKind}</p>
             <h3>{selectedStore.name}</h3>
-            <p className="meta-line">切换到“评价”即可查看这家店铺的全部顾客评价。</p>
+            <p className="meta-line">{SELECTED_STORE_COPY.menuTabHint}</p>
           </div>
         ) : (
           <SelectedStoreReviewSection props={props} />

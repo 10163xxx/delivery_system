@@ -1,32 +1,39 @@
 import type { CustomerRolePanelProps } from '@/pages/customer/object/CustomerPageObjects'
 import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { MEMBERSHIP_TIER } from '@/shared/object/core/SharedObjects'
+import { MEMBERSHIP_TIER, ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 import { CUSTOMER_PROFILE_COPY, CUSTOMER_PROFILE_RULES } from '@/pages/customer/profile/CustomerProfileCopy'
 
 export function CustomerProfileOverviewPanel({ props }: CustomerRolePanelProps) {
-  const { formatPrice, navigate, openRechargePage, selectedCustomer } = props
+  const { customerOrders, formatPrice, navigate, openRechargePage, selectedCustomer } = props
+  const refundCount = customerOrders.reduce(
+    (count, order) => count + order.partialRefundRequests.length,
+    0,
+  )
 
   return (
-    <Panel title="顾客信息" description="查看个人资料、会员状态、优惠券和地址簿。">
+    <Panel
+      title={CUSTOMER_PROFILE_COPY.overviewTitle}
+      description={CUSTOMER_PROFILE_COPY.overviewDescription}
+    >
       {selectedCustomer ? (
         <>
           <div className="form-grid">
             <label>
-              <span>匿名编号</span>
+              <span>{CUSTOMER_PROFILE_COPY.anonymousIdLabel}</span>
               <input value={selectedCustomer.name} disabled />
             </label>
             <label>
-              <span>手机号</span>
+              <span>{CUSTOMER_PROFILE_COPY.phoneLabel}</span>
               <input value={selectedCustomer.phone} disabled />
             </label>
           </div>
           <div className="summary-bar">
             <div>
-              <p>账户余额</p>
+              <p>{CUSTOMER_PROFILE_COPY.balanceLabel}</p>
               <strong>{formatPrice(selectedCustomer.balanceCents)}</strong>
             </div>
             <div>
-              <p>会员等级</p>
+              <p>{CUSTOMER_PROFILE_COPY.membershipLabel}</p>
               <strong>
                 {selectedCustomer.membershipTier === MEMBERSHIP_TIER.member
                   ? CUSTOMER_PROFILE_COPY.membershipMember
@@ -34,11 +41,11 @@ export function CustomerProfileOverviewPanel({ props }: CustomerRolePanelProps) 
               </strong>
             </div>
             <div>
-              <p>近 30 天消费</p>
+              <p>{CUSTOMER_PROFILE_COPY.spendLast30DaysLabel}</p>
               <strong>{formatPrice(selectedCustomer.monthlySpendCents)}</strong>
             </div>
             <div>
-              <p>自动派单时限</p>
+              <p>{CUSTOMER_PROFILE_COPY.autoDispatchLabel}</p>
               <strong>
                 {selectedCustomer.membershipTier === MEMBERSHIP_TIER.member
                   ? `${CUSTOMER_PROFILE_RULES.memberAutoDispatchMinutes} 分钟`
@@ -46,38 +53,56 @@ export function CustomerProfileOverviewPanel({ props }: CustomerRolePanelProps) 
               </strong>
             </div>
             <button className="secondary-button" onClick={() => openRechargePage()} type="button">
-              充值
+              {CUSTOMER_PROFILE_COPY.rechargeActionButton}
             </button>
             <button
               className="secondary-button"
-              onClick={() => navigate('/customer/profile/coupons')}
+              onClick={() => navigate(ROUTE_PATH.customerProfileCoupons)}
               type="button"
             >
-              优惠券
+              {CUSTOMER_PROFILE_COPY.overviewCouponsButton}
             </button>
             <button
               className="secondary-button"
-              onClick={() => navigate('/customer/profile/addresses')}
+              onClick={() => navigate(ROUTE_PATH.customerProfileAddresses)}
               type="button"
             >
-              地址管理
+              {CUSTOMER_PROFILE_COPY.addressManageButton}
+            </button>
+            <button
+              className="secondary-button"
+              onClick={() => navigate(ROUTE_PATH.customerProfileRefunds)}
+              type="button"
+            >
+              {CUSTOMER_PROFILE_COPY.overviewRefundsButton}
             </button>
           </div>
           <div className="summary-bar">
             <div>
-              <p>地址数量</p>
+              <p>{CUSTOMER_PROFILE_COPY.addressCountLabel}</p>
               <strong>{selectedCustomer.addresses.length}</strong>
             </div>
             <div>
-              <p>默认地址</p>
+              <p>{CUSTOMER_PROFILE_COPY.defaultAddressLabel}</p>
               <strong>{selectedCustomer.defaultAddress}</strong>
+            </div>
+            <div>
+              <p>{CUSTOMER_PROFILE_COPY.refundCountLabel}</p>
+              <strong>{refundCount}</strong>
             </div>
             <button
               className="secondary-button"
-              onClick={() => navigate('/customer/profile/addresses')}
+              onClick={() => navigate(ROUTE_PATH.customerProfileAddresses)}
               type="button"
             >
-              管理地址
+              {CUSTOMER_PROFILE_COPY.overviewAddressesButton}
+            </button>
+            <button
+              className="secondary-button"
+              onClick={() => navigate(ROUTE_PATH.customerProfileRefunds)}
+              type="button"
+            >
+              {CUSTOMER_PROFILE_COPY.refundListButton}
             </button>
           </div>
         </>

@@ -90,10 +90,12 @@ private def buildMenuItem(request: AddMenuItemRequest): MenuItem =
     MenuItem(
       id = nextId(new DisplayText("dish")),
       name = request.name,
+      category = request.category,
       description = request.description,
       priceCents = request.priceCents,
       imageUrl = request.imageUrl,
       remainingQuantity = request.remainingQuantity,
+      selectionGroups = request.selectionGroups,
     )
 
 private def validateStoreForMenuWrite(store: Store): Either[ErrorMessage, Unit] =
@@ -240,6 +242,28 @@ def updateMenuItemPrice(
               current,
               store.id,
               updateMenuItemInStore(_, menuItemId, _.copy(priceCents = sanitized.priceCents)),
+            )
+          )
+      }
+    }
+
+def updateMenuItemCategory(
+      storeId: StoreId,
+      menuItemId: MenuItemId,
+      request: UpdateMenuItemCategoryRequest,
+  ): IO[Either[ErrorMessage, DeliveryAppState]] =
+    IO.blocking {
+      updateState { current =>
+        for
+          store <- current.stores.find(_.id == storeId).toRight(ValidationMessages.Merchant.StoreNotFound)
+          _ <- store.menu.find(_.id == menuItemId).toRight(ValidationMessages.Merchant.MenuItemNotFound)
+          sanitized <- validateMenuItemCategoryRequest(request)
+        yield
+          withDerivedData(
+            replaceStore(
+              current,
+              store.id,
+              updateMenuItemInStore(_, menuItemId, _.copy(category = Some(sanitized.category))),
             )
           )
       }

@@ -1,6 +1,14 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { AuthSession, DeliveryAppState } from '@/shared/object/core/SharedObjects'
-import { browserRuntime, browserStorage, deliveryApi } from '@/shared/api/SharedApi'
+import type { AuthSession, DeliveryAppState, DisplayText } from '@/shared/object/core/SharedObjects'
+import {
+  clearSessionToken,
+  delay,
+  getSession,
+  getState,
+  logout as logoutSession,
+  requestNextPaint,
+  readCustomerStoreSearchHistory,
+} from '@/shared/api/SharedApi'
 import {
   LOGOUT_TRANSITION_MS,
 } from '@/shared/delivery/DeliveryServices'
@@ -14,7 +22,39 @@ function getErrorMessage(error: unknown, fallbackMessage: string) {
 }
 
 export function readStoredCustomerSearchHistory() {
-  return browserStorage.readCustomerStoreSearchHistory()
+  return readCustomerStoreSearchHistory()
+}
+
+type SessionRestoreArgs = {
+  setSession: Dispatch<SetStateAction<AuthSession | null>>
+  setError: Dispatch<SetStateAction<DisplayText | null>>
+}
+
+type SessionStateArgs = {
+  setState: Dispatch<SetStateAction<DeliveryAppState | null>>
+  setError: Dispatch<SetStateAction<DisplayText | null>>
+  setBusy: Dispatch<SetStateAction<boolean>>
+  setHeaderAction: Dispatch<SetStateAction<HeaderAction>>
+}
+
+type SessionSilentSyncArgs = {
+  setState: Dispatch<SetStateAction<DeliveryAppState | null>>
+}
+
+type SessionLogoutArgs = {
+  setSession: Dispatch<SetStateAction<AuthSession | null>>
+  setState: Dispatch<SetStateAction<DeliveryAppState | null>>
+  setError: Dispatch<SetStateAction<DisplayText | null>>
+  setBusy: Dispatch<SetStateAction<boolean>>
+  setHeaderAction: Dispatch<SetStateAction<HeaderAction>>
+  setShowLogoutModal: Dispatch<SetStateAction<boolean>>
+}
+
+type SessionActionArgs = {
+  action: () => Promise<DeliveryAppState>
+  setState: Dispatch<SetStateAction<DeliveryAppState | null>>
+  setError: Dispatch<SetStateAction<DisplayText | null>>
+  setBusy: Dispatch<SetStateAction<boolean>>
 }
 
 export function buildSessionServiceResult(args: {
@@ -22,8 +62,8 @@ export function buildSessionServiceResult(args: {
   setSession: Dispatch<SetStateAction<AuthSession | null>>
   state: DeliveryAppState | null
   setState: Dispatch<SetStateAction<DeliveryAppState | null>>
-  error: string | null
-  setError: Dispatch<SetStateAction<string | null>>
+  error: DisplayText | null
+  setError: Dispatch<SetStateAction<DisplayText | null>>
   busy: boolean
   setBusy: Dispatch<SetStateAction<boolean>>
   headerAction: HeaderAction
@@ -37,112 +77,73 @@ export function buildSessionServiceResult(args: {
   return args
 }
 
-export function createSessionLoadActions(args: {
-  setSession: Dispatch<SetStateAction<AuthSession | null>>
-  setState: Dispatch<SetStateAction<DeliveryAppState | null>>
-  setError: Dispatch<SetStateAction<string | null>>
-  setBusy: Dispatch<SetStateAction<boolean>>
-  setHeaderAction: Dispatch<SetStateAction<HeaderAction>>
-}) {
-  const { setSession, setState, setError, setBusy, setHeaderAction } = args
-
-  async function restoreSession() {
-    try {
-      const nextSession = await deliveryApi.auth.getSession()
-      setSession(nextSession)
-      setError(null)
-    } catch {
-      browserStorage.clearSessionToken()
-      setSession(null)
-    }
-  }
-
-  async function loadState() {
-    setHeaderAction(HEADER_ACTION.refresh)
-    setBusy(true)
-    try {
-      const nextState = await deliveryApi.customer.getState()
-      setState(nextState)
-      setError(null)
-    } catch (loadError) {
-      setError(getErrorMessage(loadError, LOAD_FAILED_MESSAGE))
-    } finally {
-      setBusy(false)
-      setHeaderAction(null)
-    }
-  }
-
-  async function syncStateSilently() {
-    try {
-      const nextState = await deliveryApi.customer.getState()
-      setState(nextState)
-    } catch {
-      // Keep the current screen stable during background sync attempts.
-    }
-  }
-
-  return {
-    restoreSession,
-    loadState,
-    syncStateSilently,
+export async function restoreSession(args: SessionRestoreArgs) {
+  try {
+    const nextSession = await getSession()
+    args.setSession(nextSession)
+    args.setError(null)
+  } catch {
+    clearSessionToken()
+    args.setSession(null)
   }
 }
 
-export function createSessionActionRunner(args: {
-  setSession: Dispatch<SetStateAction<AuthSession | null>>
-  setState: Dispatch<SetStateAction<DeliveryAppState | null>>
-  setError: Dispatch<SetStateAction<string | null>>
-  setBusy: Dispatch<SetStateAction<boolean>>
-  setHeaderAction: Dispatch<SetStateAction<HeaderAction>>
-  setShowLogoutModal: Dispatch<SetStateAction<boolean>>
-}) {
-  const {
-    setSession,
-    setState,
-    setError,
-    setBusy,
-    setHeaderAction,
-    setShowLogoutModal,
-  } = args
-
-  async function logout() {
-    setHeaderAction(HEADER_ACTION.logout)
-    setShowLogoutModal(true)
-    setBusy(true)
-    try {
-      await browserRuntime.requestNextPaint()
-      await deliveryApi.auth.logout()
-    } catch {
-      // Ignore logout failures and clear local session anyway.
-    } finally {
-      await browserRuntime.delay(LOGOUT_TRANSITION_MS)
-      browserStorage.clearSessionToken()
-      setBusy(false)
-      setSession(null)
-      setState(null)
-      setError(null)
-      setHeaderAction(null)
-      setShowLogoutModal(false)
-    }
+export async function loadState(args: SessionStateArgs) {
+  args.setHeaderAction(HEADER_ACTION.refresh)
+  args.setBusy(true)
+  try {
+    const nextState = await getState()
+    args.setState(nextState)
+    args.setError(null)
+  } catch (loadError) {
+    args.setError(getErrorMessage(loadError, LOAD_FAILED_MESSAGE))
+  } finally {
+    args.setBusy(false)
+    args.setHeaderAction(null)
   }
+}
 
-  async function runAction(action: () => Promise<DeliveryAppState>) {
-    setBusy(true)
-    try {
-      const nextState = await action()
-      setState(nextState)
-      setError(null)
-      return true
-    } catch (actionError) {
-      setError(getErrorMessage(actionError, ACTION_FAILED_MESSAGE))
-      return false
-    } finally {
-      setBusy(false)
-    }
+export async function syncStateSilently(args: SessionSilentSyncArgs) {
+  try {
+    const nextState = await getState()
+    args.setState(nextState)
+  } catch {
+    // Keep the current screen stable during background sync attempts.
   }
+}
 
-  return {
-    logout,
-    runAction,
+export async function runLogout(args: SessionLogoutArgs) {
+  args.setHeaderAction(HEADER_ACTION.logout)
+  args.setShowLogoutModal(true)
+  args.setBusy(true)
+  try {
+    await requestNextPaint()
+    await logoutSession()
+  } catch {
+    // Ignore logout failures and clear local session anyway.
+  } finally {
+    await delay(LOGOUT_TRANSITION_MS)
+    clearSessionToken()
+    args.setBusy(false)
+    args.setSession(null)
+    args.setState(null)
+    args.setError(null)
+    args.setHeaderAction(null)
+    args.setShowLogoutModal(false)
+  }
+}
+
+export async function runAction(args: SessionActionArgs) {
+  args.setBusy(true)
+  try {
+    const nextState = await args.action()
+    args.setState(nextState)
+    args.setError(null)
+    return true
+  } catch (actionError) {
+    args.setError(getErrorMessage(actionError, ACTION_FAILED_MESSAGE))
+    return false
+  } finally {
+    args.setBusy(false)
   }
 }

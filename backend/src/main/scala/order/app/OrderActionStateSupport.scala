@@ -130,6 +130,25 @@ def validateReviewOrderRequest(
     _ <- Either.cond(sanitized.riderReview.isEmpty || order.riderId.nonEmpty, (), ValidationMessages.Order.RiderReviewUnavailable)
   yield ReviewOrderContext(order = order, customer = customer, timestamp = timestamp, sanitized = sanitized)
 
+def validateStoreReviewReplyRequest(
+    current: DeliveryAppState,
+    orderId: OrderId,
+    request: AppendStoreReviewReplyRequest,
+): Either[ErrorMessage, (OrderSummary, NoteText, IsoDateTime)] =
+  for
+    order <- findOrder(current, orderId)
+    _ <- requireOrderStatus(order, OrderStatus.Completed, ValidationMessages.Order.StoreReviewReplyUnavailable)
+    _ <- Either.cond(order.reviewStatus == ReviewStatus.Active, (), ValidationMessages.Order.StoreReviewReplyUnavailable)
+    _ <- Either.cond(order.storeRating.nonEmpty, (), ValidationMessages.Order.StoreReviewReplyUnavailable)
+    _ <- Either.cond(order.storeMerchantReply.isEmpty, (), ValidationMessages.Order.StoreReviewReplyAlreadySubmitted)
+    reply <- sanitizeRequiredText(
+      request.reply,
+      DeliveryValidationDefaults.ReviewExtraNoteMaxLength,
+      ValidationMessages.Order.StoreReviewReplyRequired,
+    )
+    timestamp = now()
+  yield (order, reply, timestamp)
+
 def applyReviewedOrderState(
     current: DeliveryAppState,
     orderId: OrderId,
@@ -147,6 +166,30 @@ def applyReviewedOrderState(
       deliveryState = current.deliveryState.copy(
         orders = nextOrders,
         tickets = nextTickets,
+      )
+    )
+  )
+
+def applyStoreReviewReplyState(
+    current: DeliveryAppState,
+    orderId: OrderId,
+    reply: NoteText,
+    timestamp: IsoDateTime,
+): DeliveryAppState =
+  withDerivedData(
+    current.copy(
+      deliveryState = current.deliveryState.copy(
+        orders = current.orders.map(entry =>
+          if entry.id == orderId then
+            entry.copy(
+              reviewContent = entry.reviewContent.copy(
+                storeMerchantReply = Some(reply),
+                storeMerchantReplyAt = Some(timestamp),
+              ),
+              lifecycle = entry.lifecycle.copy(updatedAt = timestamp),
+            )
+          else entry
+        )
       )
     )
   )

@@ -154,6 +154,8 @@ def createPendingOrder(
     reviewExtraNote = None,
     storeReviewComment = None,
     storeReviewExtraNote = None,
+    storeMerchantReply = None,
+    storeMerchantReplyAt = None,
     riderReviewComment = None,
     riderReviewExtraNote = None,
     merchantRejectReason = None,

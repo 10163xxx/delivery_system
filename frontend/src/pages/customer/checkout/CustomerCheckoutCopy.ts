@@ -5,23 +5,58 @@ import { MIN_SCHEDULE_LEAD_MINUTES } from '@/shared/delivery/DeliveryServices'
 
 export const CUSTOMER_CHECKOUT_COPY = {
   panel: {
-    checkoutDescription: '不离开当前页面，直接填写配送信息并确认支付。',
+    checkoutDescription: '在购物车中填写配送信息，并确认本单余额支付。',
     checkoutTicketKind: '结算台',
     checkoutTitle: '确认订单并完成余额支付',
     removePanel: '收起',
+  },
+  cart: {
+    backToMenu: '返回继续点餐',
+    cartTitle: '购物车',
+    cartTitleWithStore: (storeName: string) => `${storeName} · 购物车结算`,
+    defaultSelectionSummary: '标准出餐',
+    headerDescription: '在这里确认已选餐品、配送时间、优惠券和支付信息。',
+    itemListTitle: '已选餐品',
+    itemCountSuffix: ' 款已选',
+    requiredCategoryMissingHint: '下单前还需要从“必选品”分区至少选择 1 件商品。',
+    requiredCategorySelectedHint: '已满足“必选品”分区选择要求。',
+    decreaseQuantityButton: '-',
+    increaseQuantityButton: '+',
+    pageDescription: '确认购物车内容后，在这里下单并完成支付。',
   },
   store: {
     expandDisabledForClosedStore: '非营业时间',
     expandDisabledForIncompleteAddress: '先完善默认地址',
     expandDisabledForNoMenu: '暂无菜品可下单',
     expandDisabledForRevokedStore: '当前不可下单',
-    storeOrderReady: '提交订单',
+    storeOrderReady: '去购物车结算',
   },
   menu: {
+    categoryRequiredBadge: '必选 1 件',
+    categoryItemCountSuffix: ' 款',
+    categoryFallback: '店铺推荐',
+    categoryNavAriaLabel: '菜品分类导航',
+    categorySectionLabel: '菜品大类',
+    categoryRequiredHint: '该分区至少需要选择 1 件商品才能提交订单。',
+    configurationButtonSelect: '选配置',
+    configurationButtonUpdate: '改配置',
+    configurationDialogConfirmButton: '确认并加入',
+    configurationDialogDescription: '先选好这份商品的配置，再加入购物车。',
+    configurationDialogCancelButton: '取消',
+    configurationGroupRequiredSingle: ' · 必选 1 项',
+    configurationGroupSelectionRange: (minSelections: number, maxSelections: number) =>
+      ` · 选择 ${minSelections}-${maxSelections} 项`,
+    configurationSummaryLabel: '已选：',
+    configurationSummaryRequiredLabel: '需选配置：',
+    configurationSummarySingleSelectSuffix: ' 1项',
+    configurationSummaryRangeSuffix: (minSelections: number, maxSelections: number) =>
+      ` ${minSelections}-${maxSelections}项`,
     inStockPattern: (quantity: number) => `限量供应，剩余 ${quantity} 份`,
     menuImageLabel: '菜品图片',
+    menuItemImageAlt: (itemName: string) => `${itemName} 菜品图`,
     menuSalesPrefix: '月售',
     noStock: '当前已售罄',
+    selectionSummarySeparator: ' · ',
   },
   address: {
     addressPlaceholderError: '默认地址还是占位地址，请先到“个人信息”里修改默认地址后再下单。',
@@ -64,6 +99,11 @@ export const CUSTOMER_CHECKOUT_COPY = {
 
 export const CUSTOMER_CHECKOUT_FIELDS = {
   customerAddressOptionsId: 'customer-address-options',
+} as const
+
+export const CUSTOMER_CHECKOUT_LAYOUT = {
+  configurationGroupSpacing: 8,
+  configurationOptionGap: 8,
 } as const
 
 export function getMenuItemQuantity(quantities: CustomerRoleProps['quantities'], itemId: string) {

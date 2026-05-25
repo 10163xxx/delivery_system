@@ -1,3 +1,4 @@
+import { CustomerCartWorkspace } from '@/pages/customer/checkout/CustomerCartWorkspace'
 import { CustomerOrderWorkspace } from '@/pages/customer/workspace/CustomerOrderWorkspace'
 import { CustomerOrdersWorkspace } from '@/pages/customer/workspace/CustomerOrdersWorkspace'
 import { CustomerProfilePanels } from '@/pages/customer/profile/CustomerProfilePanels'
@@ -20,6 +21,7 @@ export function CustomerRoleView(props: CustomerRoleProps) {
         navigate={props.navigate}
       />
       {customerWorkspaceView === CUSTOMER_WORKSPACE_VIEW.order ? <CustomerOrderWorkspace {...props} /> : null}
+      {customerWorkspaceView === CUSTOMER_WORKSPACE_VIEW.cart ? <CustomerCartWorkspace {...props} /> : null}
       {customerWorkspaceView === CUSTOMER_WORKSPACE_VIEW.orders ||
       customerWorkspaceView === CUSTOMER_WORKSPACE_VIEW.orderDetail ? (
         <CustomerOrdersWorkspace {...props} />

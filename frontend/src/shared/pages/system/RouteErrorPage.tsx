@@ -1,9 +1,10 @@
 import { isRouteErrorResponse, Link, useLocation, useRouteError } from 'react-router-dom'
+import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
 import type { ErrorContent, RouteStatusCardProps } from '@/shared/object/core/SharedViewObjects'
 
 const ROUTE_ERROR_PAGE_DEFAULTS = {
-  customerFallbackPath: '/customer/order',
-  homePath: '/',
+  customerFallbackPath: ROUTE_PATH.customerOrder,
+  homePath: ROUTE_PATH.root,
   internalServerErrorStatus: 500,
   notFoundStatus: 404,
 } as const

@@ -1,5 +1,12 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { DeliveryAppState, MerchantProfile } from '@/shared/object/core/SharedObjects'
+import type {
+  DeliveryAppState,
+  DisplayText,
+  MerchantProfile,
+  PersonName,
+  RefundRequestId,
+  StoreId,
+} from '@/shared/object/core/SharedObjects'
 import type {
   MenuItemDraft,
   MenuItemFormField,
@@ -14,20 +21,20 @@ export type RunAction = (action: () => Promise<DeliveryAppState>) => Promise<boo
 type MerchantDraftState = {
   merchantDraft: MerchantDraft
   isMerchantImageUploading: boolean
-  currentDisplayName: string
-  menuItemDrafts: Record<string, MenuItemDraft>
-  menuComposerOpen: Record<string, boolean>
-  menuItemImageUploading: Record<string, boolean>
+  currentDisplayName: PersonName
+  menuItemDrafts: Record<StoreId, MenuItemDraft>
+  menuComposerOpen: Record<StoreId, boolean>
+  menuItemImageUploading: Record<StoreId, boolean>
 }
 
 type MerchantDraftSetters = {
   setMerchantDraft: Dispatch<SetStateAction<MerchantDraft>>
-  setMerchantFormErrors: Dispatch<SetStateAction<Partial<Record<MerchantFormField, string>>>>
-  setMenuItemFormErrors: Dispatch<SetStateAction<Record<string, Partial<Record<MenuItemFormField, string>>>>>
-  setMenuItemDrafts: Dispatch<SetStateAction<Record<string, MenuItemDraft>>>
-  setMenuComposerOpen: Dispatch<SetStateAction<Record<string, boolean>>>
+  setMerchantFormErrors: Dispatch<SetStateAction<Partial<Record<MerchantFormField, DisplayText>>>>
+  setMenuItemFormErrors: Dispatch<SetStateAction<Record<StoreId, Partial<Record<MenuItemFormField, DisplayText>>>>>
+  setMenuItemDrafts: Dispatch<SetStateAction<Record<StoreId, MenuItemDraft>>>
+  setMenuComposerOpen: Dispatch<SetStateAction<Record<StoreId, boolean>>>
   setIsMerchantImageUploading: Dispatch<SetStateAction<boolean>>
-  setMenuItemImageUploading: Dispatch<SetStateAction<Record<string, boolean>>>
+  setMenuItemImageUploading: Dispatch<SetStateAction<Record<StoreId, boolean>>>
 }
 
 export type MerchantDraftContext = MerchantDraftState & MerchantDraftSetters
@@ -35,24 +42,24 @@ export type MerchantDraftContext = MerchantDraftState & MerchantDraftSetters
 export type MerchantProfileContext = {
   merchantProfileDraft: MerchantProfileDraft
   merchantProfile: MerchantProfile | undefined
-  setMerchantProfileFormErrors: Dispatch<SetStateAction<Partial<Record<MerchantProfileFormField, string>>>>
+  setMerchantProfileFormErrors: Dispatch<SetStateAction<Partial<Record<MerchantProfileFormField, DisplayText>>>>
 }
 
 export type MerchantWithdrawContext = {
   merchantProfile: MerchantProfile | undefined
-  merchantWithdrawAmount: string
-  setMerchantWithdrawAmount: Dispatch<SetStateAction<string>>
-  setMerchantWithdrawFieldError: Dispatch<SetStateAction<string | null>>
+  merchantWithdrawAmount: DisplayText
+  setMerchantWithdrawAmount: Dispatch<SetStateAction<DisplayText>>
+  setMerchantWithdrawFieldError: Dispatch<SetStateAction<DisplayText | null>>
 }
 
 export type MerchantSupportContext = {
-  partialRefundResolutionDrafts: Record<string, string>
-  setPartialRefundResolutionDrafts: Dispatch<SetStateAction<Record<string, string>>>
+  partialRefundResolutionDrafts: Record<RefundRequestId, DisplayText>
+  setPartialRefundResolutionDrafts: Dispatch<SetStateAction<Record<RefundRequestId, DisplayText>>>
 }
 
 export type MerchantActionParams = {
   runAction: RunAction
-  setError: Dispatch<SetStateAction<string | null>>
+  setError: Dispatch<SetStateAction<DisplayText | null>>
   draft: MerchantDraftContext
   profile: MerchantProfileContext
   withdraw: MerchantWithdrawContext

@@ -60,11 +60,40 @@
   margin-top: 16px;
 }
 
+.merchant-menu-catalog-layout {
+  margin-top: 16px;
+}
+
+.merchant-menu-category-nav {
+  top: 12px;
+}
+
+.merchant-menu-category-section {
+  background:
+    linear-gradient(145deg, rgba(255, 250, 244, 0.98), rgba(244, 250, 238, 0.96)),
+    #fff;
+}
+
+.merchant-category-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin-top: 0;
+}
+
+.merchant-menu-item-category {
+  margin: 0 0 4px;
+  color: #5d6f37;
+  font-weight: 700;
+}
+
 @media (max-width: 720px) {
   .merchant-menu-actions,
   .merchant-menu-submit-actions,
   .merchant-menu-submit-bar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .merchant-category-grid {
+    grid-template-columns: 1fr;
   }
 }

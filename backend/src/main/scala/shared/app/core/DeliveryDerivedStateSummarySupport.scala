@@ -12,10 +12,10 @@ import domain.shared.*
 private[app] final case class ReviewDerivedCollections(
     activeReviewedOrders: List[OrderSummary],
     revokedReviewedOrders: List[OrderSummary],
-    storeRatings: List[(EntityId, RatingValue)],
-    riderRatings: List[(EntityId, RatingValue)],
-    storeOneStars: List[EntityId],
-    riderOneStars: List[EntityId],
+    storeRatings: List[(StoreId, RatingValue)],
+    riderRatings: List[(RiderId, RatingValue)],
+    storeOneStars: List[StoreId],
+    riderOneStars: List[RiderId],
 )
 
 private[app] def collectReviewDerivedCollections(
@@ -57,7 +57,7 @@ private[app] def collectReviewDerivedCollections(
     case order
         if order.riderRating.contains(DeliveryValidationDefaults.ReviewRatingMin) &&
           order.riderId.nonEmpty &&
-          isAfterReviewReset(order.updatedAt, order.riderId.flatMap(latestRiderReviewReset.get)) =>
+          isAfterReviewReset(order.updatedAt, order.riderId.flatMap(riderId => latestRiderReviewReset.get(new EntityId(riderId.raw)))) =>
       order.riderId.get
   }
 
