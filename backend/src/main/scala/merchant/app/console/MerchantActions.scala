@@ -36,6 +36,7 @@ private def buildMerchantApplication(
       merchantName = request.merchantName,
       storeName = request.storeName,
       category = request.category,
+      storeAddress = request.storeAddress,
       businessHours = request.businessHours,
       avgPrepMinutes = request.avgPrepMinutes,
       imageUrl = request.imageUrl,
@@ -277,6 +278,7 @@ def updateStoreOperationalInfo(
       updateState { current =>
         for
           store <- current.stores.find(_.id == storeId).toRight(ValidationMessages.Merchant.StoreNotFound)
+          storeAddress <- sanitizeRequiredText(request.storeAddress, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.Merchant.StoreAddressRequired)
           businessHours <- validateBusinessHours(request.businessHours)
           avgPrepMinutes <- validatePrepMinutes(request.avgPrepMinutes)
         yield
@@ -287,6 +289,7 @@ def updateStoreOperationalInfo(
               storeEntry =>
                 storeEntry.copy(
                   operations = storeEntry.operations.copy(
+                  storeAddress = storeAddress,
                   businessHours = businessHours,
                   avgPrepMinutes = avgPrepMinutes,
                 )

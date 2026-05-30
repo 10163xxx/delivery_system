@@ -76,15 +76,6 @@ where not exists (select 1 from pg_database where datname = '${DB_NAME}')
 SQL
 }
 
-init_schema() {
-  PGPASSWORD="$DB_PASSWORD" psql \
-    -h "$DB_HOST" \
-    -p "$DB_PORT" \
-    -U "$DB_USER" \
-    -d "$DB_NAME" \
-    -f "$SCRIPT_DIR/init-demo-notes.sql"
-}
-
 print_env_hint() {
   cat <<EOF
 PostgreSQL is ready.
@@ -104,5 +95,4 @@ require_cmd pg_isready
 install_postgres_if_missing
 ensure_postgres_server
 create_role_and_db
-init_schema
 print_env_hint

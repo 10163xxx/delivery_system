@@ -1,0 +1,33 @@
+import type {
+  AccountStatus,
+  AddressText,
+  CurrencyCents,
+  CustomerId,
+  EntityCount,
+  MembershipTier,
+  PersonName,
+  PhoneNumber,
+} from '@/objects/domain/DomainObjects'
+import type { AddressEntry } from '@/objects/customer/profile/AddressEntry'
+import type { Coupon } from '@/objects/customer/profile/Coupon'
+
+export type CustomerIdentity = {
+  id: CustomerId
+  name: PersonName
+  phone: PhoneNumber
+  defaultAddress: AddressText
+  addresses: AddressEntry[]
+}
+
+export type CustomerMetrics = {
+  revokedReviewCount: EntityCount
+  membershipTier: MembershipTier
+  monthlySpendCents: CurrencyCents
+  balanceCents: CurrencyCents
+  coupons: Coupon[]
+}
+
+export type Customer = CustomerIdentity & {
+  accountStatus: AccountStatus
+  metrics: CustomerMetrics
+} & CustomerMetrics

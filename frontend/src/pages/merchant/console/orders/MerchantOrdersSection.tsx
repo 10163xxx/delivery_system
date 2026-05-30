@@ -1,4 +1,4 @@
-import type { MerchantStorePanelProps } from '@/pages/merchant/object/MerchantConsoleObjects'
+import type { MerchantStorePanelProps } from '@/objects/merchant/page/MerchantConsoleObjects'
 import { OrderList } from '@/pages/order/OrderList'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/merchant/console/shell/MerchantConsoleCopy'
 import {
@@ -8,7 +8,7 @@ import {
 import {
   ORDER_STATUS,
   type OrderSummary,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 
 export function MerchantOrdersSection({
   state,

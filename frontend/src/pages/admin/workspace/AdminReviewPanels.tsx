@@ -1,6 +1,6 @@
-import type { AdminRoleProps } from '@/shared/app/role-props'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import type { AppealResolutionDraft } from '@/shared/object/core/DeliveryAppObjects'
+import type { AdminRoleProps } from '@/pages/delivery/app/roleProps'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
+import type { AppealResolutionDraft } from '@/objects/page/DeliveryAppObjects'
 import type {
   DisplayText,
   EligibilityReview,
@@ -9,7 +9,7 @@ import type {
   MerchantApplicationId,
   ReviewAppeal,
   ReviewAppealId,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 
 const APPLICATION_REVIEW_DEFAULTS = {
   approve: '资料已核验',

@@ -7,6 +7,7 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 
 final case class UpdateStoreOperationalRequest(
+    storeAddress: AddressText,
     businessHours: BusinessHours,
     avgPrepMinutes: Minutes,
 )

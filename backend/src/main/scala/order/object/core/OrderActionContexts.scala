@@ -1,9 +1,9 @@
 package domain.order
 
 import domain.customer.*
+import domain.merchant.*
 import domain.review.*
 import domain.shared.*
-import domain.merchant.*
 
 final case class CreateOrderContext(
     customer: Customer,
@@ -11,6 +11,7 @@ final case class CreateOrderContext(
     timestamp: IsoDateTime,
     items: List[OrderLineItem],
     deliveryAddress: AddressText,
+    deliveryFeeCents: CurrencyCents,
     scheduledDeliveryAt: IsoDateTime,
     appliedCoupon: Option[Coupon],
     priceBreakdown: OrderPriceBreakdown,

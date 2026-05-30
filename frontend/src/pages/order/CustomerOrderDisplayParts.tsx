@@ -9,12 +9,12 @@ import {
   type OrderLineItem,
   type OrderSummary,
   type OrderTimelineEntry,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 import type {
   CustomerOrderHelpersProps,
   OrderItemsListProps,
   OrderTimelineProps,
-} from '@/pages/order/object/OrderPageObjects'
+} from '@/objects/order/page/OrderPageObjects'
 import { OrderChatPanel } from '@/pages/order/OrderChatPanel'
 import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 

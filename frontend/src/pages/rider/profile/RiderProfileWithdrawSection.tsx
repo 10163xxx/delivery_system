@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { RiderProfileWorkspaceProps } from '@/pages/rider/object/RiderPageObjects'
-import { CURRENCY_CENTS_SCALE, DELIVERY_CONSOLE_MESSAGES, MAX_WITHDRAW_AMOUNT_YUAN } from '@/shared/delivery/DeliveryServices'
+import type { RiderProfileWorkspaceProps } from '@/objects/rider/page/RiderPageObjects'
+import { CURRENCY_CENTS_SCALE, DELIVERY_CONSOLE_MESSAGES, MAX_WITHDRAW_AMOUNT_YUAN } from '@/features/delivery/DeliveryServices'
 
 function parseWithdrawAmount(value: string) {
   const normalized = value.trim()

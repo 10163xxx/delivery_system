@@ -1,12 +1,13 @@
-import type { RiderRoleProps } from '@/shared/app/role-props'
-import { RIDER_CONSOLE_COPY } from '@/pages/rider/object/RiderWorkspaceObjects'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+import type { RiderRoleProps } from '@/pages/delivery/app/roleProps'
+import { RIDER_CONSOLE_COPY } from '@/objects/rider/page/RiderWorkspaceObjects'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
+import { RiderDeliveryRoutePanel } from '@/pages/rider/workspace/RiderDeliveryRoutePanel'
 import {
   ELIGIBILITY_REVIEW_TARGET,
   RIDER_AVAILABILITY,
   ROLE,
   type Rider,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 import { RiderOrdersPanel } from '@/pages/rider/workspace/RiderOrdersPanel'
 
 function RiderSelector({
@@ -40,23 +41,14 @@ function RiderSelector({
 
 function RiderMetrics({
   selectedRider,
-  runAction,
-  updateRiderAvailability,
   formatAggregateRating,
   formatPrice,
 }: {
   selectedRider: Rider | undefined
-  runAction: RiderRoleProps['runAction']
-  updateRiderAvailability: RiderRoleProps['updateRiderAvailability']
   formatAggregateRating: RiderRoleProps['formatAggregateRating']
   formatPrice: RiderRoleProps['formatPrice']
 }) {
   if (!selectedRider) return null
-
-  const isOnDelivery = selectedRider.availability === RIDER_AVAILABILITY.onDelivery
-  const isAcceptingOrders = selectedRider.availability === RIDER_AVAILABILITY.available
-  const canStopAccepting = !isOnDelivery && selectedRider.availability !== RIDER_AVAILABILITY.suspended
-  const canStartAccepting = !isOnDelivery && selectedRider.availability === RIDER_AVAILABILITY.unavailable
 
   const availabilityLabel =
     selectedRider.availability === RIDER_AVAILABILITY.available
@@ -84,40 +76,6 @@ function RiderMetrics({
       <div className="metric-card">
         <span>1 星差评数</span>
         <strong>{selectedRider.oneStarRatingCount}</strong>
-      </div>
-      <div className="metric-card">
-        <span>接单开关</span>
-        <div className="action-row">
-          <button
-            className="primary-button"
-            disabled={!canStartAccepting}
-            onClick={() =>
-              void runAction(() =>
-                updateRiderAvailability(selectedRider.id, {
-                  availability: RIDER_AVAILABILITY.available,
-                }),
-              )
-            }
-            type="button"
-          >
-            {RIDER_CONSOLE_COPY.consolePanel.startAccepting}
-          </button>
-          <button
-            className="secondary-button"
-            disabled={!canStopAccepting || !isAcceptingOrders}
-            onClick={() =>
-              void runAction(() =>
-                updateRiderAvailability(selectedRider.id, {
-                  availability: RIDER_AVAILABILITY.unavailable,
-                }),
-              )
-            }
-            type="button"
-          >
-            {RIDER_CONSOLE_COPY.consolePanel.stopAccepting}
-          </button>
-        </div>
-        {isOnDelivery ? <p className="meta-line">{RIDER_CONSOLE_COPY.consolePanel.onDeliveryLocked}</p> : null}
       </div>
     </div>
   )
@@ -185,8 +143,6 @@ export function RiderConsoleWorkspace({
     selectedRiderId,
     setSelectedRiderId,
     selectedRider,
-    runAction,
-    updateRiderAvailability,
     formatAggregateRating,
     formatPrice,
     eligibilityReviewDrafts,
@@ -208,16 +164,15 @@ export function RiderConsoleWorkspace({
       />
       <RiderMetrics
         selectedRider={selectedRider}
-        runAction={runAction}
-        updateRiderAvailability={updateRiderAvailability}
         formatAggregateRating={formatAggregateRating}
         formatPrice={formatPrice}
       />
+      <RiderDeliveryRoutePanel {...props} />
       <RiderEligibilityReviewBar
         selectedRider={selectedRider}
         eligibilityReviewDrafts={eligibilityReviewDrafts}
         setEligibilityReviewDrafts={setEligibilityReviewDrafts}
-        runAction={runAction}
+        runAction={props.runAction}
         buildEligibilityReviewPayload={buildEligibilityReviewPayload}
         submitEligibilityReview={submitEligibilityReview}
       />

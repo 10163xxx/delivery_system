@@ -3,11 +3,11 @@ package shared.api.planner
 import domain.shared.given
 
 import cats.effect.IO
-import database.withTransactionConnection
 import io.circe.Json
 import io.circe.syntax.*
 import io.circe.{Decoder, Encoder}
 import domain.shared.PlannerName
+import database.withTransactionConnection
 
 import java.sql.Connection
 

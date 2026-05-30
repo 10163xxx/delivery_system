@@ -13,5 +13,5 @@ import shared.api.routing.*
 val resolveAfterSalesTicketApi: FixedMethodApi1[TicketId, DeliveryAppState] =
   jsonPostApi1[TicketId, ResolveAfterSalesRequest, DeliveryAppState](
     List(routeSegment("api"), routeSegment("delivery"), routeSegment("tickets")),
-    List(routeSegment("after-sales"), routeSegment("review")),
+    List(routeSegment("afterSales"), routeSegment("review")),
   )

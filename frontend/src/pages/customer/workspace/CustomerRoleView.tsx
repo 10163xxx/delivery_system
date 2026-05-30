@@ -7,8 +7,8 @@ import { CustomerWorkspaceHeader } from '@/pages/customer/workspace/CustomerWork
 import {
   CUSTOMER_WORKSPACE_VIEW,
   isCustomerProfileWorkspaceView,
-} from '@/shared/object/core/DeliveryAppObjects'
-import type { CustomerRoleProps } from '@/shared/app/role-props'
+} from '@/objects/page/DeliveryAppObjects'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 
 export function CustomerRoleView(props: CustomerRoleProps) {
   const { customerWorkspaceView } = props

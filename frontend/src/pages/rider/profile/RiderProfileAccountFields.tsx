@@ -1,6 +1,6 @@
-import type { RiderProfileAccountSectionProps } from '@/pages/rider/object/RiderPageObjects'
-import { PAYOUT_ACCOUNT_TYPE } from '@/shared/object/core/SharedObjects'
-import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery/DeliveryServices'
+import type { RiderProfileAccountSectionProps } from '@/objects/rider/page/RiderPageObjects'
+import { PAYOUT_ACCOUNT_TYPE } from '@/objects/core/SharedObjects'
+import { DELIVERY_CONSOLE_MESSAGES } from '@/features/delivery/DeliveryServices'
 
 export function getCurrentPayoutAccountLabel(selectedRider: RiderProfileAccountSectionProps['selectedRider']) {
   return selectedRider.payoutAccount

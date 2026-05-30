@@ -1,7 +1,7 @@
-import { buildRiderProfileDraft, type RiderProfileDraft, type RiderProfileErrors } from '@/pages/rider/object/RiderWorkspaceObjects'
-import type { RiderProfileAccountSectionProps, RiderProfileWorkspaceProps } from '@/pages/rider/object/RiderPageObjects'
-import { PAYOUT_ACCOUNT_TYPE } from '@/shared/object/core/SharedObjects'
-import { DELIVERY_CONSOLE_MESSAGES, isValidBankAccountNumber } from '@/shared/delivery/DeliveryServices'
+import { buildRiderProfileDraft, type RiderProfileDraft, type RiderProfileErrors } from '@/objects/rider/page/RiderWorkspaceObjects'
+import type { RiderProfileAccountSectionProps, RiderProfileWorkspaceProps } from '@/objects/rider/page/RiderPageObjects'
+import { PAYOUT_ACCOUNT_TYPE } from '@/objects/core/SharedObjects'
+import { DELIVERY_CONSOLE_MESSAGES, isValidBankAccountNumber } from '@/features/delivery/DeliveryServices'
 import {
   RiderProfileCurrentAccountSummary,
   RiderProfilePayoutFields,

@@ -1,6 +1,6 @@
-import type { MerchantConsolePanelProps } from '@/merchant/app/state/MerchantConsoleState'
+import type { MerchantConsolePanelProps } from '@/pages/merchant/hooks/MerchantConsoleState'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/merchant/console/shell/MerchantConsoleCopy'
-import { STORE_STATUS, type Store, type OrderSummary } from '@/shared/object/core/SharedObjects'
+import { STORE_STATUS, type Store, type OrderSummary } from '@/objects/core/SharedObjects'
 
 export function MerchantStoreSummaryCard({
   store,

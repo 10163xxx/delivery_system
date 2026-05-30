@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { MerchantConsolePanelProps } from '@/merchant/app/state/MerchantConsoleState'
+import type { MerchantConsolePanelProps } from '@/pages/merchant/hooks/MerchantConsoleState'
 import { MerchantMenuItemCard } from '@/pages/merchant/console/menu/MerchantMenuItemCard'
-import type { Store } from '@/shared/object/core/SharedObjects'
+import type { Store } from '@/objects/core/SharedObjects'
 
 type MerchantMenuCategorySection = {
   id: string

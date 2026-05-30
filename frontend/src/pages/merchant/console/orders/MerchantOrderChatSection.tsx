@@ -1,10 +1,10 @@
 import type {
   MerchantConsolePanelProps,
   OrderChatDraftMap,
-} from '@/merchant/app/state/MerchantConsoleState'
+} from '@/pages/merchant/hooks/MerchantConsoleState'
 import { OrderChatPanel } from '@/pages/order/OrderChatPanel'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/merchant/console/shell/MerchantConsoleCopy'
-import { ROLE, type DisplayText, type OrderId, type OrderSummary, type Store } from '@/shared/object/core/SharedObjects'
+import { ROLE, type DisplayText, type OrderId, type OrderSummary, type Store } from '@/objects/core/SharedObjects'
 
 export function MerchantOrderChat({
   order,

@@ -1,7 +1,7 @@
 import type {
   MenuComposerOpenState,
-} from '@/merchant/app/state/MerchantConsoleState'
-import type { MerchantMenuSectionComposerProps } from '@/pages/merchant/object/MerchantPageObjects'
+} from '@/pages/merchant/hooks/MerchantConsoleState'
+import type { MerchantMenuSectionComposerProps } from '@/objects/merchant/page/MerchantPageObjects'
 import {
   MerchantMenuBasicFields,
 } from '@/pages/merchant/console/menu/MerchantMenuBasicFields'

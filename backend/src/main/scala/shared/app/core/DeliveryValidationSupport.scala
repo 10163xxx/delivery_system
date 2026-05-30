@@ -13,24 +13,24 @@ import java.time.{Duration, Instant, LocalTime}
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
-private val requiredOrderCategoryName = "必选品"
+private val requiredOrderCategoryName = wrapText[DisplayText]("必选品")
 
 val validationStoreRevoked = StoreRevokedStatus
 val validationRiderSuspended = RiderSuspendedStatus
 val validationStoreOpen = StoreOpenStatus
-val afterSalesCouponDescription = new DescriptionText("管理员处理售后申请后补发，可在有效期内下单抵扣")
-val afterSalesReturnCouponTitle = new DisplayText("售后退货补偿券")
-val afterSalesCompensationCouponTitle = new DisplayText("售后补偿券")
-def validationText(value: String): DisplayText = new DisplayText(value)
+val afterSalesCouponDescription = wrapText[DescriptionText]("管理员处理售后申请后补发，可在有效期内下单抵扣")
+val afterSalesReturnCouponTitle = wrapText[DisplayText]("售后退货补偿券")
+val afterSalesCompensationCouponTitle = wrapText[DisplayText]("售后补偿券")
+def validationText(value: String): DisplayText = wrapText[DisplayText](value)
 
 def validationShowValue[T](value: T)(using renderer: DisplayTextRenderer[T]): DisplayText =
   renderer.render(value)
 
 def joinValidationText(parts: DisplayText*): DisplayText =
-  new DisplayText(parts.map(_.raw).mkString)
+  wrapText[DisplayText](parts.map(_.raw).mkString)
 
 def joinValidationError(parts: DisplayText*): ErrorMessage =
-  new ErrorMessage(joinValidationText(parts*).raw)
+  wrapText[ErrorMessage](joinValidationText(parts*).raw)
 
 def sanitizeRequiredText(
     value: DisplayText,
@@ -45,7 +45,7 @@ def sanitizeRequiredText[T](
     maxLength: EntityCount,
     errorMessage: ErrorMessage,
 )(using wrapped: WrappedTextType[T]): Either[ErrorMessage, T] =
-  val sanitized = sanitizeText(new DisplayText(value.raw), maxLength)
+  val sanitized = sanitizeText(wrapText[DisplayText](value.raw), maxLength)
   Either.cond(sanitized.nonEmpty, wrapText(sanitized.raw), errorMessage)
 
 def sanitizeOptionalText(value: Option[DisplayText], maxLength: EntityCount): Option[DisplayText] =
@@ -59,13 +59,13 @@ def sanitizeOptionalText[T](value: Option[T], maxLength: EntityCount)(using
     wrapped: WrappedTextType[T]
 ): Option[T] =
   value.flatMap(text =>
-    sanitizeText(new DisplayText(text.raw), maxLength) match
+    sanitizeText(wrapText[DisplayText](text.raw), maxLength) match
       case sanitized if sanitized.isEmpty => None
       case sanitized => Some(wrapText(sanitized.raw))
   )
 
 def sanitizeText(value: DisplayText, maxLength: EntityCount): DisplayText =
-  new DisplayText(
+  wrapText[DisplayText](
     value.raw
       .trim
       .filter(character => !Character.isISOControl(character) || character == '\n' || character == '\t')
@@ -100,7 +100,7 @@ def buildLineItems(
         menuItem.id,
         menuItem.name,
         item.quantity,
-        menuItem.priceCents,
+        menuItem.priceCents + menuItemSelectionAdditionalPriceCents(menuItem, selections),
         NumericDefaults.ZeroQuantity,
         selections,
       )
@@ -111,13 +111,13 @@ private def validateRequiredOrderCategory(
     store: Store,
     lineItems: List[OrderLineItem],
 ): Either[ErrorMessage, List[OrderLineItem]] =
-  val requiredCategoryItems = store.menu.filter(_.category.exists(_.raw == requiredOrderCategoryName))
+  val requiredCategoryItems = store.menu.filter(_.category.contains(requiredOrderCategoryName))
   if requiredCategoryItems.isEmpty then Right(lineItems)
   else
     Either.cond(
       lineItems.exists(lineItem => requiredCategoryItems.exists(_.id == lineItem.menuItemId)),
       lineItems,
-      requiredCategoryItemMissing(new DisplayText(requiredOrderCategoryName)),
+      requiredCategoryItemMissing(requiredOrderCategoryName),
     )
 
 private def validateOrderItemSelections(
@@ -149,7 +149,7 @@ private def validateOrderItemSelections(
               uniqueOptions.length == sanitizedOptions.length &&
                 uniqueOptions.length >= group.minSelections &&
                 uniqueOptions.length <= group.maxSelections &&
-                uniqueOptions.forall(option => group.options.contains(option)),
+                uniqueOptions.forall(option => menuItemSelectionContainsOption(group, option)),
               (),
               ValidationMessages.Order.MenuItemSelectionsRequired,
             )
@@ -188,12 +188,12 @@ def buildAfterSalesCoupon(
       case AfterSalesRequestType.ReturnRequest => afterSalesReturnCouponTitle
       case AfterSalesRequestType.CompensationRequest => afterSalesCompensationCouponTitle
   Coupon(
-    id = List("coupon-", customerId, "-after-sales-", UUID.randomUUID().toString.take(IdentifierDefaults.GeneratedCouponSuffixLength)).mkString,
+    id = List("coupon-", customerId.raw, "-afterSales-", UUID.randomUUID().toString.take(IdentifierDefaults.GeneratedCouponSuffixLength)).mkString,
     title = title,
     discountCents = discountCents,
     minimumSpendCents = NumericDefaults.ZeroCurrencyCents,
     description = afterSalesCouponDescription,
-    expiresAt = new IsoDateTime(Instant.parse(currentTime.raw).plusSeconds(CouponValidityDays * TimeDefaults.SecondsPerDay).toString),
+    expiresAt = wrapText[IsoDateTime](Instant.parse(currentTime.raw).plusSeconds(CouponValidityDays * TimeDefaults.SecondsPerDay).toString),
   )
 
 def validateScheduledDeliveryAt(
@@ -208,7 +208,7 @@ def validateScheduledDeliveryAt(
     Either
       .cond(!scheduledInstant.isBefore(earliest), (), deliveryTimeTooEarly(MinimumScheduledLeadMinutes))
       .flatMap(_ => Either.cond(scheduledDate == orderDate, (), ValidationMessages.Order.DeliveryTimeTodayOnly))
-      .map(_ => new IsoDateTime(scheduledInstant.toString))
+      .map(_ => wrapText[IsoDateTime](scheduledInstant.toString))
   }
 
 def ceilToMinute(instant: Instant): Instant =
@@ -234,7 +234,7 @@ def validateOrderCoupon(
     couponId: Option[CouponId],
     itemSubtotalCents: CurrencyCents,
 ): Either[ErrorMessage, Option[Coupon]] =
-  couponId.map(value => new CouponId(value.raw.trim)).filter(_.nonEmpty) match
+  couponId.map(value => wrapText[CouponId](value.raw.trim)).filter(_.nonEmpty) match
     case None => Right(None)
     case Some(requestedCouponId) =>
       for
@@ -252,14 +252,15 @@ def calculateCouponDiscount(
     case None => NumericDefaults.ZeroCurrencyCents
 
 def createApprovedStore(application: MerchantApplication): Store =
-  val storeId = new StoreId(List("store-", application.id.raw.takeRight(IdentifierDefaults.ApprovedStoreIdSuffixLength)).mkString)
+  val storeId = wrapText[StoreId](List("store-", application.id.raw.takeRight(IdentifierDefaults.ApprovedStoreIdSuffixLength)).mkString)
   Store(
     id = storeId,
     merchantName = application.merchantName,
     name = application.storeName,
     category = application.category,
-    cuisine = new CuisineLabel(application.category.raw),
+    cuisine = wrapText[CuisineLabel](application.category.raw),
     status = validationStoreOpen,
+    storeAddress = application.storeAddress,
     businessHours = application.businessHours,
     avgPrepMinutes = application.avgPrepMinutes,
     imageUrl = application.imageUrl,
@@ -280,8 +281,8 @@ def validateBusinessHours(
     close <- parseBusinessTime(closeTime).toRight(ValidationMessages.Merchant.BusinessHoursFormatInvalid)
     _ <- Either.cond(open.isBefore(close), (), ValidationMessages.Merchant.BusinessHoursOrderInvalid)
   yield BusinessHours(
-    openTime = new TimeOfDay(open.toString),
-    closeTime = new TimeOfDay(close.toString),
+    openTime = wrapText[TimeOfDay](open.toString),
+    closeTime = wrapText[TimeOfDay](close.toString),
   )
 
 def parseBusinessTime(value: TimeOfDay): Option[LocalTime] =

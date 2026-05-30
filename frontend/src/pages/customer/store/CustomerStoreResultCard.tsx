@@ -1,9 +1,10 @@
 import { StoreReviewList } from '@/pages/customer/store/CustomerSelectedStorePanel'
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import { DisplayImageSlot } from '@/shared/components/primitives/DisplayImageSlot'
-import { STORE_STATUS, type Store } from '@/shared/object/core/SharedObjects'
-import type { CustomerStoreBrowseResultCardProps } from '@/pages/customer/object/CustomerPageObjects'
-import { CUSTOMER_STORE_RESULT_COPY } from '@/shared/delivery/DeliveryMessages'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
+import { STORE_STATUS, type Store } from '@/objects/core/SharedObjects'
+import type { CustomerStoreBrowseResultCardProps } from '@/objects/customer/page/CustomerPageObjects'
+import { CUSTOMER_STORE_RESULT_COPY } from '@/features/delivery/DeliveryMessages'
+import { getStoreDeliveryQuote } from '@/features/delivery/DeliveryServices'
 
 function getStoreBrowseHint(store: Store, isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen']) {
   if (store.status === STORE_STATUS.revoked) {
@@ -18,10 +19,15 @@ function getStoreBrowseHint(store: Store, isStoreCurrentlyOpen: CustomerRoleProp
   return CUSTOMER_STORE_RESULT_COPY.availableStoreHint
 }
 
-function getStoreBrowseButtonLabel(store: Store, isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen']) {
+function getStoreBrowseButtonLabel(
+  store: Store,
+  isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen'],
+  isDeliverable: boolean,
+) {
   if (store.status === STORE_STATUS.revoked) return CUSTOMER_STORE_RESULT_COPY.unavailableStoreButton
   if (!isStoreCurrentlyOpen(store)) return CUSTOMER_STORE_RESULT_COPY.closedStoreButton
   if (store.menu.length === 0) return CUSTOMER_STORE_RESULT_COPY.emptyMenuButton
+  if (!isDeliverable) return CUSTOMER_STORE_RESULT_COPY.outOfRangeStoreButton
   return CUSTOMER_STORE_RESULT_COPY.enterStoreButton
 }
 
@@ -32,16 +38,26 @@ export function CustomerStoreResultCard({
 }: CustomerStoreBrowseResultCardProps) {
   const {
     enterStore,
+    favoriteStoreIds,
     formatAggregateRating,
+    formatPrice,
     formatStoreAvailability,
     formatTime,
     isStoreCurrentlyOpen,
     monthlyOrdersByStore,
+    selectedCustomer,
     storeBrowseHighlights,
+    toggleBlockedStore,
+    toggleFavoriteStore,
   } = props
+  const deliveryQuote = getStoreDeliveryQuote(store, selectedCustomer?.defaultAddress ?? '')
   const disabled =
-    store.status === STORE_STATUS.revoked || !isStoreCurrentlyOpen(store) || store.menu.length === 0
+    store.status === STORE_STATUS.revoked ||
+    !isStoreCurrentlyOpen(store) ||
+    store.menu.length === 0 ||
+    !deliveryQuote.isDeliverable
   const highlights: string[] = storeBrowseHighlights[store.id] ?? []
+  const isFavoriteStore = favoriteStoreIds.includes(store.id)
 
   return (
     <article className="store-card compact-store-card">
@@ -80,6 +96,14 @@ export function CustomerStoreResultCard({
             <p>{CUSTOMER_STORE_RESULT_COPY.prepSpeedLabel}</p>
             <strong>{`${store.avgPrepMinutes}${CUSTOMER_STORE_RESULT_COPY.prepSpeedSuffix}`}</strong>
           </div>
+          <div>
+            <p>{CUSTOMER_STORE_RESULT_COPY.deliveryDistanceLabel}</p>
+            <strong>{deliveryQuote.distanceLabel}</strong>
+          </div>
+          <div>
+            <p>{CUSTOMER_STORE_RESULT_COPY.deliveryFeeLabel}</p>
+            <strong>{formatPrice(deliveryQuote.deliveryFeeCents)}</strong>
+          </div>
         </div>
         {highlights.length > 0 ? (
           <div
@@ -103,16 +127,36 @@ export function CustomerStoreResultCard({
           />
         </div>
         <p className="meta-line compact-store-hint">
-          {getStoreBrowseHint(store, isStoreCurrentlyOpen)}
+          {!deliveryQuote.isDeliverable
+            ? CUSTOMER_STORE_RESULT_COPY.outOfRangeStoreHint
+            : getStoreBrowseHint(store, isStoreCurrentlyOpen)}
         </p>
-        <button
-          className="primary-button"
-          disabled={disabled}
-          onClick={() => enterStore(store.id)}
-          type="button"
-        >
-          {getStoreBrowseButtonLabel(store, isStoreCurrentlyOpen)}
-        </button>
+        <div className="action-row">
+          <button
+            className="primary-button"
+            disabled={disabled}
+            onClick={() => enterStore(store.id)}
+            type="button"
+          >
+            {getStoreBrowseButtonLabel(store, isStoreCurrentlyOpen, deliveryQuote.isDeliverable)}
+          </button>
+          <button
+            className="secondary-button"
+            onClick={() => toggleFavoriteStore(store.id)}
+            type="button"
+          >
+            {isFavoriteStore
+              ? CUSTOMER_STORE_RESULT_COPY.unfavoriteStoreButton
+              : CUSTOMER_STORE_RESULT_COPY.favoriteStoreButton}
+          </button>
+          <button
+            className="secondary-button"
+            onClick={() => toggleBlockedStore(store.id)}
+            type="button"
+          >
+            {CUSTOMER_STORE_RESULT_COPY.blockStoreButton}
+          </button>
+        </div>
       </div>
     </article>
   )

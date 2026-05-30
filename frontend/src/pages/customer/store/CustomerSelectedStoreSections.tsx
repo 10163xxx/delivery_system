@@ -1,17 +1,18 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import type { MenuItem } from '@/shared/object/core/SharedObjects'
-import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/pages/customer/object/CustomerPageObjects'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import type { MenuItem } from '@/objects/core/SharedObjects'
+import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/objects/customer/page/CustomerPageObjects'
 import {
   MAX_RATING,
   MILLISECONDS_PER_DAY,
   MIN_RATING,
-} from '@/shared/delivery/DeliveryConstants'
+} from '@/features/delivery/DeliveryConstants'
 import { StoreReviewList } from '@/pages/customer/store/CustomerSelectedStorePanel'
 import {
+  SELECTED_STORE_COPY,
   SELECTED_STORE_SECTIONS_COPY,
   SELECTED_STORE_SECTIONS_LAYOUT,
-} from '@/shared/delivery/DeliveryMessages'
+} from '@/features/delivery/DeliveryMessages'
 
 const STORE_REVIEW_DAY_FILTER = {
   all: 0,
@@ -36,8 +37,20 @@ const STORE_REVIEW_STAR_FILTER_OPTIONS = [
 ] as const
 
 export function SelectedStoreToolbar({ props }: { props: CustomerRoleProps }) {
-  const { selectedStore, formatStoreAvailability, formatBusinessHours, formatAggregateRating, leaveStore, resetStoreCategory, quantities } = props
+  const {
+    selectedStore,
+    favoriteStoreIds,
+    formatStoreAvailability,
+    formatBusinessHours,
+    formatAggregateRating,
+    leaveStore,
+    resetStoreCategory,
+    quantities,
+    toggleBlockedStore,
+    toggleFavoriteStore,
+  } = props
   if (!selectedStore) return null
+  const isFavoriteStore = favoriteStoreIds.includes(selectedStore.id)
 
   return (
     <div className="store-toolbar">
@@ -81,6 +94,22 @@ export function SelectedStoreToolbar({ props }: { props: CustomerRoleProps }) {
         type="button"
       >
         {SELECTED_STORE_SECTIONS_COPY.resetCategoryButton}
+      </button>
+      <button
+        className="secondary-button"
+        onClick={() => toggleFavoriteStore(selectedStore.id)}
+        type="button"
+      >
+        {isFavoriteStore
+          ? SELECTED_STORE_COPY.unfavoriteStoreButton
+          : SELECTED_STORE_COPY.favoriteStoreButton}
+      </button>
+      <button
+        className="secondary-button"
+        onClick={() => toggleBlockedStore(selectedStore.id)}
+        type="button"
+      >
+        {SELECTED_STORE_COPY.blockStoreButton}
       </button>
     </div>
   )

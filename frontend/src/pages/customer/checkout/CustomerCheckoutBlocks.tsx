@@ -1,5 +1,5 @@
-import type { CheckoutPanelProps } from '@/pages/customer/object/CustomerPageObjects'
-import type { AddressEntry, Coupon } from '@/shared/object/core/SharedObjects'
+import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { AddressEntry, Coupon } from '@/objects/core/SharedObjects'
 import {
   canBalancePay,
   CUSTOMER_CHECKOUT_COPY,
@@ -101,9 +101,9 @@ export function CustomerCheckoutFormFields(props: CheckoutPanelProps) {
 
 export function CustomerCheckoutPriceSummary(props: CheckoutPanelProps) {
   const {
-    DELIVERY_FEE_CENTS,
     cartSubtotal,
     couponDiscountCents,
+    deliveryFeeCents,
     formatPrice,
     payableTotalCents,
     remainingBalanceAfterCheckout,
@@ -115,7 +115,7 @@ export function CustomerCheckoutPriceSummary(props: CheckoutPanelProps) {
     <div className="full summary-bar checkout-summary">
       <div><p>{CUSTOMER_CHECKOUT_COPY.payment.payStoreTitle}</p><strong>{selectedStore?.name}</strong></div>
       <div><p>{CUSTOMER_CHECKOUT_COPY.payment.subtotalTitle}</p><strong>{formatPrice(cartSubtotal)}</strong></div>
-      <div><p>{CUSTOMER_CHECKOUT_COPY.payment.deliveryFeeTitle}</p><strong>{cartSubtotal > 0 ? formatPrice(DELIVERY_FEE_CENTS) : CUSTOMER_CHECKOUT_COPY.payment.noneDisplay}</strong></div>
+      <div><p>{CUSTOMER_CHECKOUT_COPY.payment.deliveryFeeTitle}</p><strong>{cartSubtotal > 0 ? formatPrice(deliveryFeeCents) : CUSTOMER_CHECKOUT_COPY.payment.noneDisplay}</strong></div>
       <div><p>{CUSTOMER_CHECKOUT_COPY.coupon.couponDiscountTitle}</p><strong>{couponDiscountCents > 0 ? `-${formatPrice(couponDiscountCents)}` : CUSTOMER_CHECKOUT_COPY.payment.noneDisplay}</strong></div>
       <div><p>{CUSTOMER_CHECKOUT_COPY.payment.orderAmountTitle}</p><strong>{formatPrice(payableTotalCents)}</strong></div>
       <div><p>{CUSTOMER_CHECKOUT_COPY.payment.walletBalanceTitle}</p><strong>{formatPrice(selectedCustomer?.balanceCents ?? 0)}</strong></div>

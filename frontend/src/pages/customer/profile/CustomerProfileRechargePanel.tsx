@@ -1,6 +1,6 @@
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
+import { ROUTE_PATH } from '@/objects/core/SharedObjects'
 import {
   CUSTOMER_PROFILE_COPY,
   CUSTOMER_PROFILE_RULES,

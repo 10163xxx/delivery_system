@@ -22,10 +22,12 @@ def validateCreateOrderRequest(
     _ <- Either.cond(isStoreOpenAt(store, timestamp), (), storeCurrentlyClosed(formatBusinessHours(store.businessHours)))
     items <- buildLineItems(store, request.items)
     deliveryAddress <- sanitizeRequiredText(request.deliveryAddress, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.Order.DeliveryAddressRequired)
+    deliveryQuote = buildStoreDeliveryQuote(store, deliveryAddress)
+    _ <- Either.cond(deliveryQuote.isDeliverable, (), ValidationMessages.Order.DeliveryDistanceOutOfRange)
     scheduledDeliveryAt <- validateScheduledDeliveryAt(request.scheduledDeliveryAt, timestamp)
     itemSubtotalCents = lineItemSubtotalCents(items)
     appliedCoupon <- validateOrderCoupon(customer, request.couponId, itemSubtotalCents)
-    priceBreakdown = calculateOrderPriceBreakdown(itemSubtotalCents, appliedCoupon)
+    priceBreakdown = calculateOrderPriceBreakdown(itemSubtotalCents, appliedCoupon, deliveryQuote.deliveryFeeCents)
     _ <- Either.cond(customer.balanceCents >= priceBreakdown.totalPriceCents, (), ValidationMessages.Order.InsufficientBalanceForOrder)
   yield CreateOrderContext(
     customer = customer,
@@ -33,6 +35,7 @@ def validateCreateOrderRequest(
     timestamp = timestamp,
     items = items,
     deliveryAddress = deliveryAddress,
+    deliveryFeeCents = deliveryQuote.deliveryFeeCents,
     scheduledDeliveryAt = scheduledDeliveryAt,
     appliedCoupon = appliedCoupon,
     priceBreakdown = priceBreakdown,
@@ -47,6 +50,7 @@ def applyCreatedOrderState(
     customer = context.customer,
     store = context.store,
     deliveryAddress = context.deliveryAddress,
+    deliveryFeeCents = context.deliveryFeeCents,
     scheduledDeliveryAt = context.scheduledDeliveryAt,
     remark = context.remark,
     items = context.items,

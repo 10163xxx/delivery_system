@@ -1,8 +1,8 @@
-import type { MerchantRoleProps } from '@/shared/app/role-props'
-import type { MerchantProfileFormProps } from '@/pages/merchant/object/MerchantPageObjects'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery/DeliveryServices'
-import { PAYOUT_ACCOUNT_TYPE } from '@/shared/object/core/SharedObjects'
+import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
+import type { MerchantProfileFormProps } from '@/objects/merchant/page/MerchantPageObjects'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
+import { DELIVERY_CONSOLE_MESSAGES } from '@/features/delivery/DeliveryServices'
+import { PAYOUT_ACCOUNT_TYPE } from '@/objects/core/SharedObjects'
 import {
   getCurrentPayoutAccountLabel,
   MerchantProfileOverviewMetrics,

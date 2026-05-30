@@ -1,5 +1,5 @@
-import type { RiderRoleProps } from '@/shared/app/role-props'
-import { RIDER_CONSOLE_COPY } from '@/pages/rider/object/RiderWorkspaceObjects'
+import type { RiderRoleProps } from '@/pages/delivery/app/roleProps'
+import { RIDER_CONSOLE_COPY } from '@/objects/rider/page/RiderWorkspaceObjects'
 import { OrderList } from '@/pages/order/OrderList'
 import { RiderOrderFooter } from '@/pages/rider/workspace/RiderOrderSections'
 

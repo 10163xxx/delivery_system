@@ -1,4 +1,4 @@
-import type { CustomerRoleProps } from '@/shared/app/role-props'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 import { CustomerProfilePanelContent } from '@/pages/customer/profile/CustomerProfilePanelContent'
 
 export function CustomerProfilePanels(props: CustomerRoleProps) {

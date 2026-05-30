@@ -3,20 +3,20 @@ import type {
   MerchantConsolePanelProps,
   OrderRejectDraftMap,
   StoreReviewReplyDraftMap,
-} from '@/merchant/app/state/MerchantConsoleState'
-import type { MerchantStorePanelProps } from '@/pages/merchant/object/MerchantConsoleObjects'
+} from '@/pages/merchant/hooks/MerchantConsoleState'
+import type { MerchantStorePanelProps } from '@/objects/merchant/page/MerchantConsoleObjects'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/merchant/console/shell/MerchantConsoleCopy'
 import {
   MAX_REVIEW_EXTRA_NOTE_LENGTH,
   normalizeWhitespace,
-} from '@/shared/delivery/DeliveryServices'
+} from '@/features/delivery/DeliveryServices'
 import {
   APPEAL_ROLE,
   APPLICATION_STATUS,
   ORDER_STATUS,
   REVIEW_STATUS,
   type OrderSummary,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 
 function MerchantOrderStatusActions({
   order,

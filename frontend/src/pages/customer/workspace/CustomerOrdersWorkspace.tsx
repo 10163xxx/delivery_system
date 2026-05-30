@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react'
-import type { CustomerRoleProps } from '@/shared/app/role-props'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 import type {
   CustomerOrderSection,
   CustomerOrderSectionData,
-} from '@/pages/customer/object/CustomerPageObjects'
-import { CUSTOMER_ORDER_SECTION as CUSTOMER_ORDER_SECTIONS } from '@/pages/customer/object/CustomerPageObjects'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+} from '@/objects/customer/page/CustomerPageObjects'
+import { CUSTOMER_ORDER_SECTION as CUSTOMER_ORDER_SECTIONS } from '@/objects/customer/page/CustomerPageObjects'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { OrderList } from '@/pages/order/OrderList'
 import { CustomerOrderDetailSection } from '@/pages/order/CustomerOrderHelpers'
-import { ORDER_STATUS, type OrderSummary } from '@/shared/object/core/SharedObjects'
+import { ORDER_STATUS, type OrderSummary } from '@/objects/core/SharedObjects'
 import {
   buildCustomerOrderDetailRoute,
   CUSTOMER_WORKSPACE_VIEW,
-} from '@/shared/object/core/DeliveryAppObjects'
-import { CUSTOMER_ORDER_WORKSPACE_COPY } from '@/shared/delivery/DeliveryMessages'
+} from '@/objects/page/DeliveryAppObjects'
+import { CUSTOMER_ORDER_WORKSPACE_COPY } from '@/features/delivery/DeliveryMessages'
 
 const ACTIVE_ORDER_STATUSES: OrderSummary['status'][] = [
   ORDER_STATUS.pendingMerchantAcceptance,

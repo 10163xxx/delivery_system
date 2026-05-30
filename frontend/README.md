@@ -10,7 +10,7 @@
 - `@/*` 路径别名
 - `components.json` 与基础 UI 组件配置
 - Vite + TypeScript 工程配置
-- 按业务拆分的 `app / services / features / components / api / domain` 目录结构
+- 仿照 `src/frontend-sample.zip` 组织的 `pages / apis / objects / features / components / system/api / styles` 目录结构
 
 ## 开发命令
 
@@ -37,15 +37,15 @@ npm run preview
 
 ## 关键文件
 
-- `src/shared/app/main.tsx`: 应用挂载入口
-- `src/shared/app/router.tsx`: 路由入口，当前主要把不同 URL 映射到统一的配送控制台页面
+- `src/main.tsx`: 应用挂载入口
+- `src/router.tsx`: 路由入口，当前主要把不同 URL 映射到统一的配送控制台页面
 - `src/pages`: 页面入口，目前核心页是 `DeliveryConsole.tsx`
-- `src/app/delivery`: 页面组装层
-- `src/services`: 页面状态、派生视图和会话管理
-- `src/delivery`: 配送业务规则与表单逻辑
-- `src/components/delivery`: 角色视图和展示组件
-- `src/api`: 接口调用层
-- `src/domain`: 领域模型和共享类型
+- `src/pages/delivery`: 配送控制台页面组装、页面 hooks 和角色 props
+- `src/features/delivery`: 配送业务规则、校验、常量、payload 与格式化
+- `src/components`: 通用展示组件与基础 UI
+- `src/apis`: 业务接口调用层
+- `src/system/api`: 底层请求、协议路由和响应解码
+- `src/objects`: 领域对象、请求响应对象和页面对象
 - `src/styles`: 样式文件
 - `public`: 静态资源
 
@@ -53,22 +53,22 @@ npm run preview
 
 按职责分成 4 组：
 
-- 页面层：`pages`、`app`、`components`
+- 页面层：`pages`、`components`
   - 负责路由落点、页面组装和角色界面展示
-- 状态与业务层：`services`、`features`
-  - `services` 管页面状态和派生视图，`features` 放业务规则、校验、常量、payload
-- 数据层：`api`、`domain`
-  - `api` 负责请求后端，`domain` 负责类型和对象模型
+- 状态与业务层：`pages/*/hooks`、`features`
+  - 页面 hooks 管页面状态和派生视图，`features` 放业务规则、校验、常量、payload
+- 数据层：`apis`、`system/api`、`objects`
+  - `apis` 负责业务请求，`system/api` 负责底层请求工具和协议定义，`objects` 负责类型和对象模型
 - 资源层：`styles`、`public`
   - 样式和静态资源集中放这里
 
 可以把主链路理解成：
 
-- `pages/app -> services/features -> api/domain -> backend`
+- `pages -> features/apis/objects -> system/api -> backend`
 
 ## 当前接口约定
 
-前端统一通过 `src/api/http.ts` 请求后端，默认目标是：
+前端统一通过 `src/system/api/SharedHttpClient.ts` 请求后端，默认目标是：
 
 - `http://127.0.0.1:8081`
 

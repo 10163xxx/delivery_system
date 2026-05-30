@@ -1,16 +1,16 @@
-import { REVIEW_TARGET, ROUTE_PATH } from '@/shared/object/core/SharedObjects'
-import { buildReviewDraftKey } from '@/shared/object/core/DeliveryAppObjects'
+import { REVIEW_TARGET, ROUTE_PATH } from '@/objects/core/SharedObjects'
+import { buildReviewDraftKey } from '@/objects/page/DeliveryAppObjects'
 import {
   DEFAULT_REVIEW_RATING,
   LOW_RATING_MAX,
   MAX_RATING,
   MIN_RATING,
-} from '@/shared/delivery/DeliveryServices'
+} from '@/features/delivery/DeliveryServices'
 import { StarRatingField } from '@/pages/review/StarRatingField'
 import type {
   CustomerReviewOrderContentProps,
   CustomerReviewSectionProps,
-} from '@/pages/customer/object/CustomerPageObjects'
+} from '@/objects/customer/page/CustomerPageObjects'
 import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 
 export function CustomerReviewSection({

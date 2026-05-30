@@ -43,10 +43,7 @@ cd backend
 ./sbtw run
 ```
 
-当前业务后端默认把认证状态和配送业务状态持久化到：
-
-- `backend/data/auth-state.json`
-- `backend/data/delivery-state.json`
+当前业务后端默认把认证状态和配送业务状态持久化到 PostgreSQL。
 
 默认端口：
 
@@ -59,12 +56,7 @@ cd backend
 
 - `NPM_REGISTRY`
 
-后端持久化文件：
-
-- `AUTH_STATE_FILE`
-- `DELIVERY_STATE_FILE`
-
-后端数据库示例配置（仅模板保留，当前配送业务默认不依赖 PostgreSQL）：
+后端数据库配置：
 
 - `DB_HOST`
 - `DB_PORT`
@@ -109,12 +101,13 @@ cd backend
 - 页面、动作、服务、路由文件里禁止临时定义公共类型；发现页面里有本模块之外会复用的 `type`，必须先挪到 `object` 再继续写逻辑。
 - 前端 `delivery` 目录只保留纯业务规则、校验、格式化、payload 构造和共享常量；带副作用的动作编排、页面流程装配和状态联动统一放 `app`；公共展示 copy 与视图元数据统一放 `components` 或具体 UI 目录，不再放回业务规则层。
 - 前后端目录按业务模块保持镜像对齐；例如一侧新增 `auth`、`customer`、`merchant`、`order`、`review`、`admin`、`rider` 等模块时，另一侧也要在对应层级补齐同名目录或明确说明为何例外。
-- 提交前检查前后端分层目录是否一致，至少对齐 `domain`、接口层（前端 `src/api` / 后端 `src/main/scala/api`）以及业务装配层（前端 `src/app` / 后端 `src/main/scala/app`）；前端不再单列 `services` 作为并行大类，应用编排统一归 `app`。
-- 前后端不仅要模块名对齐，还要子职责目录对齐；如果前端已经拆出 `profile`、`menu`、`store`、`checkout`、`after-sales` 等子目录，后端对应域也应优先使用同名或同义职责子目录，而不是继续平铺在模块根下。
+- 提交前检查前后端分层目录是否一致，至少对齐领域对象层、接口层（前端 `src/apis` / 后端 `src/main/scala/*/api`）以及业务装配层（前端 `src/pages`、`src/features` / 后端 `src/main/scala/*/app`）；前端不再单列 `services` 作为并行大类。
+- 前后端不仅要模块名对齐，还要子职责目录对齐；如果前端已经拆出 `profile`、`menu`、`store`、`checkout`、`afterSales` 等子目录，后端对应域也应优先使用同名或同义职责子目录，而不是继续平铺在模块根下。
 - 调整目录结构时，禁止只整理前端或只整理后端；涉及同一业务域的分组重构，默认同时检查并整理两侧目录层级，保持“域 -> 子职责 -> 文件”的对称结构。
-- 同一父目录下禁止保留语义重叠或命名重叠的 sibling 目录；例如 `app` 与 `delivery-app`、`app` 与 `app-build-role-props` 这类并存说明拆分没有收干净，必须继续并回统一主目录，再用子目录表达职责。
+- 同一父目录下禁止保留语义重叠或命名重叠的 sibling 目录；例如 `app` 与 `deliveryApp`、`app` 与 `appBuildRoleProps` 这类并存说明拆分没有收干净，必须继续并回统一主目录，再用子目录表达职责。
 - 目录命名优先使用“主职责目录 + 子职责目录”的形式；应用编排统一归 `app/...`，不要再额外平铺一个带 `app` 后缀的新大类目录。
 - 任一目录下禁止同时直接放源码文件和子目录；如果一个目录已经开始按子职责继续分层，就必须把该层剩余源码一并收进对应子目录，避免“半平铺半分组”的混合结构。
+- 协议层与内部层必须明确区分：只有业务 request/response、前端直接消费的领域对象和业务 API 需要前后端 1:1 对齐；持久化对象、服务上下文、页面草稿和调试路由不得再混入协议层。具体规则见 `PROTOCOL_ALIGNMENT.md`。
 
 ## 开发流程
 

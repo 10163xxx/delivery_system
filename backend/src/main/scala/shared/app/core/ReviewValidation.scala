@@ -7,12 +7,12 @@ import domain.order.*
 import domain.review.*
 import domain.shared.*
 
-private val merchantReviewLabel = new DisplayText("商家")
-private val riderReviewLabel = new DisplayText("骑手")
-private val reviewDetailSeparator = new DisplayText("；")
+private val merchantReviewLabel = text("商家")
+private val riderReviewLabel = text("骑手")
+private val reviewDetailSeparator = text("；")
 
 private def joinReviewDetails(details: List[DisplayText]): DisplayText =
-  new DisplayText(details.map(_.raw).mkString(reviewDetailSeparator.raw))
+  text(details.map(_.raw).mkString(reviewDetailSeparator.raw))
 
 def validateReviewRequest(
       request: ReviewOrderRequest
@@ -79,7 +79,7 @@ def reviewTicket(
 
       ticketKind.map(kind =>
         AdminTicket(
-          id = nextId(new DisplayText("tkt")),
+          id = nextId(text("tkt")),
           orderId = order.id,
           kind = kind,
           status = TicketStatus.Open,

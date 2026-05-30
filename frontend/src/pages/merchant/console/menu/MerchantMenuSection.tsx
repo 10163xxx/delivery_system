@@ -1,7 +1,7 @@
 import type {
   MerchantConsolePanelProps,
-} from '@/merchant/app/state/MerchantConsoleState'
-import type { Store } from '@/shared/object/core/SharedObjects'
+} from '@/pages/merchant/hooks/MerchantConsoleState'
+import type { Store } from '@/objects/core/SharedObjects'
 import { MerchantMenuComposer } from '@/pages/merchant/console/menu/MerchantMenuComposer'
 import { MerchantMenuCatalog } from '@/pages/merchant/console/menu/MerchantMenuCatalog'
 

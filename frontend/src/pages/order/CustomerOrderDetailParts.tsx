@@ -1,9 +1,9 @@
-import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
+import { ROUTE_PATH } from '@/objects/core/SharedObjects'
 import type {
   CustomerOrderDetailHeaderProps,
   CustomerOrderPriceBreakdownProps,
   CustomerOrderSummaryBarProps,
-} from '@/pages/order/object/OrderPageObjects'
+} from '@/objects/order/page/OrderPageObjects'
 
 export function CustomerOrderDetailHeader({
   navigate,

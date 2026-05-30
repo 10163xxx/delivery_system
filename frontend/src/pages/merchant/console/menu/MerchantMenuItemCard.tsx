@@ -1,5 +1,6 @@
-import { DisplayImageSlot } from '@/shared/components/primitives/DisplayImageSlot'
-import type { MerchantMenuSectionItemCardProps } from '@/pages/merchant/object/MerchantConsoleObjects'
+import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
+import type { MerchantMenuSectionItemCardProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import { getMenuItemDisplayPriceText } from '@/features/delivery/DeliveryServices'
 import {
   MerchantMenuSectionItemActions,
   MerchantMenuSectionItemInfo,
@@ -22,7 +23,7 @@ export function MerchantMenuItemCard({
       />
       <MerchantMenuSectionItemInfo item={item} monthlySales={monthlySales} />
       <div className="menu-footer">
-        <strong>{props.formatPrice(item.priceCents)}</strong>
+        <strong>{getMenuItemDisplayPriceText(item, props.formatPrice)}</strong>
         <MerchantMenuSectionItemActions item={item} props={props} storeId={store.id} />
       </div>
     </article>

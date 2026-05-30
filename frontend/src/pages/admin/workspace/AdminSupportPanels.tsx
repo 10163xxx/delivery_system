@@ -1,8 +1,8 @@
-import type { AdminRoleProps } from '@/shared/app/role-props'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { TICKET_KIND, TICKET_STATUS, type AdminTicket, type OrderId } from '@/shared/object/core/SharedObjects'
-import type { ResolutionDraftMap } from '@/shared/object/core/DeliveryAppObjects'
-import { AfterSalesTicketsPanel } from '@/pages/admin/after-sales/AdminAfterSalesPanel'
+import type { AdminRoleProps } from '@/pages/delivery/app/roleProps'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
+import { TICKET_KIND, TICKET_STATUS, type AdminTicket, type OrderId } from '@/objects/core/SharedObjects'
+import type { ResolutionDraftMap } from '@/objects/page/DeliveryAppObjects'
+import { AfterSalesTicketsPanel } from '@/pages/admin/afterSales/AdminAfterSalesPanel'
 
 const TICKET_RESOLUTION_DEFAULTS = {
   resolution: '已回访用户',

@@ -3,7 +3,7 @@ package shared.api.health
 import domain.shared.given
 
 import cats.effect.IO
-import domain.shared.{HealthResponse, ServiceName, ServiceStatus}
+import domain.shared.*
 import io.circe.syntax.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder.*
@@ -24,8 +24,8 @@ val healthRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
       _ <- healthRoutesLogger.info("HealthRoutes received GET /api/health")
       response <- Ok(
         HealthResponse(
-          status = new ServiceStatus("ok"),
-          service = new ServiceName("backend-sample"),
+          status = serviceStatus("ok"),
+          service = serviceName("backend-sample"),
         ).asJson
       )
     yield response

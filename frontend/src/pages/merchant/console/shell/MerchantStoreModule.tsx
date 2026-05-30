@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import type { MerchantConsolePanelProps } from '@/merchant/app/state/MerchantConsoleState'
+import type { MerchantConsolePanelProps } from '@/pages/merchant/hooks/MerchantConsoleState'
 import {
   MERCHANT_STORE_SUB_VIEW,
   type MerchantStoreSubView,
-} from '@/pages/merchant/object/MerchantPageObjects'
+} from '@/objects/merchant/page/MerchantPageObjects'
 import { MerchantMenuSection } from '@/pages/merchant/console/menu/MerchantMenuSection'
 import { MerchantOrdersSection } from '@/pages/merchant/console/orders/MerchantOrdersSection'
 import { MerchantStoreSidebar } from '@/pages/merchant/console/shell/MerchantStoreSidebar'
-import { ORDER_STATUS, STORE_STATUS, type OrderSummary, type Store } from '@/shared/object/core/SharedObjects'
+import { ORDER_STATUS, STORE_STATUS, type OrderSummary, type Store } from '@/objects/core/SharedObjects'
 
 export function MerchantStoreModule({
   state,

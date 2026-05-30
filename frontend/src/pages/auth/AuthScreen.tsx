@@ -3,23 +3,23 @@ import type { FormEvent } from 'react'
 import type {
   LoginRequest,
   RegisterRequest,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 import {
   AUTH_SCREEN_MODE,
   type AuthScreenMode,
   type AuthScreenProps,
-} from '@/pages/auth/object/AuthPageObjects'
+} from '@/objects/auth/page/AuthPageObjects'
 import {
   clearSessionToken,
   login,
   register,
   saveSessionToken,
-} from '@/shared/api/SharedApi'
-import { REGISTERABLE_ROLES, ROLE } from '@/shared/object/core/SharedObjects'
+} from '@/system/api/SharedApi'
+import { REGISTERABLE_ROLES, ROLE } from '@/objects/core/SharedObjects'
 
-const registerRoles: RegisterRequest['role'][] = [...REGISTERABLE_ROLES]
+const registerRoles: (typeof REGISTERABLE_ROLES)[number][] = [...REGISTERABLE_ROLES]
 const loginRoles: LoginRequest['role'][] = [ROLE.customer, ROLE.merchant, ROLE.rider, ROLE.admin]
-const roleLabels: Record<RegisterRequest['role'], string> = {
+const roleLabels: Record<(typeof REGISTERABLE_ROLES)[number], string> = {
   customer: '顾客',
   merchant: '商家',
   rider: '骑手',

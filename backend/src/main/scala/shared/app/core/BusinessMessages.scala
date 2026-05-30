@@ -4,26 +4,26 @@ import domain.shared.given
 
 import domain.shared.*
 
-private val blankText = new DisplayText("")
-private val reviewReasonPrefix = new DisplayText("，理由：")
-private val reviewExtraPrefix = new DisplayText("，补充：")
-private val compensationAmountMissing = new DisplayText("未填写金额")
-private val reviewSeparator = new DisplayText("、")
+private val blankText = wrapText[DisplayText]("")
+private val reviewReasonPrefix = wrapText[DisplayText]("，理由：")
+private val reviewExtraPrefix = wrapText[DisplayText]("，补充：")
+private val compensationAmountMissing = wrapText[DisplayText]("未填写金额")
+private val reviewSeparator = wrapText[DisplayText]("、")
 
 private def messageText(value: String): DisplayText =
-  new DisplayText(value)
+  wrapText[DisplayText](value)
 
 private def showValue[T](value: T)(using renderer: DisplayTextRenderer[T]): DisplayText =
   renderer.render(value)
 
 private def joinText(parts: DisplayText*): DisplayText =
-  new DisplayText(parts.map(_.raw).mkString)
+  wrapText[DisplayText](parts.map(_.raw).mkString)
 
 private def trimText(value: DisplayText): DisplayText =
-  new DisplayText(value.raw.trim)
+  wrapText[DisplayText](value.raw.trim)
 
 private def joinLabels(labels: List[DisplayText]): DisplayText =
-  new DisplayText(labels.map(_.raw).mkString(reviewSeparator.raw))
+  wrapText[DisplayText](labels.map(_.raw).mkString(reviewSeparator.raw))
 
 private def formatBusinessCurrency(amountCents: CurrencyCents): DisplayText =
   val amount = BigDecimal(amountCents)
@@ -50,10 +50,10 @@ def renderReviewRatingLabel(roleLabel: DisplayText, rating: RatingValue): Displa
   joinText(roleLabel, messageText(" "), showValue(rating), messageText(" 星"))
 
 def renderReviewAppealResolvedNote(resolutionNote: ResolutionText): ResolutionText =
-  new ResolutionText(joinText(messageText("申诉成功，评价已撤销："), showValue(resolutionNote)).raw)
+  wrapText[ResolutionText](joinText(messageText("申诉成功，评价已撤销："), showValue(resolutionNote)).raw)
 
 def renderAdminTicketResolution(resolution: ResolutionText, note: NoteText): ResolutionText =
-  new ResolutionText(joinText(showValue(resolution), messageText("；"), showValue(note)).raw)
+  wrapText[ResolutionText](joinText(showValue(resolution), messageText("；"), showValue(note)).raw)
 
 def renderOrderTimelineMessage(message: OrderTimelineMessage): DisplayText =
   message match
@@ -117,16 +117,16 @@ def renderAfterSalesOutcomeMessage(message: AfterSalesOutcomeMessage): DisplayTe
 def renderAfterSalesTicketSummary(message: AfterSalesTicketSummaryMessage): SummaryText =
   message match
     case AfterSalesTicketSummaryMessage.ReturnRequest(reason) =>
-      new SummaryText(joinText(messageText("顾客申请退货售后："), showValue(reason)).raw)
+      wrapText[SummaryText](joinText(messageText("顾客申请退货售后："), showValue(reason)).raw)
     case AfterSalesTicketSummaryMessage.CompensationRequest(reason, expectedCompensationCents) =>
       val amountText = expectedCompensationCents.map(formatBusinessCurrency).getOrElse(compensationAmountMissing)
-      new SummaryText(joinText(messageText("顾客申请赔偿售后（期望 "), amountText, messageText("）："), showValue(reason)).raw)
+      wrapText[SummaryText](joinText(messageText("顾客申请赔偿售后（期望 "), amountText, messageText("）："), showValue(reason)).raw)
 
 def renderReviewTicketSummary(message: ReviewTicketSummaryMessage): SummaryText =
   message match
     case ReviewTicketSummaryMessage.Positive(customerName, storeName, detail) =>
-      new SummaryText(trimText(joinText(showValue(customerName), messageText(" 对 "), storeName, messageText(" 给出好评。"), detail)).raw)
+      wrapText[SummaryText](trimText(joinText(showValue(customerName), messageText(" 对 "), storeName, messageText(" 给出好评。"), detail)).raw)
     case ReviewTicketSummaryMessage.Negative(customerName, detail) =>
-      new SummaryText(trimText(joinText(showValue(customerName), messageText(" 提交了差评。"), detail)).raw)
+      wrapText[SummaryText](trimText(joinText(showValue(customerName), messageText(" 提交了差评。"), detail)).raw)
     case ReviewTicketSummaryMessage.DeliveryIssue(customerName, detail) =>
-      new SummaryText(trimText(joinText(showValue(customerName), messageText(" 反馈配送异常。"), detail)).raw)
+      wrapText[SummaryText](trimText(joinText(showValue(customerName), messageText(" 反馈配送异常。"), detail)).raw)

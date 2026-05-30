@@ -66,7 +66,7 @@ def withdrawMerchantIncome(
           _ <- Either.cond(profile.availableToWithdrawCents >= amountCents, (), ValidationMessages.Merchant.WithdrawBalanceInsufficient)
         yield
           val timestamp = now()
-          val withdrawal = buildWithdrawal(new DisplayText("mwd"), amountCents, payoutAccount, timestamp)
+          val withdrawal = buildWithdrawal(wrapText[DisplayText]("mwd"), amountCents, payoutAccount, timestamp)
           withDerivedData(
             current.copy(
               merchantProfiles = replaceMerchantProfile(

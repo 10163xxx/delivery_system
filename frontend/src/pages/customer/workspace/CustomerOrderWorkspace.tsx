@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { CustomerStoreBrowse } from '@/pages/customer/store/CustomerStoreBrowse'
-import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/pages/customer/object/CustomerPageObjects'
+import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/objects/customer/page/CustomerPageObjects'
 import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 
 export function CustomerOrderWorkspace(props: CustomerRoleProps) {

@@ -1,5 +1,5 @@
-import type { Role } from '@/shared/object/core/SharedObjects'
-import type { OrderChatPanelProps } from '@/pages/order/object/OrderPageObjects'
+import type { Role } from '@/objects/core/SharedObjects'
+import type { OrderChatPanelProps } from '@/objects/order/page/OrderPageObjects'
 import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 
 const roleLabelMap: Record<Role, string> = {

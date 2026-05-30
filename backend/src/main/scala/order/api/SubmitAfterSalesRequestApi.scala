@@ -15,5 +15,5 @@ import shared.app.*
 val submitAfterSalesRequestApi: FixedMethodApi1[OrderId, DeliveryAppState] =
   jsonPostApi1[OrderId, SubmitAfterSalesRequest, DeliveryAppState](
     List(routeSegment("api"), routeSegment("delivery"), routeSegment("orders")),
-    List(routeSegment("after-sales")),
+    List(routeSegment("afterSales")),
   )

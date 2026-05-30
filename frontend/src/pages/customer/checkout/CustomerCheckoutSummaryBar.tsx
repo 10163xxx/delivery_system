@@ -1,4 +1,4 @@
-import type { CheckoutPanelProps } from '@/pages/customer/object/CustomerPageObjects'
+import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
 import {
   CUSTOMER_CHECKOUT_COPY,
   getCheckoutPrimaryActionLabel,
@@ -6,10 +6,10 @@ import {
 
 export function CustomerCheckoutSummaryBar(props: CheckoutPanelProps) {
   const {
-    DELIVERY_FEE_CENTS,
     availableCheckoutCoupons,
     cartSubtotal,
     customerRequiresDefaultAddressUpdate,
+    deliveryFeeCents,
     formatPrice,
     openCheckout,
     payableTotalCents,
@@ -26,7 +26,7 @@ export function CustomerCheckoutSummaryBar(props: CheckoutPanelProps) {
       <div>
         <p>{CUSTOMER_CHECKOUT_COPY.payment.deliveryFeeTitle}</p>
         <strong>
-          {cartSubtotal > 0 ? formatPrice(DELIVERY_FEE_CENTS) : CUSTOMER_CHECKOUT_COPY.payment.noneDisplay}
+          {cartSubtotal > 0 ? formatPrice(deliveryFeeCents) : CUSTOMER_CHECKOUT_COPY.payment.noneDisplay}
         </strong>
       </div>
       <div>

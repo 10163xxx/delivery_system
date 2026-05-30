@@ -10,8 +10,8 @@ import domain.merchant.*
 import domain.order.*
 import domain.rider.*
 import domain.shared.*
-import database.{initializeDeliveryStateTable, loadPersistedDeliveryState, savePersistedDeliveryState, savePersistedDeliveryStateBlocking, withTransactionConnection, withTransactionConnectionBlocking}
-import shared.infra.files.loadJsonFileIfExists
+import database.{withTransactionConnection, withTransactionConnectionBlocking}
+import table.{initializeDeliveryStateTable, loadPersistedDeliveryState, savePersistedDeliveryState, savePersistedDeliveryStateBlocking}
 
 import java.time.{Instant, ZoneId}
 import java.util.UUID
@@ -62,7 +62,7 @@ val StoreCategories = List(
   new DisplayText("夜宵小吃"),
 )
 val SpendRewardCouponTemplates = DeliveryBusinessDefaults.SpendRewardCouponTemplates
-private val pendingAddress = new AddressText("请先完善默认地址")
+private val pendingAddress = new AddressText("上海市浦东新区世纪大道100号上海环球金融中心")
 private val defaultAddressLabel = new AddressLabel("默认")
 private val riderVehiclePending = new VehicleLabel("待完善")
 private val riderZonePending = new ZoneLabel("待分区")
@@ -72,22 +72,14 @@ private val adminSelfRegistrationMessage = new ErrorMessage("管理员账号不�
 private val userAliasPrefix = new DisplayText("用户")
 private val customerPhonePrefix = "139"
 
-private val legacyStateFile = sys.env
-  .get(DeliveryRuntimeDefaults.StateFileEnv.raw)
-  .map(java.nio.file.Paths.get(_))
-  .getOrElse(DeliveryRuntimeDefaults.StateFilePath)
 val writeLock = new AnyRef
-val stateRef = new AtomicReference[DeliveryAppState](seedState())
+val stateRef = new AtomicReference[DeliveryAppState](emptyDeliveryAppState())
 
 def initializeDeliveryStatePersistence: IO[Unit] =
   withTransactionConnection { connection =>
     for
       _ <- initializeDeliveryStateTable(connection)
-      maybeState <- loadPersistedDeliveryState(connection)
-      initialState = maybeState.getOrElse(loadLegacyState())
-      _ <- maybeState match
-        case Some(_) => IO.unit
-        case None => savePersistedDeliveryState(connection, initialState)
+      initialState <- loadPersistedDeliveryState(connection).map(_.getOrElse(emptyDeliveryAppState()))
       _ <- IO(stateRef.set(initialState))
     yield ()
   }
@@ -103,7 +95,7 @@ def getState: IO[DeliveryAppState] =
     }.flatTap(refreshed => savePersistedDeliveryState(connection, refreshed))
   }
 
-def getStateForUser(user: AuthUser): IO[DeliveryAppState] =
+def getStateForUser(user: AuthAccount): IO[DeliveryAppState] =
   getState.map(state => projectStateForUser(state, user))
 
 def registerUserProfile(role: UserRole, displayName: PersonName): Either[ErrorMessage, Option[EntityId]] =
@@ -236,7 +228,7 @@ def ownsOrderAsRider(orderId: OrderId, linkedProfileId: Option[EntityId]): Appro
       order.id == orderId && order.riderId.exists(riderId => linkedProfileId.exists(_.raw == riderId.raw))
     )
 
-private def projectStateForUser(state: DeliveryAppState, user: AuthUser): DeliveryAppState =
+private def projectStateForUser(state: DeliveryAppState, user: AuthAccount): DeliveryAppState =
     user.role match
       case UserRole.admin => state
       case UserRole.customer => projectCustomerState(state, user.linkedProfileId)
@@ -359,10 +351,22 @@ def updateState(
       )
     }
 
-private def loadLegacyState(): DeliveryAppState =
-  loadJsonFileIfExists[DeliveryAppState](legacyStateFile).getOrElse(seedState())
-
 def nextId[T](prefix: DisplayText)(using wrapped: WrappedTextType[T]): T =
   wrapText[T](List(prefix.raw, "-", UUID.randomUUID().toString.take(DeliveryBusinessDefaults.GeneratedIdSuffixLength)).mkString)
 
 def now(): IsoDateTime = new IsoDateTime(Instant.now().toString)
+
+private def emptyDeliveryAppState(): DeliveryAppState =
+  DeliveryAppState(
+    customers = List.empty,
+    stores = List.empty,
+    merchantProfiles = List.empty,
+    riders = List.empty,
+    admins = List.empty,
+    merchantApplications = List.empty,
+    reviewAppeals = List.empty,
+    eligibilityReviews = List.empty,
+    orders = List.empty,
+    tickets = List.empty,
+    metrics = SystemMetrics(NumericDefaults.ZeroCount, NumericDefaults.ZeroCount, NumericDefaults.ZeroCount, NumericDefaults.ZeroAverageRating),
+  )

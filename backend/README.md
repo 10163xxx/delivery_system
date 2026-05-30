@@ -1,7 +1,7 @@
 # backend-sample
 
 一个基于 Scala 3、Cats Effect、http4s、Circe 的可运行后端。
-当前配送与认证接口默认使用本地 JSON 文件持久化，不再依赖进程内 mock 状态。
+当前认证与配送主链路默认使用 PostgreSQL 持久化。
 
 ## 目录结构
 
@@ -16,12 +16,11 @@
 - `domain`: 领域模型、请求/响应对象、共享类型
   - 按 `auth / customer / merchant / order / review / rider / admin / shared` 分组
 - `infra`: 基础设施
-  - 当前主要是 JSON 文件持久化和上传存储
-- `database`、`tables`: 保留的数据库配置和 SQL 示例
+  - 当前主要是上传存储
+- `database`、`table`: 数据库连接、表定义和 Scala 持久化实现
 
 运行相关目录：
 
-- `data`: 本地 JSON 持久化文件
 - `scripts`: 构建、运行和初始化脚本
 
 可以把主链路理解成：
@@ -38,26 +37,22 @@
 
 - `http://0.0.0.0:8081`
 
-默认持久化文件：
+默认持久化介质：
+- PostgreSQL 数据库
 
-- `data/auth-state.json`
-- `data/delivery-state.json`
-
-可通过环境变量覆盖：
-
-- `AUTH_STATE_FILE`
-- `DELIVERY_STATE_FILE`
-
-仓库里仍然保留了 PostgreSQL/JDBC 示例代码，便于后续切换成数据库表模型，但当前主链路默认不要求 PostgreSQL 才能运行。
+默认数据库连接参数见 `DB_HOST / DB_PORT / DB_NAME / DB_USER / DB_PASSWORD`，定义在
+`src/main/scala/shared/object/RuntimeDefaultValues.scala`。
 
 ## 持久化说明
 
-后端每次修改认证或配送状态后都会立即写盘，因此服务重启后仍能保留：
+后端每次修改认证或配送状态后都会立即写入数据库，因此服务重启后仍能保留：
 
 - 已注册账号
 - 登录会话
 - 顾客 / 骑手资料
 - 商家申请、店铺、菜单、订单等业务数据
+
+当数据库为空时，服务会用内置 Scala bootstrap 数据初始化业务表和认证账号。
 
 ## API 示例
 

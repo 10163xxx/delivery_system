@@ -1,12 +1,12 @@
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import type { CustomerRolePanelProps } from '@/pages/customer/object/CustomerPageObjects'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import type { CustomerRolePanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
 import {
   APPLICATION_STATUS,
   ROUTE_PATH,
   type OrderPartialRefundRequest,
   type OrderSummary,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 import { CUSTOMER_PROFILE_COPY } from '@/pages/customer/profile/CustomerProfileCopy'
 
 function ReturnToProfileButton({ navigate }: Pick<CustomerRoleProps, 'navigate'>) {

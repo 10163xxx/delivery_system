@@ -1,6 +1,6 @@
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import { MAX_RATING } from '@/shared/delivery/DeliveryServices'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import { MAX_RATING } from '@/features/delivery/DeliveryServices'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { CustomerReviewOrderContent } from '@/pages/customer/workspace/CustomerReviewSections'
 import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
 

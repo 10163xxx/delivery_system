@@ -1,7 +1,7 @@
-import type { MerchantRoleProps } from '@/shared/app/role-props'
-import type { MerchantTrendPoint } from '@/pages/merchant/object/MerchantPageObjects'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
+import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
+import type { MerchantTrendPoint } from '@/objects/merchant/page/MerchantPageObjects'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
+import { ROUTE_PATH } from '@/objects/core/SharedObjects'
 
 const MERCHANT_PROFILE_ANALYTICS = {
   chartHeight: 240,
@@ -77,17 +77,11 @@ function TrendLineChart({
           <p className="ticket-kind">近 30 天</p>
           <h3>{title}</h3>
         </div>
-        <span className={`badge ${accentClassName}`}>峰值 {formatValue(maxValue)}</span>
+        <span className="merchant-line-chart__peak">峰值 {formatValue(maxValue)}</span>
       </div>
-      <div className="merchant-analytics-summary">
-        <div>
-          <p>累计</p>
-          <strong>{formatValue(totalValue)}</strong>
-        </div>
-        <div>
-          <p>最近一天</p>
-          <strong>{formatValue(lastValue)}</strong>
-        </div>
+      <div className="merchant-line-chart__stats">
+        <span>累计 <strong>{formatValue(totalValue)}</strong></span>
+        <span>最近一天 <strong>{formatValue(lastValue)}</strong></span>
       </div>
       <div className="merchant-line-chart">
         <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} aria-label={title} role="img">

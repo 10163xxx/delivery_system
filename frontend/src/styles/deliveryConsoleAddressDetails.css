@@ -1,0 +1,320 @@
+.address-details {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: 28px;
+  border: 1px solid rgba(192, 138, 90, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(255, 214, 170, 0.24), transparent 42%),
+    linear-gradient(145deg, rgba(255, 248, 239, 0.96), rgba(255, 255, 255, 0.94));
+  box-shadow: 0 22px 48px rgba(161, 111, 65, 0.1);
+}
+
+.address-details.is-rainy {
+  border-color: rgba(89, 122, 171, 0.26);
+  background:
+    radial-gradient(circle at top right, rgba(152, 190, 235, 0.24), transparent 42%),
+    linear-gradient(145deg, rgba(241, 247, 255, 0.97), rgba(255, 255, 255, 0.94));
+  box-shadow: 0 22px 48px rgba(88, 117, 161, 0.12);
+}
+
+.address-details__header {
+  display: grid;
+  gap: 1rem;
+}
+
+.address-details__weather-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 0.32rem 0.78rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.address-details__weather-badge.is-clear {
+  background: rgba(255, 247, 232, 0.85);
+  color: #9a5f28;
+}
+
+.address-details__weather-badge.is-rainy {
+  background: rgba(219, 233, 252, 0.92);
+  color: #4c6ea1;
+}
+
+.address-details__summary {
+  margin-top: 0.45rem;
+  color: rgba(89, 61, 39, 0.82);
+  line-height: 1.6;
+}
+
+.address-details__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.address-details__metric-pill {
+  min-width: 8.5rem;
+  padding: 0.8rem 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(208, 165, 119, 0.18);
+}
+
+.address-details__metric-pill span {
+  display: block;
+  font-size: 0.82rem;
+  color: rgba(126, 89, 58, 0.78);
+}
+
+.address-details__metric-pill strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: #5c3d25;
+}
+
+.address-details__records {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.address-details__record-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(215, 177, 135, 0.16);
+}
+
+.address-details__record-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.address-details__record-head h3 {
+  margin-top: 0.2rem;
+  color: #4f3520;
+}
+
+.address-details__field-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.address-details__field {
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 18px;
+  background: rgba(250, 244, 235, 0.84);
+  border: 1px solid rgba(224, 186, 145, 0.14);
+}
+
+.address-details__field.is-rainy {
+  background: rgba(239, 245, 255, 0.92);
+  border-color: rgba(159, 184, 223, 0.24);
+}
+
+.address-details__field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.address-details__field span {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(104, 72, 45, 0.66);
+}
+
+.address-details__field strong {
+  color: #4f3520;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.address-details__map-preview {
+  height: 150px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(185, 124, 66, 0.18);
+  border-radius: 14px;
+  background: #f2efe9;
+}
+
+.address-details__map-preview.is-large {
+  height: 280px;
+}
+
+.address-details__map-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.address-details__field-hint {
+  color: rgba(82, 101, 133, 0.86);
+  line-height: 1.45;
+}
+
+.address-route-preview {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 24px;
+  border: 1px solid rgba(205, 163, 118, 0.18);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.address-route-preview.is-rainy {
+  border-color: rgba(145, 179, 225, 0.24);
+  background: rgba(244, 248, 255, 0.86);
+}
+
+.address-route-preview__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.address-route-preview__header h3 {
+  margin-top: 0.2rem;
+  color: #4f3520;
+}
+
+.address-route-preview__summary {
+  color: rgba(89, 61, 39, 0.82);
+  line-height: 1.55;
+}
+
+.address-route-preview__map {
+  position: relative;
+  min-height: 280px;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(185, 124, 66, 0.18);
+  background: #f2efe9;
+}
+
+.address-route-preview__map iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  border: 0;
+}
+
+.address-route-preview__fallback {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  padding: 1rem;
+  color: rgba(96, 76, 56, 0.78);
+}
+
+.address-route-preview__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.address-route-preview__overlay path {
+  fill: none;
+  stroke: rgba(230, 126, 34, 0.9);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 3.5 2.4;
+  filter: drop-shadow(0 2px 4px rgba(120, 76, 32, 0.18));
+}
+
+.address-route-preview__marker {
+  position: absolute;
+  display: grid;
+  gap: 0.35rem;
+  max-width: 11rem;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.address-route-preview__marker.is-end {
+  justify-items: end;
+}
+
+.address-route-preview__pin {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(40, 26, 14, 0.24);
+}
+
+.address-route-preview__pin.is-start {
+  background: #d97706;
+}
+
+.address-route-preview__pin.is-end {
+  background: #2563eb;
+}
+
+.address-route-preview__marker-copy {
+  display: grid;
+  gap: 0.08rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 8px 20px rgba(84, 57, 27, 0.12);
+}
+
+.address-route-preview__marker-copy strong {
+  font-size: 0.82rem;
+  color: #4f3520;
+}
+
+.address-route-preview__marker-copy small {
+  color: rgba(90, 70, 50, 0.8);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 860px) {
+  .address-details__header {
+    grid-template-columns: minmax(0, 1.3fr) minmax(15rem, 0.9fr);
+    align-items: start;
+  }
+
+  .address-details__field-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 759px) {
+  .address-details {
+    padding: 1rem;
+    border-radius: 22px;
+  }
+
+  .address-details__record-head {
+    flex-direction: column;
+  }
+
+  .address-route-preview__header {
+    flex-direction: column;
+  }
+
+  .address-route-preview__map,
+  .address-route-preview__map iframe,
+  .address-route-preview__fallback {
+    min-height: 240px;
+  }
+}

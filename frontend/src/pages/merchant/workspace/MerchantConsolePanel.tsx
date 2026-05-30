@@ -1,9 +1,10 @@
-import type { MerchantConsolePanelProps } from '@/merchant/app/state/MerchantConsoleState'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+import type { MerchantConsolePanelProps } from '@/pages/merchant/hooks/MerchantConsoleState'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/merchant/console/shell/MerchantConsoleCopy'
+import { MerchantDeliveryRoutePanel } from '@/pages/merchant/workspace/MerchantDeliveryRoutePanel'
 import { MerchantStoreModule } from '@/pages/merchant/console/shell/MerchantStoreModule'
 import { MerchantStoreSummaryCard } from '@/pages/merchant/console/shell/MerchantStoreSummaryCard'
-import { ORDER_STATUS, type OrderSummary, type Store } from '@/shared/object/core/SharedObjects'
+import { ORDER_STATUS, type OrderSummary, type Store } from '@/objects/core/SharedObjects'
 
 function getPendingMerchantOrders(orders: OrderSummary[]) {
   return orders.filter(
@@ -28,6 +29,7 @@ export function MerchantConsolePanel(props: MerchantConsolePanelProps) {
     <Panel title={MERCHANT_CONSOLE_COPY.panel.title} description={MERCHANT_CONSOLE_COPY.panel.description}>
       {merchantStores.length > 0 ? (
         <div className="merchant-store-list">
+          <MerchantDeliveryRoutePanel {...props} />
           {activeMerchantStore ? (
             <div className="summary-bar merchant-store-single-bar">
               <div>

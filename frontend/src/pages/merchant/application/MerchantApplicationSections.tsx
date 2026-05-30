@@ -1,13 +1,13 @@
-import type { MerchantRoleProps } from '@/shared/app/role-props'
-import { DisplayImageSlot } from '@/shared/components/primitives/DisplayImageSlot'
-import type { MerchantApplication } from '@/shared/object/core/SharedObjects'
-import { APPLICATION_STATUS, ROLE } from '@/shared/object/core/SharedObjects'
+import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
+import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
+import type { MerchantApplication } from '@/objects/core/SharedObjects'
+import { APPLICATION_STATUS, ROLE } from '@/objects/core/SharedObjects'
 import {
   buildMerchantApplicationSubmitRoute,
   MERCHANT_APPLICATION_VIEW,
   MERCHANT_FORM_FIELD,
   type MerchantRoutePath,
-} from '@/shared/object/core/DeliveryAppObjects'
+} from '@/objects/page/DeliveryAppObjects'
 
 type MerchantApplicationView = MerchantRoleProps['merchantApplicationView']
 
@@ -57,6 +57,7 @@ function MerchantApplicationRecord({
         <span className={badgeClassName}>{badgeText}</span>
       </div>
       <p>商家 {application.merchantName} · {application.category} · 预计出餐 {application.avgPrepMinutes} 分钟</p>
+      <p className="meta-line">店铺地址 {application.storeAddress}</p>
       <p className="meta-line">营业时间 {formatBusinessHours(application.businessHours)}</p>
       <p className="meta-line">
         提交于 {formatTime(application.submittedAt)}
@@ -154,6 +155,11 @@ export function MerchantApplicationForm(props: Pick<
             {STORE_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
           </select>
           {merchantFormErrors.category ? <small className="field-error-text">{merchantFormErrors.category}</small> : null}
+        </label>
+        <label className="full">
+          <span>店铺地址</span>
+          <input aria-invalid={Boolean(merchantFormErrors.storeAddress)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.storeAddress))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.storeAddress)} value={merchantDraft.storeAddress} onChange={(event) => { setMerchantDraft((current) => ({ ...current, storeAddress: event.target.value })); setMerchantFormErrors((current) => ({ ...current, storeAddress: undefined })) }} />
+          {merchantFormErrors.storeAddress ? <small className="field-error-text">{merchantFormErrors.storeAddress}</small> : <small className="field-hint">填写真实门牌地址，后续地图与路线能力将基于这里定位。</small>}
         </label>
         <label>
           <span>预计出餐时间</span>

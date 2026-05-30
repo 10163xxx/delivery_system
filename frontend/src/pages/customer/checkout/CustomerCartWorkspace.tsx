@@ -5,17 +5,19 @@ import {
   CustomerCheckoutPaymentSummary,
   CustomerCheckoutPriceSummary,
 } from '@/pages/customer/checkout/CustomerCheckoutBlocks'
+import { CustomerDeliveryRoutePanel } from '@/pages/customer/checkout/CustomerDeliveryRoutePanel'
 import {
   CUSTOMER_CHECKOUT_COPY,
 } from '@/pages/customer/checkout/CustomerCheckoutCopy'
-import type { CheckoutPanelProps } from '@/pages/customer/object/CustomerPageObjects'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { ROUTE_PATH, type MenuItem } from '@/shared/object/core/SharedObjects'
-import { buildCustomerOrderStoreRoute } from '@/shared/object/core/DeliveryAppObjects'
+import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
+import { ROUTE_PATH, type MenuItem } from '@/objects/core/SharedObjects'
+import { buildCustomerOrderStoreRoute } from '@/objects/page/DeliveryAppObjects'
 import {
+  getMenuItemConfiguredUnitPriceCents,
   hasSelectedRequiredCategoryItem,
   storeHasRequiredMenuCategory,
-} from '@/shared/delivery/DeliveryServices'
+} from '@/features/delivery/DeliveryServices'
 
 function getSelectedCartItems(props: CheckoutPanelProps) {
   return (
@@ -101,12 +103,17 @@ export function CustomerCartWorkspace(props: CheckoutPanelProps & { navigate: Na
                   >
                     {CUSTOMER_CHECKOUT_COPY.cart.increaseQuantityButton}
                   </button>
-                  <strong>{formatPrice(item.priceCents * quantity)}</strong>
+                  <strong>
+                    {formatPrice(
+                      getMenuItemConfiguredUnitPriceCents(item, selectedConfiguration) * quantity,
+                    )}
+                  </strong>
                 </div>
               </div>
             )
           })}
         </div>
+        <CustomerDeliveryRoutePanel {...props} />
         <div className="form-grid">
           <CustomerCheckoutFormFields {...props} />
           <CustomerCheckoutPriceSummary {...props} />

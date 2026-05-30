@@ -2,13 +2,13 @@ import type {
   MerchantProfileOverviewMetricsProps,
   MerchantProfileOverviewSidebarProps,
   MerchantProfileWithdrawalSectionProps,
-} from '@/pages/merchant/object/MerchantPageObjects'
-import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery/DeliveryServices'
+} from '@/objects/merchant/page/MerchantPageObjects'
+import { DELIVERY_CONSOLE_MESSAGES } from '@/features/delivery/DeliveryServices'
 import {
   PAYOUT_ACCOUNT_TYPE,
   ROUTE_PATH,
   type MerchantWithdrawal,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 
 function getMerchantTrendSummary(merchantMonthlyTrend: MerchantProfileOverviewSidebarProps['merchantMonthlyTrend']) {
   return {

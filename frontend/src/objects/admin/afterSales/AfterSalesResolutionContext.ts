@@ -1,0 +1,15 @@
+import type { AdminTicket } from '@/objects/admin/afterSales/AdminTicket'
+import type { OrderSummary } from '@/objects/order/core/OrderSummary'
+import type {
+  AfterSalesRequestType,
+  AfterSalesResolutionMode,
+  ResolveAfterSalesRequest,
+} from '@/objects/core/SharedObjects'
+
+export type AfterSalesResolutionContext = {
+  request: ResolveAfterSalesRequest
+  ticket: AdminTicket
+  order: OrderSummary
+  requestType: AfterSalesRequestType
+  resolutionMode: AfterSalesResolutionMode
+}

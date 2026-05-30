@@ -6,7 +6,7 @@ import domain.shared.given
 
 import cats.effect.IO
 import domain.merchant.ImageUploadResponse
-import domain.shared.{FileNameText, MediaTypeText, UploadDefaults, UserRole}
+import domain.shared.*
 import merchant.app.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
@@ -25,8 +25,8 @@ val uploadMerchantStoreImageRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
             filePart.body.compile.to(Array).flatMap { bytes =>
               val mediaType = filePart.headers.get[`Content-Type`].map(_.mediaType.toString)
               saveMerchantStoreImage(
-                filePart.filename.map(value => new FileNameText(value)),
-                mediaType.map(value => new MediaTypeText(value)),
+                filePart.filename.map(fileNameText),
+                mediaType.map(mediaTypeText),
                 bytes,
               ).flatMap(handleUploadResult)
             }

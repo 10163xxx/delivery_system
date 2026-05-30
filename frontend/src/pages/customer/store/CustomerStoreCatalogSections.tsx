@@ -1,12 +1,17 @@
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import { ACCOUNT_STATUS, type Store } from '@/shared/object/core/SharedObjects'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import type { Store } from '@/objects/core/SharedObjects'
 import { CustomerStoreResultCard } from '@/pages/customer/store/CustomerStoreResultCard'
-import type { RecentFrequentStore } from '@/pages/customer/object/CustomerPageObjects'
-import { CUSTOMER_STORE_VISIBILITY } from '@/shared/object/core/DeliveryAppObjects'
+import { CUSTOMER_STORE_VISIBILITY } from '@/objects/page/DeliveryAppObjects'
 import {
+  CUSTOMER_STORE_RESULT_COPY,
   CUSTOMER_STORE_BROWSE_COPY,
   CUSTOMER_STORE_BROWSE_LAYOUT,
-} from '@/shared/delivery/DeliveryMessages'
+} from '@/features/delivery/DeliveryMessages'
+import {
+  CUSTOMER_FAVORITE_STORE_CATEGORY,
+  getStoreDeliveryQuote,
+} from '@/features/delivery/DeliveryServices'
+import { buildAddressMapEmbedUrl } from '@/components/address/AddressMapLinks'
 
 const SEARCH_HISTORY_WRAPPER_STYLE = {
   flex: 1,
@@ -165,19 +170,24 @@ export function CustomerStatusBar({ props }: { props: CustomerRoleProps }) {
 
   if (!selectedCustomer) return null
 
+  const addressMapUrl = buildAddressMapEmbedUrl(selectedCustomer.defaultAddress)
+
   return (
-    <div className="summary-bar">
-      <div>
-        <p>{CUSTOMER_STORE_BROWSE_COPY.customerStatusLabel}</p>
-        <strong>
-          {selectedCustomer.accountStatus === ACCOUNT_STATUS.suspended
-            ? CUSTOMER_STORE_BROWSE_COPY.customerStatusSuspended
-            : CUSTOMER_STORE_BROWSE_COPY.customerStatusActive}
-        </strong>
-      </div>
-      <div>
-        <p>{CUSTOMER_STORE_BROWSE_COPY.reviewRevokedCountLabel}</p>
-        <strong>{selectedCustomer.revokedReviewCount}</strong>
+    <div className="summary-bar customer-home-status">
+      <div className="customer-home-address">
+        <div>
+          <p>当前收货地址</p>
+          <strong>{selectedCustomer.defaultAddress}</strong>
+        </div>
+        {addressMapUrl ? (
+          <iframe
+            className="customer-home-address-map"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            src={addressMapUrl}
+            title="当前收货地址地图"
+          />
+        ) : null}
       </div>
     </div>
   )
@@ -187,79 +197,77 @@ export function RecentFrequentStoresPanel({ props }: { props: CustomerRoleProps 
   const {
     addPreviousOrderToCart,
     enterStore,
+    favoriteStoreIds,
     formatTime,
     recentFrequentStores,
     repeatOrder,
+    toggleBlockedStore,
+    toggleFavoriteStore,
   } = props
   const visibleFrequentStores = recentFrequentStores.filter(
     (entry): entry is NonNullable<typeof entry> => entry != null,
   )
+  const featuredFrequentStore = visibleFrequentStores[0] ?? null
 
-  if (visibleFrequentStores.length === 0) return null
+  if (!featuredFrequentStore) return null
 
   return (
-    <section className="order-section-card">
-      <div className="order-section-header">
-        <div>
+    <section className="recent-frequent-section">
+      <div className="recent-frequent-strip">
+        <div className="recent-frequent-heading">
           <p className="ticket-kind">{CUSTOMER_STORE_BROWSE_COPY.recentFrequentCardTitle}</p>
-          <h3>{CUSTOMER_STORE_BROWSE_COPY.recentFrequentSectionSubtitle}</h3>
+          <h3>{featuredFrequentStore.storeName}</h3>
         </div>
-      </div>
-      <div className="store-grid compact-store-grid">
-        {visibleFrequentStores.map((entry: RecentFrequentStore) => (
-          <article key={entry.storeId} className="store-card compact-store-card">
-            <div className="compact-store-content">
-              <div className="ticket-header">
-                <div>
-                  <p className="ticket-kind">{entry.category}</p>
-                  <h3>{entry.storeName}</h3>
-                </div>
-                <span className="badge success">
-                  {`${entry.orderCount}${CUSTOMER_STORE_BROWSE_COPY.recentFrequentCountSuffix}`}
-                </span>
-              </div>
-              <div className="summary-bar compact-store-summary">
-                <div>
-                  <p>{CUSTOMER_STORE_BROWSE_COPY.recentFrequentLastOrderedLabel}</p>
-                  <strong>{formatTime(entry.lastOrderedAt)}</strong>
-                </div>
-                <div>
-                  <p>{CUSTOMER_STORE_BROWSE_COPY.recentFrequentTopItemsLabel}</p>
-                  <strong>{entry.topItems.length}</strong>
-                </div>
-              </div>
-              <p className="meta-line">
-                {entry.topItems.length > 0
-                  ? `${CUSTOMER_STORE_BROWSE_COPY.recentFrequentTopItemsPrefix}${entry.topItems.join('、')}`
-                  : CUSTOMER_STORE_BROWSE_COPY.recentFrequentEmptyHint}
-              </p>
-              <div className="action-row">
-                <button
-                  className="primary-button"
-                  onClick={() => addPreviousOrderToCart(entry.latestOrder)}
-                  type="button"
-                >
-                  {CUSTOMER_STORE_BROWSE_COPY.recentFrequentAddToCartButton}
-                </button>
-                <button
-                  className="secondary-button"
-                  onClick={() => repeatOrder(entry.latestOrder)}
-                  type="button"
-                >
-                  {CUSTOMER_STORE_BROWSE_COPY.recentFrequentRepeatOrderButton}
-                </button>
-                <button
-                  className="secondary-button"
-                  onClick={() => enterStore(entry.storeId)}
-                  disabled={!entry.canOrder}
-                  type="button"
-                >
-                  {CUSTOMER_STORE_BROWSE_COPY.recentFrequentEnterStoreButton}
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
+        <span className="badge success">
+          {`${featuredFrequentStore.orderCount}${CUSTOMER_STORE_BROWSE_COPY.recentFrequentCountSuffix}`}
+        </span>
+        <p className="meta-line recent-frequent-meta">
+          {`${featuredFrequentStore.category} · ${CUSTOMER_STORE_BROWSE_COPY.recentFrequentLastOrderedLabel} ${formatTime(featuredFrequentStore.lastOrderedAt)} · ${
+            featuredFrequentStore.topItems.length > 0
+              ? `${CUSTOMER_STORE_BROWSE_COPY.recentFrequentTopItemsPrefix}${featuredFrequentStore.topItems.join('、')}`
+              : CUSTOMER_STORE_BROWSE_COPY.recentFrequentEmptyHint
+          }`}
+        </p>
+        <div className="action-row recent-frequent-actions">
+          <button
+            className="primary-button recent-frequent-button"
+            onClick={() => addPreviousOrderToCart(featuredFrequentStore.latestOrder)}
+            type="button"
+          >
+            {CUSTOMER_STORE_BROWSE_COPY.recentFrequentAddToCartButton}
+          </button>
+          <button
+            className="secondary-button recent-frequent-button"
+            onClick={() => repeatOrder(featuredFrequentStore.latestOrder)}
+            type="button"
+          >
+            {CUSTOMER_STORE_BROWSE_COPY.recentFrequentRepeatOrderButton}
+          </button>
+          <button
+            className="secondary-button recent-frequent-button"
+            onClick={() => enterStore(featuredFrequentStore.storeId)}
+            disabled={!featuredFrequentStore.canOrder}
+            type="button"
+          >
+            {CUSTOMER_STORE_BROWSE_COPY.recentFrequentEnterStoreButton}
+          </button>
+          <button
+            className="secondary-button recent-frequent-button"
+            onClick={() => toggleFavoriteStore(featuredFrequentStore.storeId)}
+            type="button"
+          >
+            {favoriteStoreIds.includes(featuredFrequentStore.storeId)
+              ? CUSTOMER_STORE_RESULT_COPY.unfavoriteStoreButton
+              : CUSTOMER_STORE_RESULT_COPY.favoriteStoreButton}
+          </button>
+          <button
+            className="secondary-button recent-frequent-button"
+            onClick={() => toggleBlockedStore(featuredFrequentStore.storeId)}
+            type="button"
+          >
+            {CUSTOMER_STORE_RESULT_COPY.blockStoreButton}
+          </button>
+        </div>
       </div>
     </section>
   )
@@ -271,46 +279,64 @@ export function StoreCategoryGrid({ props }: { props: CustomerRoleProps }) {
     visibleStores,
     getCategoryMeta,
     chooseStoreCategory,
+    favoriteStores,
     isStoreCurrentlyOpen,
   } = props
 
-      return (
+  return (
     <div className="store-grid">
       {storeCategories.map((category: CustomerRoleProps['storeCategories'][number]) => {
-        const storesInCategory = visibleStores.filter((store: Store) => store.category === category)
+        const storesInCategory =
+          category === CUSTOMER_FAVORITE_STORE_CATEGORY
+            ? favoriteStores
+            : visibleStores.filter((store: Store) => store.category === category)
         const openStoreCount = storesInCategory.filter(
           (store: Store) => isStoreCurrentlyOpen(store) && store.menu.length > 0,
         ).length
+        const isFavoriteCategory = category === CUSTOMER_FAVORITE_STORE_CATEGORY
+        const categoryImageSrc = isFavoriteCategory
+          ? '/mascots/delivery-buddy.svg'
+          : getCategoryMeta(category).imageSrc
+        const categorySubtitle = isFavoriteCategory
+          ? CUSTOMER_STORE_BROWSE_COPY.favoriteCategoryDescription
+          : getCategoryMeta(category).subtitle
+        const categoryTicketKind = isFavoriteCategory
+          ? CUSTOMER_STORE_BROWSE_COPY.favoriteCategoryTicketKind
+          : CUSTOMER_STORE_BROWSE_COPY.categoryTicketKind
+        const categoryButtonLabel = isFavoriteCategory
+          ? CUSTOMER_STORE_BROWSE_COPY.favoriteCategoryButton
+          : CUSTOMER_STORE_BROWSE_COPY.chooseCategoryButton
+        const categoryHint = isFavoriteCategory && storesInCategory.length === 0
+          ? CUSTOMER_STORE_BROWSE_COPY.favoriteCategoryEmptyHint
+          : CUSTOMER_STORE_BROWSE_COPY.categoryOrderableCoverageSummary(
+              openStoreCount,
+              storesInCategory.length,
+            )
 
         return (
           <article key={category} className="store-card category-card">
             <img
               alt={CUSTOMER_STORE_BROWSE_COPY.categoryImageAlt(category)}
               className="category-image"
-              src={getCategoryMeta(category).imageSrc}
+              src={categoryImageSrc}
             />
             <div className="ticket-header">
               <div>
-                <p className="ticket-kind">{CUSTOMER_STORE_BROWSE_COPY.categoryTicketKind}</p>
+                <p className="ticket-kind">{categoryTicketKind}</p>
                 <h3 className="category-title">{category}</h3>
               </div>
               <span className="badge">
                 {`${storesInCategory.length}${CUSTOMER_STORE_BROWSE_COPY.categoryStoreCountSuffix}`}
               </span>
             </div>
-            <p className="category-description">{getCategoryMeta(category).subtitle}</p>
-            <p className="meta-line">
-              {CUSTOMER_STORE_BROWSE_COPY.categoryOrderableCoverageSummary(
-                openStoreCount,
-                storesInCategory.length,
-              )}
-            </p>
+            <p className="category-description">{categorySubtitle}</p>
+            <p className="meta-line">{categoryHint}</p>
             <button
               className="primary-button"
               onClick={() => chooseStoreCategory(category)}
               type="button"
             >
-              {CUSTOMER_STORE_BROWSE_COPY.chooseCategoryButton}
+              {categoryButtonLabel}
             </button>
           </article>
         )
@@ -331,15 +357,29 @@ export function StoreResultsGrid({
     customerStoreSearch,
     setCustomerStoreSearch,
     resetStoreCategory,
+    favoriteStoreIds,
+    formatPrice,
+    toggleBlockedStore,
+    toggleFavoriteStore,
     formatStoreAvailability,
     formatAggregateRating,
     formatTime,
     isStoreCurrentlyOpen,
     enterStore,
     monthlyOrdersByStore,
+    selectedCustomer,
     storeBrowseHighlights,
     storeCustomerReviews,
   } = props
+  const referenceAddress = selectedCustomer?.defaultAddress ?? ''
+  const distanceSortedStores = storesToBrowse
+    .slice()
+    .sort(
+      (left: Store, right: Store) =>
+        getStoreDeliveryQuote(left, referenceAddress).distanceKm - getStoreDeliveryQuote(right, referenceAddress).distanceKm ||
+        right.averageRating - left.averageRating ||
+        right.ratingCount - left.ratingCount,
+    )
 
   return (
     <>
@@ -355,7 +395,7 @@ export function StoreResultsGrid({
               CUSTOMER_STORE_BROWSE_COPY.searchResultKeyword(customerStoreSearch.trim())}
           </strong>
           <p className="meta-line">
-            {CUSTOMER_STORE_BROWSE_COPY.searchResultSummary(storesToBrowse.length)}
+            {`${CUSTOMER_STORE_BROWSE_COPY.searchResultSummary(distanceSortedStores.length)} · 已按配送距离由近到远排序`}
           </p>
         </div>
         <button
@@ -381,7 +421,7 @@ export function StoreResultsGrid({
       </div>
 
       <div className="store-grid compact-store-grid">
-        {storesToBrowse.map((store: Store) => {
+        {distanceSortedStores.map((store: Store) => {
           const reviews = storeCustomerReviews[store.id] ?? []
           return (
             <CustomerStoreResultCard
@@ -389,11 +429,16 @@ export function StoreResultsGrid({
               props={{
                 enterStore,
                 formatAggregateRating,
+                formatPrice,
                 formatStoreAvailability,
                 formatTime,
                 isStoreCurrentlyOpen,
                 monthlyOrdersByStore,
+                selectedCustomer,
                 storeBrowseHighlights,
+                favoriteStoreIds,
+                toggleBlockedStore,
+                toggleFavoriteStore,
               }}
               reviews={reviews.slice(0, 2)}
               store={store}
@@ -414,6 +459,8 @@ export function StoreBrowseEmptyState({ props }: { props: CustomerRoleProps }) {
     <div className="empty-card">
       {customerStoreSearch.trim()
         ? CUSTOMER_STORE_BROWSE_COPY.emptySearchResult
+        : props.selectedStoreCategory === CUSTOMER_FAVORITE_STORE_CATEGORY
+          ? CUSTOMER_STORE_BROWSE_COPY.emptyFavoriteCategoryResult
         : showOrderableOnly
           ? CUSTOMER_STORE_BROWSE_COPY.switchToAllStoresHint
           : CUSTOMER_STORE_BROWSE_COPY.emptyCategoryResult}

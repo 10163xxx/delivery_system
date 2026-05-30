@@ -1,5 +1,5 @@
-import type { RiderRoleProps } from '@/shared/app/role-props'
-import { RIDER_CONSOLE_COPY } from '@/pages/rider/object/RiderWorkspaceObjects'
+import type { RiderRoleProps } from '@/pages/delivery/app/roleProps'
+import { RIDER_CONSOLE_COPY } from '@/objects/rider/page/RiderWorkspaceObjects'
 import { OrderChatPanel } from '@/pages/order/OrderChatPanel'
 import {
   APPEAL_ROLE,
@@ -9,18 +9,13 @@ import {
   ROLE,
   type DisplayText,
   type OrderId,
-} from '@/shared/object/core/SharedObjects'
+} from '@/objects/core/SharedObjects'
 
 function RiderOrderActionButtons({ order, props }: { order: RiderRoleProps['riderOrders'][number], props: RiderRoleProps }) {
-  const { assignRider, deliverOrder, pickupOrder, runAction, selectedRiderId } = props
+  const { deliverOrder, pickupOrder, runAction, selectedRiderId } = props
 
   return (
     <>
-      {order.status === ORDER_STATUS.readyForPickup && !order.riderId ? (
-        <button className="primary-button" onClick={() => void runAction(() => assignRider(order.id, { riderId: selectedRiderId }))} type="button">
-          抢单
-        </button>
-      ) : null}
       {order.status === ORDER_STATUS.readyForPickup && order.riderId === selectedRiderId ? (
         <button className="secondary-button" onClick={() => void runAction(() => pickupOrder(order.id))} type="button">
           已取餐

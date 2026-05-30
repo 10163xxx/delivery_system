@@ -1,6 +1,6 @@
-import type { MerchantRoleProps } from '@/shared/app/role-props'
-import { MERCHANT_APPLICATION_VIEW } from '@/shared/object/core/DeliveryAppObjects'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
+import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
+import { MERCHANT_APPLICATION_VIEW } from '@/objects/page/DeliveryAppObjects'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
 import {
   MerchantApplicationForm,
   MerchantApplicationTabs,

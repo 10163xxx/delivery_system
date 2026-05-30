@@ -18,6 +18,7 @@ final case class MerchantApplication(
     merchantName: PersonName,
     storeName: DisplayText,
     category: DisplayText,
+    storeAddress: AddressText,
     businessHours: BusinessHours,
     avgPrepMinutes: Minutes,
     imageUrl: Option[ImageUrl],
@@ -33,6 +34,7 @@ object MerchantApplication:
       merchantName: PersonName,
       storeName: DisplayText,
       category: DisplayText,
+      storeAddress: AddressText,
       businessHours: BusinessHours,
       avgPrepMinutes: Minutes,
       imageUrl: Option[ImageUrl],
@@ -47,6 +49,7 @@ object MerchantApplication:
       merchantName = merchantName,
       storeName = storeName,
       category = category,
+      storeAddress = storeAddress,
       businessHours = businessHours,
       avgPrepMinutes = avgPrepMinutes,
       imageUrl = imageUrl,
@@ -77,6 +80,7 @@ object MerchantApplication:
       merchantName <- cursor.get[PersonName]("merchantName")
       storeName <- cursor.get[DisplayText]("storeName")
       category <- cursor.get[DisplayText]("category")
+      storeAddress <- cursor.getOrElse[AddressText]("storeAddress")(new AddressText(""))
       businessHours <- cursor.getOrElse[BusinessHours]("businessHours")(BusinessHours.Default)
       avgPrepMinutes <- cursor.get[Minutes]("avgPrepMinutes")
       imageUrl <- cursor.get[Option[ImageUrl]]("imageUrl")
@@ -90,6 +94,7 @@ object MerchantApplication:
       merchantName = merchantName,
       storeName = storeName,
       category = category,
+      storeAddress = storeAddress,
       businessHours = businessHours,
       avgPrepMinutes = avgPrepMinutes,
       imageUrl = imageUrl,

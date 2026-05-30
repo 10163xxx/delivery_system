@@ -1,5 +1,5 @@
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import type { CustomerStoreTab } from '@/pages/customer/object/CustomerPageObjects'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import type { CustomerStoreTab } from '@/objects/customer/page/CustomerPageObjects'
 import {
   CustomerStatusBar,
   RecentFrequentStoresPanel,
@@ -11,7 +11,8 @@ import {
 } from '@/pages/customer/store/CustomerStoreCatalogSections'
 import { SelectedStoreBanner } from '@/pages/customer/store/CustomerSelectedStorePanel'
 import type { Dispatch, SetStateAction } from 'react'
-import { CUSTOMER_STORE_VISIBILITY } from '@/shared/object/core/DeliveryAppObjects'
+import { CUSTOMER_STORE_VISIBILITY } from '@/objects/page/DeliveryAppObjects'
+import { getStoreDeliveryQuote } from '@/features/delivery/DeliveryServices'
 
 export function CustomerStoreBrowse(
   props: CustomerRoleProps & {
@@ -27,16 +28,26 @@ export function CustomerStoreBrowse(
     customerStoreVisibility,
     isStoreCurrentlyOpen,
     recentFrequentStores,
+    selectedCustomer,
     visibleStores,
   } =
     props
+  const referenceAddress = selectedCustomer?.defaultAddress ?? ''
   const hasStoreSearch = customerStoreSearch.trim().length > 0
   const showOrderableOnly = customerStoreVisibility === CUSTOMER_STORE_VISIBILITY.orderableOnly
   const filteredVisibleStores = showOrderableOnly
-    ? visibleStores.filter((store) => isStoreCurrentlyOpen(store) && store.menu.length > 0)
+    ? visibleStores.filter((store) =>
+        isStoreCurrentlyOpen(store) &&
+        store.menu.length > 0 &&
+        getStoreDeliveryQuote(store, referenceAddress).isDeliverable,
+      )
     : visibleStores
   const filteredCategoryStores = showOrderableOnly
-    ? categoryStores.filter((store) => isStoreCurrentlyOpen(store) && store.menu.length > 0)
+    ? categoryStores.filter((store) =>
+        isStoreCurrentlyOpen(store) &&
+        store.menu.length > 0 &&
+        getStoreDeliveryQuote(store, referenceAddress).isDeliverable,
+      )
     : categoryStores
   const filteredRecentFrequentStores = showOrderableOnly
     ? recentFrequentStores.filter((entry) => entry.canOrder)

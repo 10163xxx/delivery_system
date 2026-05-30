@@ -1,12 +1,13 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import { CUSTOMER_STORE_TAB, type CustomerStoreTab, type StoreCustomerReview } from '@/pages/customer/object/CustomerPageObjects'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import { CUSTOMER_STORE_TAB, type CustomerStoreTab, type StoreCustomerReview } from '@/objects/customer/page/CustomerPageObjects'
 import {
   SelectedStoreReviewSection,
   SelectedStoreTabs,
   SelectedStoreToolbar,
 } from '@/pages/customer/store/CustomerSelectedStoreSections'
-import { SELECTED_STORE_COPY } from '@/shared/delivery/DeliveryMessages'
+import { CustomerCheckoutBody } from '@/pages/customer/checkout/CustomerCheckoutBody'
+import { SELECTED_STORE_COPY } from '@/features/delivery/DeliveryMessages'
 
 export function StoreReviewList({
   emptyText,
@@ -101,11 +102,14 @@ export function SelectedStoreBanner({
         <SelectedStoreTabs selectedStoreName={selectedStore.name} selectedStoreTab={selectedStoreTab} setSelectedStoreTab={setSelectedStoreTab} />
 
         {selectedStoreTab === CUSTOMER_STORE_TAB.menu ? (
-          <div className="store-detail-summary">
-            <p className="ticket-kind">{SELECTED_STORE_COPY.menuTicketKind}</p>
-            <h3>{selectedStore.name}</h3>
-            <p className="meta-line">{SELECTED_STORE_COPY.menuTabHint}</p>
-          </div>
+          <>
+            <div className="store-detail-summary">
+              <p className="ticket-kind">{SELECTED_STORE_COPY.menuTicketKind}</p>
+              <h3>{selectedStore.name}</h3>
+              <p className="meta-line">{SELECTED_STORE_COPY.menuTabHint}</p>
+            </div>
+            <CustomerCheckoutBody {...props} />
+          </>
         ) : (
           <SelectedStoreReviewSection props={props} />
         )}

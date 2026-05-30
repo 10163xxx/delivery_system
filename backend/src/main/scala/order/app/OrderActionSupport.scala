@@ -77,10 +77,11 @@ def lineItemSubtotalCents(items: List[OrderLineItem]): CurrencyCents =
 def calculateOrderPriceBreakdown(
     itemSubtotalCents: CurrencyCents,
     appliedCoupon: Option[Coupon],
+    deliveryFeeCents: CurrencyCents,
 ): OrderPriceBreakdown =
-  val couponDiscountCents = calculateCouponDiscount(appliedCoupon, itemSubtotalCents, DeliveryFeeCents)
+  val couponDiscountCents = calculateCouponDiscount(appliedCoupon, itemSubtotalCents, deliveryFeeCents)
   val totalPriceCents =
-    Math.max(NumericDefaults.ZeroCurrencyCents, itemSubtotalCents + DeliveryFeeCents - couponDiscountCents)
+    Math.max(NumericDefaults.ZeroCurrencyCents, itemSubtotalCents + deliveryFeeCents - couponDiscountCents)
   OrderPriceBreakdown(
     itemSubtotalCents = itemSubtotalCents,
     couponDiscountCents = couponDiscountCents,
@@ -121,6 +122,7 @@ def createPendingOrder(
     customer: Customer,
     store: Store,
     deliveryAddress: AddressText,
+    deliveryFeeCents: CurrencyCents,
     scheduledDeliveryAt: IsoDateTime,
     remark: Option[NoteText],
     items: List[OrderLineItem],
@@ -142,7 +144,7 @@ def createPendingOrder(
     remark = remark,
     items = items,
     itemSubtotalCents = priceBreakdown.itemSubtotalCents,
-    deliveryFeeCents = DeliveryFeeCents,
+    deliveryFeeCents = deliveryFeeCents,
     couponDiscountCents = priceBreakdown.couponDiscountCents,
     appliedCoupon = appliedCoupon,
     totalPriceCents = priceBreakdown.totalPriceCents,

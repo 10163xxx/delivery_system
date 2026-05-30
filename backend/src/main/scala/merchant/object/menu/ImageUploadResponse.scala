@@ -6,7 +6,7 @@ import domain.shared.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 
-final case class ImageUploadResponse(url: ExternalUrl)
+final case class ImageUploadResponse(url: ImageUrl)
 object ImageUploadResponse:
   given Encoder[ImageUploadResponse] = deriveEncoder
   given Decoder[ImageUploadResponse] = deriveDecoder

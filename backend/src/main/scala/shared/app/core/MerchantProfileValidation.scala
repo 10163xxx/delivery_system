@@ -5,15 +5,15 @@ import domain.shared.given
 import domain.merchant.*
 import domain.shared.*
 
-private val emptyProfilePhoneNumber = new PhoneNumber("")
+private val emptyProfilePhoneNumber = wrapText[PhoneNumber]("")
 
-private def profileText(value: String): DisplayText = new DisplayText(value)
+private def profileText(value: String): DisplayText = wrapText[DisplayText](value)
 
 private def profileShowValue[T](value: T)(using renderer: DisplayTextRenderer[T]): DisplayText =
   renderer.render(value)
 
 private def profileJoinText(parts: DisplayText*): DisplayText =
-  new DisplayText(parts.map(_.raw).mkString)
+  wrapText[DisplayText](parts.map(_.raw).mkString)
 
 def findOrCreateMerchantProfile(
       state: DeliveryAppState,
@@ -46,13 +46,13 @@ def sanitizeContactPhone(value: PhoneNumber): Either[ErrorMessage, PhoneNumber] 
 def sanitizeMerchantPayoutAccount(
       account: MerchantPayoutAccount,
   ): Either[ErrorMessage, MerchantPayoutAccount] =
-    val bankName = account.bankName.map(value => new BankName(value.raw.trim)).filter(_.nonEmpty)
+    val bankName = account.bankName.map(value => wrapText[BankName](value.raw.trim)).filter(_.nonEmpty)
     for
       accountHolder <- sanitizeRequiredText(account.accountHolder, DeliveryValidationDefaults.PayoutAccountHolderMaxLength, ValidationMessages.Merchant.PayoutAccountHolderRequired)
       accountNumber <- sanitizeRequiredText(account.accountNumber, DeliveryValidationDefaults.PayoutAccountNumberMaxLength, ValidationMessages.Merchant.PayoutAccountNumberRequired)
       normalizedBankName <-
         if account.accountType == MerchantPayoutAccountType.Bank then
-          sanitizeRequiredText(bankName.getOrElse(new BankName("")), DeliveryValidationDefaults.BankNameMaxLength, ValidationMessages.Merchant.BankNameRequired).map(Some(_))
+          sanitizeRequiredText(bankName.getOrElse(wrapText[BankName]("")), DeliveryValidationDefaults.BankNameMaxLength, ValidationMessages.Merchant.BankNameRequired).map(Some(_))
         else Right(None)
       _ <- Either.cond(
         account.accountType != MerchantPayoutAccountType.Alipay || accountNumber.length >= DeliveryValidationDefaults.AlipayAccountMinLength,
@@ -84,7 +84,7 @@ def payoutAccountLabel(account: MerchantPayoutAccount): DisplayText =
         )
       case MerchantPayoutAccountType.Bank =>
         profileJoinText(
-          profileShowValue(account.bankName.getOrElse(new BankName(MerchantPayoutAccountType.BankLabel.raw))),
+          profileShowValue(account.bankName.getOrElse(wrapText[BankName](MerchantPayoutAccountType.BankLabel.raw))),
           profileText(" "),
           profileShowValue(account.accountHolder),
           profileText(" / "),

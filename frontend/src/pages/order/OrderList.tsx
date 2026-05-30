@@ -1,5 +1,5 @@
-import type { OrderListProps } from '@/pages/order/object/OrderPageObjects'
-import { ORDER_LIST_COPY } from '@/shared/delivery/DeliveryMessages'
+import type { OrderListProps } from '@/objects/order/page/OrderPageObjects'
+import { ORDER_LIST_COPY } from '@/features/delivery/DeliveryMessages'
 
 export function OrderList({
   orders,

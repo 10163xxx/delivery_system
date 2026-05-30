@@ -3,7 +3,7 @@ package auth.app
 import domain.shared.given
 
 import cats.effect.IO
-import database.{
+import table.{
   createPersistedAuthAccountWithSession,
   createPersistedAuthSession,
   deletePersistedAuthSession,
@@ -76,7 +76,7 @@ def register(request: RegisterRequest): IO[Either[ErrorMessage, AuthSession]] =
       findPersistedAuthAccountByUsername(username).flatMap {
         case Some(_) => IO.pure(Left(ValidationMessages.Auth.UsernameAlreadyExists))
         case None =>
-          val displayName = new PersonName(username.raw)
+          val displayName = personName(username.raw)
           registerUserProfile(request.role, displayName) match
             case Left(registerError) => IO.pure(Left(registerError))
             case Right(profileId) =>
@@ -96,7 +96,7 @@ private def createRegisteredSession(
     displayName: PersonName,
     linkedProfileId: Option[EntityId],
 ): IO[Either[ErrorMessage, AuthSession]] =
-  val account = AuthAccount(
+  val account = PersistedAuthAccount(
     id = nextAuthId(AuthDefaults.UserIdPrefix),
     username = username,
     passwordHash = hashPassword(password),
@@ -111,7 +111,7 @@ private def createRegisteredSession(
     _ <- createPersistedAuthAccountWithSession(account, token, authNow())
   yield Right(toSessionResponse(account, token))
 
-private def toSessionResponse(account: AuthAccount, token: SessionToken): AuthSession =
+private def toSessionResponse(account: PersistedAuthAccount, token: SessionToken): AuthSession =
   val displayName =
     if account.role == UserRole.customer then
       account.linkedProfileId.map(profileId => customerAlias(new CustomerId(profileId.raw))).getOrElse(account.displayName)
@@ -119,12 +119,13 @@ private def toSessionResponse(account: AuthAccount, token: SessionToken): AuthSe
 
   AuthSession(
     token = token,
-    user = AuthUser(
+    user = AuthAccount(
       id = account.id,
       username = account.username,
       role = account.role,
       displayName = displayName,
       linkedProfileId = account.linkedProfileId,
+      createdAt = account.createdAt,
     ),
   )
 
@@ -150,7 +151,7 @@ private def sanitizeAuthRequiredText[T](
   Either.cond(sanitized.raw.nonEmpty, wrapText(sanitized.raw), errorMessage)
 
 private def sanitizeAuthText[T](value: T, maxLength: EntityCount)(using wrapped: WrappedTextType[T]): DisplayText =
-  new DisplayText(
+  text(
     value.raw
       .trim
       .filter(character => !Character.isISOControl(character) || character == '\n' || character == '\t')
@@ -169,4 +170,4 @@ private def nextAuthToken(): SessionToken =
   UUID.randomUUID().toString.replace("-", "")
 
 private def authNow(): IsoDateTime =
-  new IsoDateTime(Instant.now().toString)
+  currentIsoDateTime()

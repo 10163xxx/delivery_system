@@ -5,7 +5,7 @@ import domain.shared.given
 import cats.effect.IO
 import auth.app.getSession
 import io.circe.syntax.*
-import domain.auth.AuthUser
+import domain.auth.AuthAccount
 import domain.merchant.ImageUploadResponse
 import domain.shared.{DeliveryAppState, ErrorMessage, HttpHeaders, SessionToken, UserRole}
 import org.http4s.Request
@@ -26,7 +26,7 @@ def handleUploadResult(result: Either[ErrorMessage, ImageUploadResponse]) =
     case Right(response) => Ok(response.asJson)
     case Left(message) => BadRequest(message)
 
-def withSession(req: Request[IO])(handle: AuthUser => IO[org.http4s.Response[IO]]) =
+def withSession(req: Request[IO])(handle: AuthAccount => IO[org.http4s.Response[IO]]) =
   readToken(req) match
     case Some(token) =>
       getSession(token).flatMap {
@@ -35,7 +35,7 @@ def withSession(req: Request[IO])(handle: AuthUser => IO[org.http4s.Response[IO]
       }
     case None => unauthorized(RouteMessages.LoginRequired)
 
-def withRole(req: Request[IO], role: UserRole)(handle: AuthUser => IO[org.http4s.Response[IO]]) =
+def withRole(req: Request[IO], role: UserRole)(handle: AuthAccount => IO[org.http4s.Response[IO]]) =
   withSession(req) { user =>
     if user.role == role then handle(user)
     else Forbidden(roleMismatch(role))

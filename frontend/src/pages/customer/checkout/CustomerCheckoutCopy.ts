@@ -1,7 +1,7 @@
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import type { CheckoutPanelProps } from '@/pages/customer/object/CustomerPageObjects'
-import { STORE_STATUS } from '@/shared/object/core/SharedObjects'
-import { MIN_SCHEDULE_LEAD_MINUTES } from '@/shared/delivery/DeliveryServices'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import { STORE_STATUS } from '@/objects/core/SharedObjects'
+import { MIN_SCHEDULE_LEAD_MINUTES } from '@/features/delivery/DeliveryServices'
 
 export const CUSTOMER_CHECKOUT_COPY = {
   panel: {
@@ -27,6 +27,7 @@ export const CUSTOMER_CHECKOUT_COPY = {
   store: {
     expandDisabledForClosedStore: '非营业时间',
     expandDisabledForIncompleteAddress: '先完善默认地址',
+    expandDisabledForOutOfRange: '超出 10 公里',
     expandDisabledForNoMenu: '暂无菜品可下单',
     expandDisabledForRevokedStore: '当前不可下单',
     storeOrderReady: '去购物车结算',
@@ -115,6 +116,7 @@ export function getCheckoutPrimaryActionLabel(props: CheckoutPanelProps) {
     customerRequiresDefaultAddressUpdate,
     isStoreCurrentlyOpen,
     selectedStore,
+    selectedStoreIsDeliverable,
     selectedStoreHasMenu,
   } = props
 
@@ -122,6 +124,7 @@ export function getCheckoutPrimaryActionLabel(props: CheckoutPanelProps) {
   if (customerRequiresDefaultAddressUpdate) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForIncompleteAddress
   if (selectedStore.status === STORE_STATUS.revoked) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForRevokedStore
   if (!isStoreCurrentlyOpen(selectedStore)) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForClosedStore
+  if (!selectedStoreIsDeliverable) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForOutOfRange
   return selectedStoreHasMenu
     ? CUSTOMER_CHECKOUT_COPY.store.storeOrderReady
     : CUSTOMER_CHECKOUT_COPY.store.expandDisabledForNoMenu

@@ -1,7 +1,7 @@
-import type { CustomerRoleProps } from '@/shared/app/role-props'
-import type { CustomerRolePanelProps } from '@/pages/customer/object/CustomerPageObjects'
-import { Panel } from '@/shared/components/primitives/LayoutPrimitives'
-import { ROUTE_PATH, type AddressEntry } from '@/shared/object/core/SharedObjects'
+import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
+import type { CustomerRolePanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import { Panel } from '@/components/primitives/LayoutPrimitives'
+import { ROUTE_PATH, type AddressEntry } from '@/objects/core/SharedObjects'
 import { CUSTOMER_PROFILE_COPY } from '@/pages/customer/profile/CustomerProfileCopy'
 
 function ReturnToProfileButton({ navigate }: Pick<CustomerRoleProps, 'navigate'>) {

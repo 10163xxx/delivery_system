@@ -1,4 +1,4 @@
-import { MAX_RATING, MIN_RATING } from '@/shared/delivery/DeliveryServices'
+import { MAX_RATING, MIN_RATING } from '@/features/delivery/DeliveryServices'
 
 export function StarRatingField({
   label,

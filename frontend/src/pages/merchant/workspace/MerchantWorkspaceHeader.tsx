@@ -1,11 +1,11 @@
-import type { MerchantRoleProps } from '@/shared/app/role-props'
+import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
 import {
   buildMerchantApplicationSubmitRoute,
   MERCHANT_WORKSPACE_VIEW,
   type MerchantWorkspaceRouteMeta,
   type MerchantWorkspaceView,
-} from '@/shared/object/core/DeliveryAppObjects'
-import { ROUTE_PATH } from '@/shared/object/core/SharedObjects'
+} from '@/objects/page/DeliveryAppObjects'
+import { ROUTE_PATH } from '@/objects/core/SharedObjects'
 
 const MERCHANT_WORKSPACE_VIEW_META: Record<MerchantWorkspaceView, MerchantWorkspaceRouteMeta> = {
   [MERCHANT_WORKSPACE_VIEW.application]: {

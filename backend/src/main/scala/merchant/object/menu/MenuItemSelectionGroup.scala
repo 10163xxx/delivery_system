@@ -10,7 +10,7 @@ final case class MenuItemSelectionGroup(
     name: DisplayText,
     minSelections: EntityCount,
     maxSelections: EntityCount,
-    options: List[DisplayText],
+    options: List[MenuItemSelectionOption],
 )
 object MenuItemSelectionGroup:
   given Encoder[MenuItemSelectionGroup] = deriveEncoder

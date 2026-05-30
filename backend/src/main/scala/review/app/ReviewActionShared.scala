@@ -79,7 +79,7 @@ private[app] def buildReviewAppeal(
       timestamp: IsoDateTime,
   ): ReviewAppeal =
     ReviewAppeal(
-      id = nextId(new DisplayText("apl")),
+      id = nextId(wrapText[DisplayText]("apl")),
       orderId = order.id,
       customerId = order.customerId,
       customerName = order.customerName,
@@ -114,7 +114,7 @@ private[app] def buildEligibilityReview(
       timestamp: IsoDateTime,
   ): EligibilityReview =
     EligibilityReview(
-      id = nextId(new DisplayText("eqr")),
+      id = nextId(wrapText[DisplayText]("eqr")),
       target = request.target,
       targetId = request.targetId,
       targetName = targetName,

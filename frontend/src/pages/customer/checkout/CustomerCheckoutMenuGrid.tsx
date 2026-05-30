@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CheckoutPanelProps } from '@/pages/customer/object/CustomerPageObjects'
-import { DisplayImageSlot } from '@/shared/components/primitives/DisplayImageSlot'
+import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
 import {
   Dialog,
   DialogContent,
@@ -8,17 +8,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/shared/components/ui/dialog'
-import type { MenuItem } from '@/shared/object/core/SharedObjects'
+} from '@/components/ui/dialog'
+import type { MenuItem } from '@/objects/core/SharedObjects'
 import {
   CUSTOMER_CHECKOUT_LAYOUT,
   CUSTOMER_CHECKOUT_COPY,
   getMenuItemQuantity,
 } from '@/pages/customer/checkout/CustomerCheckoutCopy'
 import {
+  formatPrice as formatPriceText,
+  getMenuItemDisplayPriceText,
   REQUIRED_MENU_CATEGORY_HASH,
   REQUIRED_MENU_CATEGORY_NAME,
-} from '@/shared/delivery/DeliveryServices'
+} from '@/features/delivery/DeliveryServices'
 
 type MenuCategorySection = {
   id: string
@@ -226,7 +228,7 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
                           ) : null}
                         </div>
                         <div className="menu-footer">
-                          <strong>{formatPrice(item.priceCents)}</strong>
+                          <strong>{getMenuItemDisplayPriceText(item, formatPrice)}</strong>
                           <div className="stepper">
                             <button type="button" onClick={() => updateQuantity(item, currentQuantity - 1)}>
                               -
@@ -328,15 +330,16 @@ function MenuItemConfigurationDialog(props: MenuItemConfigurationDialogProps) {
                   }}
                 >
                   {group.options.map((option) => {
-                    const selected = selectedOptions.includes(option)
+                    const selected = selectedOptions.includes(option.name)
                     return (
                       <button
-                        key={option}
+                        key={option.name}
                         type="button"
                         className={`secondary-button${selected ? ' is-active' : ''}`}
-                        onClick={() => toggleOption(group.name, option, group.maxSelections)}
+                        onClick={() => toggleOption(group.name, option.name, group.maxSelections)}
                       >
-                        {option}
+                        {option.name}
+                        {option.additionalPriceCents > 0 ? ` +${formatPriceText(option.additionalPriceCents)}` : ''}
                       </button>
                     )
                   })}

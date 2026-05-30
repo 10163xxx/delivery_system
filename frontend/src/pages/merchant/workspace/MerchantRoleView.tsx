@@ -1,10 +1,10 @@
-import { useMerchantConsoleState } from '@/merchant/app/state/MerchantConsoleState'
+import { useMerchantConsoleState } from '@/pages/merchant/hooks/MerchantConsoleState'
 import { MerchantApplicationPanel } from '@/pages/merchant/application/MerchantApplicationPanel'
 import { MerchantConsolePanel } from '@/pages/merchant/workspace/MerchantConsolePanel'
 import { MerchantProfilePanel } from '@/pages/merchant/profile/MerchantProfilePanel'
 import { MerchantWorkspaceHeader } from '@/pages/merchant/workspace/MerchantWorkspaceHeader'
-import { MERCHANT_WORKSPACE_VIEW } from '@/shared/object/core/DeliveryAppObjects'
-import type { MerchantRoleProps } from '@/shared/app/role-props'
+import { MERCHANT_WORKSPACE_VIEW } from '@/objects/page/DeliveryAppObjects'
+import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
 
 export function MerchantRoleView(props: MerchantRoleProps) {
   const { merchantWorkspaceView } = props

@@ -2,7 +2,7 @@ import {
   RIDER_CONSOLE_COPY,
   RIDER_WORKSPACE_VIEW,
   type RiderWorkspaceView,
-} from '@/pages/rider/object/RiderWorkspaceObjects'
+} from '@/objects/rider/page/RiderWorkspaceObjects'
 
 export function RiderWorkspaceTabs({
   workspaceView,
@@ -18,6 +18,8 @@ export function RiderWorkspaceTabs({
         <strong>
           {workspaceView === RIDER_WORKSPACE_VIEW.console
             ? RIDER_CONSOLE_COPY.workspace.console
+            : workspaceView === RIDER_WORKSPACE_VIEW.acceptance
+              ? RIDER_CONSOLE_COPY.workspace.acceptance
             : RIDER_CONSOLE_COPY.workspace.profile}
         </strong>
       </div>
@@ -28,6 +30,13 @@ export function RiderWorkspaceTabs({
           type="button"
         >
           配送台
+        </button>
+        <button
+          className={workspaceView === RIDER_WORKSPACE_VIEW.acceptance ? 'primary-button' : 'secondary-button'}
+          onClick={() => setWorkspaceView(RIDER_WORKSPACE_VIEW.acceptance)}
+          type="button"
+        >
+          接单台
         </button>
         <button
           className={workspaceView === RIDER_WORKSPACE_VIEW.profile ? 'primary-button' : 'secondary-button'}

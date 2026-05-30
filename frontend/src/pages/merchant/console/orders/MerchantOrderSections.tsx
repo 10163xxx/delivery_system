@@ -1,5 +1,5 @@
 export { MerchantOrderFooter } from '@/pages/merchant/console/orders/MerchantOrderFooter'
-import { ORDER_STATUS, type OrderSummary } from '@/shared/object/core/SharedObjects'
+import { ORDER_STATUS, type OrderSummary } from '@/objects/core/SharedObjects'
 
 export function getMerchantNewOrderCount(storeOrders: OrderSummary[]) {
   return storeOrders.filter(

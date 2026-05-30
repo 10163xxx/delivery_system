@@ -1,9 +1,9 @@
 import type {
   MerchantConsolePanelProps,
   PartialRefundResolutionDraftMap,
-} from '@/merchant/app/state/MerchantConsoleState'
-import type { OrderSummary } from '@/shared/object/core/SharedObjects'
-import { APPLICATION_STATUS } from '@/shared/object/core/SharedObjects'
+} from '@/pages/merchant/hooks/MerchantConsoleState'
+import type { OrderSummary } from '@/objects/core/SharedObjects'
+import { APPLICATION_STATUS } from '@/objects/core/SharedObjects'
 
 export function MerchantRefundResolutionList({
   order,

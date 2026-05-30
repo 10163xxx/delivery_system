@@ -8,6 +8,7 @@ import io.circe.generic.semiauto.*
 
 final case class StoreOperations(
     status: DisplayText,
+    storeAddress: AddressText,
     businessHours: BusinessHours,
     avgPrepMinutes: Minutes,
     imageUrl: Option[ImageUrl],
@@ -43,6 +44,7 @@ object Store:
       category: DisplayText,
       cuisine: CuisineLabel,
       status: DisplayText,
+      storeAddress: AddressText,
       businessHours: BusinessHours,
       avgPrepMinutes: Minutes,
       imageUrl: Option[ImageUrl],
@@ -60,6 +62,7 @@ object Store:
       cuisine = cuisine,
       operations = StoreOperations(
         status = status,
+        storeAddress = storeAddress,
         businessHours = businessHours,
         avgPrepMinutes = avgPrepMinutes,
         imageUrl = imageUrl,
@@ -75,6 +78,7 @@ object Store:
 
   extension (store: Store)
     def status: DisplayText = store.operations.status
+    def storeAddress: AddressText = store.operations.storeAddress
     def businessHours: BusinessHours = store.operations.businessHours
     def avgPrepMinutes: Minutes = store.operations.avgPrepMinutes
     def imageUrl: Option[ImageUrl] = store.operations.imageUrl
@@ -99,6 +103,7 @@ object Store:
       category <- cursor.get[DisplayText]("category")
       cuisine <- cursor.get[CuisineLabel]("cuisine")
       status <- cursor.get[DisplayText]("status")
+      storeAddress <- cursor.getOrElse[AddressText]("storeAddress")(new AddressText(""))
       businessHours <- cursor.getOrElse[BusinessHours]("businessHours")(BusinessHours.Default)
       avgPrepMinutes <- cursor.get[Minutes]("avgPrepMinutes")
       imageUrl <- cursor.get[Option[ImageUrl]]("imageUrl")
@@ -114,6 +119,7 @@ object Store:
       category = category,
       cuisine = cuisine,
       status = status,
+      storeAddress = storeAddress,
       businessHours = businessHours,
       avgPrepMinutes = avgPrepMinutes,
       imageUrl = imageUrl,

@@ -6,7 +6,7 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 import domain.shared.*
 
-final case class AuthSession(token: SessionToken, user: AuthUser)
+final case class AuthSession(token: SessionToken, user: AuthAccount)
 object AuthSession:
   given Encoder[AuthSession] = deriveEncoder
   given Decoder[AuthSession] = deriveDecoder

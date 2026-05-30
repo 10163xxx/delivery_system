@@ -1,7 +1,7 @@
 import type {
   MerchantMenuSectionItemCardActionProps,
   MerchantMenuSectionItemCardInfoProps,
-} from '@/pages/merchant/object/MerchantConsoleObjects'
+} from '@/objects/merchant/page/MerchantConsoleObjects'
 
 const MERCHANT_MENU_ITEM_PRICE_INPUT_MIN = 0.01
 const MERCHANT_MENU_ITEM_STOCK_INPUT_MAX = 10
@@ -18,7 +18,14 @@ export function MerchantMenuSectionItemInfo({
       <p>{item.description}</p>
       {item.selectionGroups.length > 0 ? (
         <p className="meta-line">
-          {item.selectionGroups.map((group) => `${group.name}${group.minSelections === 1 && group.maxSelections === 1 ? ' 必选1项' : ` ${group.minSelections}-${group.maxSelections}项`}`).join(' · ')}
+          {item.selectionGroups
+            .map((group) => {
+              const priceHint = group.options.some((option) => option.additionalPriceCents > 0)
+                ? ' 含加价选项'
+                : ''
+              return `${group.name}${group.minSelections === 1 && group.maxSelections === 1 ? ' 必选1项' : ` ${group.minSelections}-${group.maxSelections}项`}${priceHint}`
+            })
+            .join(' · ')}
         </p>
       ) : null}
       {item.remainingQuantity != null ? (

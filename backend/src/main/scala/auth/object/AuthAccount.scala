@@ -9,7 +9,6 @@ import domain.shared.*
 final case class AuthAccount(
     id: AuthUserId,
     username: Username,
-    passwordHash: PasswordHash,
     role: UserRole,
     displayName: PersonName,
     linkedProfileId: Option[EntityId],

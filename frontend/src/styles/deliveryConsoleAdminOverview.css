@@ -1,0 +1,138 @@
+.admin-overview {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-overview::before {
+  content: '';
+  position: absolute;
+  inset: auto -80px -120px auto;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 219, 183, 0.8), rgba(255, 219, 183, 0));
+  pointer-events: none;
+}
+
+.admin-overview__hero,
+.admin-overview__metrics,
+.admin-overview__grid,
+.admin-overview__care-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-overview__metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-overview__grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.admin-overview__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.admin-overview__chart-card,
+.admin-overview__care-card {
+  padding: 22px;
+  border: 1px solid rgba(94, 76, 48, 0.1);
+  border-radius: 24px;
+  background: #fffdf8;
+  box-shadow: 0 18px 38px rgba(88, 65, 29, 0.08);
+}
+
+.admin-overview__chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-overview__chart-head {
+  margin-bottom: 18px;
+}
+
+.admin-overview__chart-head h3,
+.admin-overview__care-card h3 {
+  margin-top: 6px;
+}
+
+.admin-overview__line-chart {
+  display: grid;
+}
+
+.admin-overview__line-chart svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.admin-overview__line-axis {
+  stroke: rgba(86, 78, 64, 0.2);
+  stroke-width: 1;
+}
+
+.admin-overview__line-path {
+  fill: none;
+  stroke: #314f3a;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.admin-overview__line-point {
+  stroke: #fffaf2;
+  stroke-width: 2;
+}
+
+.admin-overview__line-point.is-sunrise {
+  fill: #f59b52;
+}
+
+.admin-overview__line-point.is-amber {
+  fill: #d99a28;
+}
+
+.admin-overview__line-point.is-peach {
+  fill: #ef8c6f;
+}
+
+.admin-overview__line-point.is-mint {
+  fill: #4da06c;
+}
+
+.admin-overview__line-point.is-leaf {
+  fill: #6b9a49;
+}
+
+.admin-overview__line-point.is-rose {
+  fill: #cf6d68;
+}
+
+.admin-overview__line-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 12px;
+  color: #7f6d52;
+  font-size: 0.82rem;
+}
+
+.admin-overview__line-labels strong {
+  color: #4e3b27;
+}
+
+.admin-overview__care-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (max-width: 720px) {
+  .admin-overview__metrics {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,5 +1,5 @@
-import type { MerchantStoreSidebarProps } from '@/pages/merchant/object/MerchantConsoleObjects'
-import { ELIGIBILITY_REVIEW_TARGET, STORE_STATUS } from '@/shared/object/core/SharedObjects'
+import type { MerchantStoreSidebarProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import { ELIGIBILITY_REVIEW_TARGET, STORE_STATUS } from '@/objects/core/SharedObjects'
 
 export function MerchantStoreOverviewCard({ store, props }: MerchantStoreSidebarProps) {
   const { formatAggregateRating, formatBusinessHours, formatPrice } = props
@@ -12,6 +12,7 @@ export function MerchantStoreOverviewCard({ store, props }: MerchantStoreSidebar
         <div><p>营业额</p><strong>{formatPrice(store.revenueCents)}</strong></div>
         <div><p>营业时间</p><strong>{formatBusinessHours(store.businessHours)}</strong></div>
         <div><p>预计出餐</p><strong>{store.avgPrepMinutes} 分钟</strong></div>
+        <div><p>店铺地址</p><strong>{store.storeAddress}</strong></div>
       </div>
     </div>
   )
@@ -73,6 +74,25 @@ export function MerchantStoreOperationCard({ store, props }: MerchantStoreSideba
           {operationErrors?.closeTime ? <small className="field-error-text">{operationErrors.closeTime}</small> : null}
         </label>
         <label className="full">
+          <span>店铺地址</span>
+          <input
+            className={operationErrors?.storeAddress ? 'field-error' : undefined}
+            value={draft.storeAddress}
+            onChange={(event) => {
+              const value = event.target.value
+              setStoreOperationDrafts((current) => ({
+                ...current,
+                [store.id]: { ...getStoreOperationDraft(store), storeAddress: value },
+              }))
+              setStoreOperationErrors((current) => ({
+                ...current,
+                [store.id]: { ...(current[store.id] ?? {}), storeAddress: undefined },
+              }))
+            }}
+          />
+          {operationErrors?.storeAddress ? <small className="field-error-text">{operationErrors.storeAddress}</small> : <small className="field-hint">填写真实门牌地址，地图与导航能力会基于这里展示。</small>}
+        </label>
+        <label className="full">
           <span>预计出餐时间</span>
           <input
             className={operationErrors?.avgPrepMinutes ? 'field-error' : undefined}
@@ -96,7 +116,7 @@ export function MerchantStoreOperationCard({ store, props }: MerchantStoreSideba
         </label>
       </div>
       <div className="summary-bar">
-        <div><p>当前设置</p><strong>{draft.openTime} - {draft.closeTime} · {draft.avgPrepMinutes} 分钟</strong></div>
+        <div><p>当前设置</p><strong>{draft.storeAddress} · {draft.openTime} - {draft.closeTime} · {draft.avgPrepMinutes} 分钟</strong></div>
         <button className="primary-button" onClick={() => void submitStoreOperationalInfo(store)} type="button">
           保存营业设置
         </button>

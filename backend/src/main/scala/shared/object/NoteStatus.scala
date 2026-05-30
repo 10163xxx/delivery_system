@@ -8,8 +8,8 @@ enum NoteStatus:
   case Draft
   case Published
 
-private val noteStatusDraftValue = new DisplayText("draft")
-private val noteStatusPublishedValue = new DisplayText("published")
+private val noteStatusDraftValue = text("draft")
+private val noteStatusPublishedValue = text("published")
 val noteStatusDatabaseValues: List[DisplayText] = List(noteStatusDraftValue, noteStatusPublishedValue)
 
 def noteStatusToDatabase(status: NoteStatus): DisplayText =
@@ -21,7 +21,7 @@ def noteStatusFromDatabase(value: DisplayText): Either[DisplayText, NoteStatus] 
   value.raw.trim.toLowerCase match
     case raw if raw == noteStatusDraftValue.raw => Right(NoteStatus.Draft)
     case raw if raw == noteStatusPublishedValue.raw => Right(NoteStatus.Published)
-    case other => Left(new DisplayText(s"Unsupported NoteStatus value: $other"))
+    case other => Left(text(s"Unsupported NoteStatus value: $other"))
 
 def noteStatusFromDatabaseUnsafe(value: DisplayText): NoteStatus =
   noteStatusFromDatabase(value).fold(message => throw new IllegalArgumentException(message.raw), identity)
@@ -29,4 +29,4 @@ def noteStatusFromDatabaseUnsafe(value: DisplayText): NoteStatus =
 object NoteStatus:
   val DatabaseValues: List[DisplayText] = noteStatusDatabaseValues
   given Encoder[NoteStatus] = Encoder.encodeString.contramap(status => noteStatusToDatabase(status).raw)
-  given Decoder[NoteStatus] = Decoder.decodeString.emap(value => noteStatusFromDatabase(new DisplayText(value)).left.map(_.raw))
+  given Decoder[NoteStatus] = Decoder.decodeString.emap(value => noteStatusFromDatabase(text(value)).left.map(_.raw))

@@ -1,6 +1,6 @@
-import type { MerchantMenuBasicFieldsProps } from '@/pages/merchant/object/MerchantConsoleObjects'
-import { MENU_ITEM_FORM_FIELD } from '@/shared/object/core/DeliveryAppObjects'
-import { DELIVERY_CONSOLE_MESSAGES } from '@/shared/delivery/DeliveryServices'
+import type { MerchantMenuBasicFieldsProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import { MENU_ITEM_FORM_FIELD } from '@/objects/page/DeliveryAppObjects'
+import { DELIVERY_CONSOLE_MESSAGES } from '@/features/delivery/DeliveryServices'
 
 function MerchantMenuNameField({ storeId, props }: MerchantMenuBasicFieldsProps) {
   const { getMenuItemDraft, getMenuItemFieldId, getMerchantFieldClassName, menuItemFormErrors, setMenuItemDrafts, setMenuItemFormErrors } = props
@@ -138,7 +138,7 @@ function MerchantMenuSelectionGroupsField({ storeId, props }: MerchantMenuBasicF
         aria-invalid={Boolean(storeMenuItemErrors.selectionGroupsText)}
         className={getMerchantFieldClassName(Boolean(storeMenuItemErrors.selectionGroupsText))}
         id={getMenuItemFieldId(storeId, MENU_ITEM_FORM_FIELD.selectionGroupsText)}
-        placeholder={`留空表示无配置\n甜度: 全糖,七分糖,半糖,无糖\n小料[0-2]: 珍珠,椰果,布丁`}
+        placeholder={`留空表示无配置\n甜度: 全糖,七分糖,半糖,无糖\n小料[0-2]: 珍珠(+2),椰果,布丁(+3)`}
         rows={4}
         value={menuItemDraft.selectionGroupsText}
         onChange={(event) => {
@@ -149,7 +149,7 @@ function MerchantMenuSelectionGroupsField({ storeId, props }: MerchantMenuBasicF
       {storeMenuItemErrors.selectionGroupsText ? (
         <small className="field-error-text">{storeMenuItemErrors.selectionGroupsText}</small>
       ) : (
-        <small className="field-hint">默认格式为“分组名: 选项1,选项2”；若要多选，使用“分组名[最少-最多]: ...”，例如“小料[0-2]”。</small>
+        <small className="field-hint">默认格式为“分组名: 选项1,选项2”；若选项需要加价，写成“选项名(+2.5)”；若要多选，使用“分组名[最少-最多]: ...”，例如“小料[0-2]”。</small>
       )}
     </label>
   )

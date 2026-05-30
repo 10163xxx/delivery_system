@@ -8,124 +8,138 @@ enum OrderStatus:
   case PendingMerchantAcceptance, Preparing, ReadyForPickup, Delivering, Completed, Cancelled, Escalated
 
 object OrderStatus:
-  given Encoder[OrderStatus] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[OrderStatus] = Decoder.decodeString.emap { value =>
-    OrderStatus.values.find(_.toString == value).toRight(s"Invalid OrderStatus: $value")
-  }
+  private val enumLabel = text("OrderStatus")
+  def render(value: OrderStatus): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[OrderStatus] = parseEnumValue(value, OrderStatus.values)
+  given Encoder[OrderStatus] = enumEncoder
+  given Decoder[OrderStatus] = enumDecoder(OrderStatus.values, enumLabel)
 
 enum TicketKind:
   case PositiveReview, NegativeReview, DeliveryIssue
 
 object TicketKind:
-  given Encoder[TicketKind] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[TicketKind] = Decoder.decodeString.emap { value =>
-    TicketKind.values.find(_.toString == value).toRight(s"Invalid TicketKind: $value")
-  }
+  private val enumLabel = text("TicketKind")
+  def render(value: TicketKind): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[TicketKind] = parseEnumValue(value, TicketKind.values)
+  given Encoder[TicketKind] = enumEncoder
+  given Decoder[TicketKind] = enumDecoder(TicketKind.values, enumLabel)
 
 enum AfterSalesRequestType:
   case ReturnRequest, CompensationRequest
 
 object AfterSalesRequestType:
-  given Encoder[AfterSalesRequestType] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[AfterSalesRequestType] = Decoder.decodeString.emap { value =>
-    AfterSalesRequestType.values.find(_.toString == value).toRight(s"Invalid AfterSalesRequestType: $value")
-  }
+  private val enumLabel = text("AfterSalesRequestType")
+  def render(value: AfterSalesRequestType): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[AfterSalesRequestType] = parseEnumValue(value, AfterSalesRequestType.values)
+  given Encoder[AfterSalesRequestType] = enumEncoder
+  given Decoder[AfterSalesRequestType] = enumDecoder(AfterSalesRequestType.values, enumLabel)
 
 enum AfterSalesResolutionMode:
   case Balance, Coupon, Manual
 
 object AfterSalesResolutionMode:
-  given Encoder[AfterSalesResolutionMode] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[AfterSalesResolutionMode] = Decoder.decodeString.emap { value =>
-    AfterSalesResolutionMode.values.find(_.toString == value).toRight(s"Invalid AfterSalesResolutionMode: $value")
-  }
+  private val enumLabel = text("AfterSalesResolutionMode")
+  def render(value: AfterSalesResolutionMode): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[AfterSalesResolutionMode] = parseEnumValue(value, AfterSalesResolutionMode.values)
+  given Encoder[AfterSalesResolutionMode] = enumEncoder
+  given Decoder[AfterSalesResolutionMode] = enumDecoder(AfterSalesResolutionMode.values, enumLabel)
 
 enum TicketStatus:
   case Open, Resolved
 
 object TicketStatus:
-  given Encoder[TicketStatus] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[TicketStatus] = Decoder.decodeString.emap { value =>
-    TicketStatus.values.find(_.toString == value).toRight(s"Invalid TicketStatus: $value")
-  }
+  private val enumLabel = text("TicketStatus")
+  def render(value: TicketStatus): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[TicketStatus] = parseEnumValue(value, TicketStatus.values)
+  given Encoder[TicketStatus] = enumEncoder
+  given Decoder[TicketStatus] = enumDecoder(TicketStatus.values, enumLabel)
 
 enum MerchantApplicationStatus:
   case Pending, Approved, Rejected
 
 object MerchantApplicationStatus:
-  given Encoder[MerchantApplicationStatus] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[MerchantApplicationStatus] = Decoder.decodeString.emap { value =>
-    MerchantApplicationStatus.values.find(_.toString == value).toRight(s"Invalid MerchantApplicationStatus: $value")
-  }
+  private val enumLabel = text("MerchantApplicationStatus")
+  def render(value: MerchantApplicationStatus): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[MerchantApplicationStatus] = parseEnumValue(value, MerchantApplicationStatus.values)
+  given Encoder[MerchantApplicationStatus] = enumEncoder
+  given Decoder[MerchantApplicationStatus] = enumDecoder(MerchantApplicationStatus.values, enumLabel)
 
 enum AccountStatus:
   case Active, Suspended
 
 object AccountStatus:
-  given Encoder[AccountStatus] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[AccountStatus] = Decoder.decodeString.emap { value =>
-    AccountStatus.values.find(_.toString == value).toRight(s"Invalid AccountStatus: $value")
-  }
+  private val enumLabel = text("AccountStatus")
+  def render(value: AccountStatus): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[AccountStatus] = parseEnumValue(value, AccountStatus.values)
+  given Encoder[AccountStatus] = enumEncoder
+  given Decoder[AccountStatus] = enumDecoder(AccountStatus.values, enumLabel)
 
 enum ReviewStatus:
   case Active, Revoked
 
 object ReviewStatus:
-  given Encoder[ReviewStatus] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[ReviewStatus] = Decoder.decodeString.emap { value =>
-    ReviewStatus.values.find(_.toString == value).toRight(s"Invalid ReviewStatus: $value")
-  }
+  private val enumLabel = text("ReviewStatus")
+  def render(value: ReviewStatus): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[ReviewStatus] = parseEnumValue(value, ReviewStatus.values)
+  given Encoder[ReviewStatus] = enumEncoder
+  given Decoder[ReviewStatus] = enumDecoder(ReviewStatus.values, enumLabel)
 
 enum AppealStatus:
   case Pending, Approved, Rejected
 
 object AppealStatus:
-  given Encoder[AppealStatus] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[AppealStatus] = Decoder.decodeString.emap { value =>
-    AppealStatus.values.find(_.toString == value).toRight(s"Invalid AppealStatus: $value")
-  }
+  private val enumLabel = text("AppealStatus")
+  def render(value: AppealStatus): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[AppealStatus] = parseEnumValue(value, AppealStatus.values)
+  given Encoder[AppealStatus] = enumEncoder
+  given Decoder[AppealStatus] = enumDecoder(AppealStatus.values, enumLabel)
 
 enum PartialRefundStatus:
   case Pending, Approved, Rejected
 
 object PartialRefundStatus:
-  given Encoder[PartialRefundStatus] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[PartialRefundStatus] = Decoder.decodeString.emap { value =>
-    PartialRefundStatus.values.find(_.toString == value).toRight(s"Invalid PartialRefundStatus: $value")
-  }
+  private val enumLabel = text("PartialRefundStatus")
+  def render(value: PartialRefundStatus): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[PartialRefundStatus] = parseEnumValue(value, PartialRefundStatus.values)
+  given Encoder[PartialRefundStatus] = enumEncoder
+  given Decoder[PartialRefundStatus] = enumDecoder(PartialRefundStatus.values, enumLabel)
 
 enum AppealRole:
   case Merchant, Rider
 
 object AppealRole:
-  given Encoder[AppealRole] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[AppealRole] = Decoder.decodeString.emap { value =>
-    AppealRole.values.find(_.toString == value).toRight(s"Invalid AppealRole: $value")
-  }
+  private val enumLabel = text("AppealRole")
+  def render(value: AppealRole): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[AppealRole] = parseEnumValue(value, AppealRole.values)
+  given Encoder[AppealRole] = enumEncoder
+  given Decoder[AppealRole] = enumDecoder(AppealRole.values, enumLabel)
 
 enum EligibilityReviewTarget:
   case Store, Rider
 
 object EligibilityReviewTarget:
-  given Encoder[EligibilityReviewTarget] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[EligibilityReviewTarget] = Decoder.decodeString.emap { value =>
-    EligibilityReviewTarget.values.find(_.toString == value).toRight(s"Invalid EligibilityReviewTarget: $value")
-  }
+  private val enumLabel = text("EligibilityReviewTarget")
+  def render(value: EligibilityReviewTarget): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[EligibilityReviewTarget] = parseEnumValue(value, EligibilityReviewTarget.values)
+  given Encoder[EligibilityReviewTarget] = enumEncoder
+  given Decoder[EligibilityReviewTarget] = enumDecoder(EligibilityReviewTarget.values, enumLabel)
 
 enum MembershipTier:
   case Standard, Member
 
 object MembershipTier:
-  given Encoder[MembershipTier] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[MembershipTier] = Decoder.decodeString.emap { value =>
-    MembershipTier.values.find(_.toString == value).toRight(s"Invalid MembershipTier: $value")
-  }
+  private val enumLabel = text("MembershipTier")
+  def render(value: MembershipTier): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[MembershipTier] = parseEnumValue(value, MembershipTier.values)
+  given Encoder[MembershipTier] = enumEncoder
+  given Decoder[MembershipTier] = enumDecoder(MembershipTier.values, enumLabel)
 
 enum UserRole:
   case customer, merchant, rider, admin
 
 object UserRole:
-  given Encoder[UserRole] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[UserRole] = Decoder.decodeString.emap { value =>
-    UserRole.values.find(_.toString == value).toRight(s"Invalid UserRole: $value")
-  }
+  private val enumLabel = text("UserRole")
+  def render(value: UserRole): DisplayText = enumDisplayText(value)
+  def parse(value: DisplayText): Option[UserRole] = parseEnumValue(value, UserRole.values)
+  given Encoder[UserRole] = enumEncoder
+  given Decoder[UserRole] = enumDecoder(UserRole.values, enumLabel)

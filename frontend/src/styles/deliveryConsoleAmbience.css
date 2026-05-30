@@ -1,0 +1,128 @@
+.delivery-app {
+  padding-bottom: 56px;
+}
+
+.hero-panel {
+  border-color: rgba(118, 92, 55, 0.1);
+  background:
+    linear-gradient(135deg, rgba(255, 248, 236, 0.96), rgba(252, 242, 231, 0.92)),
+    #fffdf7;
+  box-shadow: 0 28px 64px rgba(88, 65, 29, 0.09);
+}
+
+.metric-card,
+.panel,
+.role-strip,
+.order-card,
+.menu-card,
+.ticket-card,
+.store-card,
+.empty-card {
+  border-color: rgba(118, 92, 55, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(255, 247, 239, 0.93)),
+    #fff;
+  box-shadow: 0 18px 40px rgba(88, 65, 29, 0.07);
+}
+
+.metric-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -20px -28px auto;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 216, 168, 0.5), rgba(255, 216, 168, 0));
+}
+
+.role-strip,
+.summary-bar {
+  border: 1px solid rgba(118, 92, 55, 0.1);
+  box-shadow: 0 16px 34px rgba(88, 65, 29, 0.06);
+}
+
+.summary-bar {
+  background:
+    linear-gradient(135deg, rgba(255, 239, 214, 0.96), rgba(234, 245, 233, 0.9)),
+    #fff;
+}
+
+.summary-bar > div > p,
+.summary-bar strong {
+  color: #5e482d;
+}
+
+.primary-button,
+.secondary-button,
+.role-pill {
+  min-height: 46px;
+  border: 1px solid transparent;
+}
+
+.role-pill,
+.secondary-button {
+  background: linear-gradient(180deg, #f8efe0, #f1e2cc);
+  color: #5f4a30;
+  box-shadow: 0 10px 22px rgba(106, 80, 42, 0.09);
+}
+
+.role-pill.active,
+.primary-button {
+  background: linear-gradient(135deg, #c9834d, #9f6a3f 48%, #6f8f57);
+  color: #fffaf1;
+  box-shadow: 0 14px 28px rgba(117, 84, 44, 0.2);
+}
+
+.primary-button:hover,
+.secondary-button:hover,
+.role-pill:hover {
+  box-shadow: 0 18px 30px rgba(106, 80, 42, 0.12);
+}
+
+.badge {
+  border: 1px solid rgba(122, 89, 46, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.badge.warning {
+  background: #fff0dc;
+  color: #936019;
+}
+
+.badge.success {
+  background: #e7f3e5;
+  color: #34613d;
+}
+
+select,
+input,
+textarea {
+  background: linear-gradient(180deg, #fffdf9, #fff8ef);
+  border-color: rgba(118, 92, 55, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+  border-color: rgba(198, 131, 77, 0.46);
+  box-shadow:
+    0 0 0 4px rgba(201, 141, 89, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+.display-image-slot,
+.category-image {
+  box-shadow: 0 12px 24px rgba(88, 65, 29, 0.08);
+}
+
+.empty-card {
+  background:
+    linear-gradient(135deg, rgba(255, 249, 240, 0.97), rgba(248, 242, 232, 0.94)),
+    #fff;
+}

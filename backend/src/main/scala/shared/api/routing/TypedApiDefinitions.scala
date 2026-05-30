@@ -1,22 +1,22 @@
 package shared.api.routing
 
 import cats.effect.IO
-import domain.shared.{RoutePath, WrappedTextType, wrapText}
+import domain.shared.{RoutePath, RouteSegmentText, WrappedTextType, wrapText}
 import org.http4s.{Method, Request}
 
-final case class StaticRouteSegment(value: RoutePath)
+final case class StaticRouteSegment(value: RouteSegmentText)
 
 def routeSegment(value: String): StaticRouteSegment =
-  StaticRouteSegment(new RoutePath(value))
+  StaticRouteSegment(new RouteSegmentText(value))
 
 trait PathParamCodec[T]:
-  def parse(raw: String): Option[T]
-  def render(value: T): String
+  def parse(raw: RouteSegmentText): Option[T]
+  def render(value: T): RouteSegmentText
 
 object PathParamCodec:
   given wrappedTextPathParamCodec[T](using wrapped: WrappedTextType[T]): PathParamCodec[T] with
-    def parse(raw: String): Option[T] = Some(wrapText[T](raw))
-    def render(value: T): String = wrapped.toRaw(value)
+    def parse(raw: RouteSegmentText): Option[T] = Some(wrapText[T](raw.raw))
+    def render(value: T): RouteSegmentText = new RouteSegmentText(wrapped.toRaw(value))
 
 final case class FixedMethodApi0[Response](method: Method, segments: List[StaticRouteSegment])
 
@@ -58,14 +58,14 @@ def jsonPostApi2[FirstParam, SecondParam, Body, Response](
 ): FixedMethodApi2[FirstParam, SecondParam, Response] =
   FixedMethodApi2(Method.POST, prefixSegments, middleSegments, suffixSegments)
 
-private def requestSegments(req: Request[IO]): List[String] =
-  req.uri.path.renderString.split('/').filter(_.nonEmpty).toList
+private def requestSegments(req: Request[IO]): List[RouteSegmentText] =
+  req.uri.path.renderString.split('/').filter(_.nonEmpty).toList.map(segment => new RouteSegmentText(segment))
 
-private def staticSegmentValues(segments: List[StaticRouteSegment]): List[String] =
-  segments.map(_.value.raw)
+private def staticSegmentValues(segments: List[StaticRouteSegment]): List[RouteSegmentText] =
+  segments.map(_.value)
 
-private def buildRoutePath(segments: List[String]): RoutePath =
-  new RoutePath(s"/${segments.mkString("/")}")
+private def buildRoutePath(segments: List[RouteSegmentText]): RoutePath =
+  new RoutePath(s"/${segments.map(_.raw).mkString("/")}")
 
 def matchesApi0[Response](api: FixedMethodApi0[Response], req: Request[IO]): Boolean =
   req.method == api.method && requestSegments(req) == staticSegmentValues(api.segments)

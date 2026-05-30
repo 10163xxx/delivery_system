@@ -16,6 +16,7 @@ def validateMerchantRegistration(
       merchantName <- sanitizeRequiredText(request.merchantName, DeliveryValidationDefaults.MerchantNameMaxLength, ValidationMessages.Merchant.MerchantNameRequired)
       storeName <- sanitizeRequiredText(request.storeName, DeliveryValidationDefaults.StoreNameMaxLength, ValidationMessages.Merchant.StoreNameRequired)
       category <- sanitizeRequiredText(request.category, DeliveryValidationDefaults.StoreCategoryMaxLength, ValidationMessages.Merchant.StoreCategoryRequired)
+      storeAddress <- sanitizeRequiredText(request.storeAddress, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.Merchant.StoreAddressRequired)
       _ <- Either.cond(StoreCategories.contains(category), (), ValidationMessages.Merchant.InvalidStoreCategory)
       businessHours <- validateBusinessHours(request.businessHours)
       _ <- Either.cond(
@@ -28,6 +29,7 @@ def validateMerchantRegistration(
       merchantName = merchantName,
       storeName = storeName,
       category = category,
+      storeAddress = storeAddress,
       businessHours = businessHours,
       avgPrepMinutes = request.avgPrepMinutes,
       imageUrl = sanitizeOptionalText(request.imageUrl, DeliveryValidationDefaults.ImageUrlMaxLength),
@@ -90,24 +92,19 @@ private def validateMenuItemSelectionGroups(
               ValidationMessages.Merchant.MenuItemSelectionGroupsInvalid,
             )
             _ <- Either.cond(!seenNames.contains(name.raw), (), ValidationMessages.Merchant.MenuItemSelectionGroupsInvalid)
-            sanitizedOptions = group.options.flatMap(option =>
-              sanitizeOptionalText(Some(option), DeliveryValidationDefaults.MenuItemSelectionOptionMaxLength)
-            )
-            uniqueOptions = sanitizedOptions.distinct
+            sanitizedOptions = sanitizeMenuItemSelectionOptions(group.options)
             _ <- Either.cond(
-              uniqueOptions.nonEmpty &&
-                uniqueOptions.length == sanitizedOptions.length &&
-                uniqueOptions.length <= DeliveryValidationDefaults.MenuItemSelectionOptionMaxCount &&
+              hasValidMenuItemSelectionOptions(sanitizedOptions) &&
                 group.minSelections >= NumericDefaults.ZeroCount &&
                 group.maxSelections >= group.minSelections &&
                 group.maxSelections > NumericDefaults.ZeroCount &&
-                group.maxSelections <= uniqueOptions.length &&
-                group.minSelections <= uniqueOptions.length,
+                group.maxSelections <= sanitizedOptions.length &&
+                group.minSelections <= sanitizedOptions.length,
               (),
               ValidationMessages.Merchant.MenuItemSelectionGroupsInvalid,
             )
           yield (
-            validated :+ group.copy(name = name, options = uniqueOptions),
+            validated :+ group.copy(name = name, options = sanitizedOptions),
             seenNames + name.raw,
           )
       }.map(_._1)

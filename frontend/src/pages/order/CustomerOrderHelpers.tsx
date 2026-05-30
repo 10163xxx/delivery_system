@@ -1,5 +1,5 @@
-import { createInitialAfterSalesDraft } from '@/shared/delivery/DeliveryServices'
-import type { CustomerOrderDetailSectionProps } from '@/pages/order/object/OrderPageObjects'
+import { createInitialAfterSalesDraft } from '@/features/delivery/DeliveryServices'
+import type { CustomerOrderDetailSectionProps } from '@/objects/order/page/OrderPageObjects'
 import {
   AfterSalesActionPanel,
   renderCustomerOrderFooter,
@@ -17,6 +17,7 @@ import {
   CustomerOrderPriceBreakdown,
   CustomerOrderSummaryBar,
 } from '@/pages/order/CustomerOrderDetailParts'
+import { OrderRoutePanel } from '@/pages/order/OrderRoutePanel'
 
 export function CustomerOrderDetailSection({
   order,
@@ -40,12 +41,13 @@ export function CustomerOrderDetailSection({
   const afterSalesDraft =
     afterSalesDrafts[order.id] ?? createInitialAfterSalesDraft()
   const afterSalesError = afterSalesErrors[order.id]
+  const orderStore = props.stores.find((store) => store.id === order.storeId)
 
   return (
     <section className="order-section-card">
       <CustomerOrderDetailHeader navigate={navigate} order={order} statusLabels={statusLabels} />
       <CustomerOrderSummaryBar formatPrice={formatPrice} formatTime={formatTime} order={order} />
-      <p className="meta-line">配送地址：{order.deliveryAddress}</p>
+      <OrderRoutePanel order={order} formatTime={formatTime} storeAddress={orderStore?.storeAddress} />
       <OrderItemsList order={order} formatPrice={formatPrice} />
       <CustomerOrderPriceBreakdown formatPrice={formatPrice} order={order} />
       <OrderTimeline
