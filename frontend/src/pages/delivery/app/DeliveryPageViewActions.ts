@@ -2,17 +2,26 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { MenuItem, OrderSummary, Store } from '@/objects/core/SharedObjects'
 import {
   buildSelectedMenuItemConfiguration,
+  buildCartLineKey,
   createInitialReviewDraft,
   DELIVERY_CONSOLE_MESSAGES,
   formatOrderRestoreCartSuccessMessage,
   formatOrderRestoreCheckoutSuccessMessage,
   formatOrderRestorePartialMessage,
+  formatRequiredCategorySelectionMessage,
   formatRemainingQuantityMessage,
   formatStoreClosedMessage,
   formatBusinessHours,
   getInitialQuantities,
+  getMenuItemCartLineKeys,
+  getMenuItemCartQuantity,
+  getSelectedCartLines,
   getTodayDeliveryWindow,
+  hasSelectedRequiredCategoryItem,
   hasValidMenuItemSelections,
+  REQUIRED_MENU_CATEGORY_HASH,
+  REQUIRED_MENU_CATEGORY_NAME,
+  storeHasRequiredMenuCategory,
   validateScheduledDeliveryTime,
 } from '@/features/delivery/DeliveryServices'
 import { ROUTE_QUERY_KEY } from '@/objects/core/SharedObjects'
@@ -153,27 +162,46 @@ export function enterMerchantStoreAction(args: ActionArgs, storeId: string) {
 }
 
 export function updateQuantityAction(args: ActionArgs, menuItem: MenuItem, nextValue: number) {
+  const currentQuantity = getMenuItemCartQuantity(args.quantities, menuItem.id)
+  if (menuItem.selectionGroups.length > 0 && nextValue > currentQuantity) {
+    openMenuItemConfigurationAction(args, menuItem)
+    return
+  }
+
+  if (menuItem.selectionGroups.length > 0) {
+    const lineKeys = getMenuItemCartLineKeys(args.quantities, menuItem.id)
+    args.setQuantities((current) => {
+      const next = { ...current }
+      if (nextValue <= 0) {
+        lineKeys.forEach((lineKey) => delete next[lineKey])
+        return next
+      }
+      const lineKey = [...lineKeys].reverse()[0]
+      if (!lineKey) return next
+      const nextLineQuantity = Math.max(0, (next[lineKey] ?? 0) - 1)
+      if (nextLineQuantity > 0) next[lineKey] = nextLineQuantity
+      else delete next[lineKey]
+      return next
+    })
+
+    args.setSelectedMenuItemConfigurations((current) => {
+      const next = { ...current }
+      if (nextValue <= 0) lineKeys.forEach((lineKey) => delete next[lineKey])
+      else {
+        const lineKey = [...lineKeys].reverse()[0]
+        if (lineKey && (args.quantities[lineKey] ?? 0) <= 1) delete next[lineKey]
+      }
+      return next
+    })
+    args.setError(null)
+    return
+  }
+
   const nextQuantity = Math.max(0, nextValue)
   const remainingQuantity = menuItem.remainingQuantity
   const hasStockLimit = remainingQuantity != null
   const cappedQuantity =
     !hasStockLimit ? nextQuantity : Math.min(nextQuantity, Math.max(remainingQuantity, 0))
-
-  if (nextQuantity > 0 && menuItem.selectionGroups.length > 0) {
-    const currentConfiguration = args.selectedMenuItemConfigurations[menuItem.id]
-    if (!hasValidMenuItemSelections(menuItem, currentConfiguration)) {
-      args.setMenuItemConfigurationModal({
-        itemId: menuItem.id,
-        quantityAfterConfirm: cappedQuantity,
-        draftSelections: Object.fromEntries(
-          menuItem.selectionGroups.map((group) => [group.name, currentConfiguration?.selections.find((selection) => selection.groupName === group.name)?.selectedOptions ?? []]),
-        ),
-        errorText: null,
-      })
-      args.setError(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired)
-      return
-    }
-  }
 
   args.setQuantities((current: Record<string, number>) => ({
     ...current,
@@ -196,16 +224,46 @@ export function updateQuantityAction(args: ActionArgs, menuItem: MenuItem, nextV
   }
 }
 
+export function updateCartLineQuantityAction(
+  args: ActionArgs,
+  menuItem: MenuItem,
+  lineKey: string,
+  nextValue: number,
+) {
+  if (menuItem.selectionGroups.length > 0 && nextValue > (args.quantities[lineKey] ?? 0)) {
+    openMenuItemConfigurationAction(args, menuItem)
+    return
+  }
+
+  const remainingQuantity = menuItem.remainingQuantity
+  const hasStockLimit = remainingQuantity != null
+  const cappedQuantity =
+    !hasStockLimit ? Math.max(0, nextValue) : Math.min(Math.max(0, nextValue), Math.max(remainingQuantity, 0))
+
+  args.setQuantities((current) => {
+    const next = { ...current }
+    if (cappedQuantity > 0) next[lineKey] = cappedQuantity
+    else delete next[lineKey]
+    return next
+  })
+  if (cappedQuantity === 0) {
+    args.setSelectedMenuItemConfigurations((current) => {
+      const next = { ...current }
+      delete next[lineKey]
+      return next
+    })
+  }
+  args.setError(hasStockLimit && nextValue > remainingQuantity ? formatRemainingQuantityMessage(menuItem.name, remainingQuantity) : null)
+}
+
 export function openMenuItemConfigurationAction(args: ActionArgs, menuItem: MenuItem) {
-  const currentConfiguration = args.selectedMenuItemConfigurations[menuItem.id]
   args.setMenuItemConfigurationModal({
     itemId: menuItem.id,
-    quantityAfterConfirm: Math.max(args.quantities[menuItem.id] ?? 0, 1),
+    quantityAfterConfirm: 1,
     draftSelections: Object.fromEntries(
       menuItem.selectionGroups.map((group) => [
         group.name,
-        currentConfiguration?.selections.find((selection) => selection.groupName === group.name)
-          ?.selectedOptions ?? [],
+        [],
       ]),
     ),
     errorText: null,
@@ -219,15 +277,25 @@ export function openCheckoutAction(args: ActionArgs, todayDeliveryWindow = getTo
     args.setError(formatStoreClosedMessage(formatBusinessHours(args.selectedStore.businessHours)))
     return
   }
-  const selectedItems = args.selectedStore.menu.filter(
-    (item: MenuItem) => (args.quantities[item.id] ?? 0) > 0,
+  const selectedLines = getSelectedCartLines(
+    args.selectedStore,
+    args.quantities,
+    args.selectedMenuItemConfigurations,
   )
-  if (selectedItems.length === 0) {
+  if (selectedLines.length === 0) {
     args.setError(DELIVERY_CONSOLE_MESSAGES.order.noMenuItemSelected)
     return
   }
-  if (selectedItems.some((item) => !hasValidMenuItemSelections(item, args.selectedMenuItemConfigurations[item.id]))) {
+  if (selectedLines.some((line) => !hasValidMenuItemSelections(line.item, line.configuration))) {
     args.setError(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired)
+    return
+  }
+  if (
+    storeHasRequiredMenuCategory(args.selectedStore) &&
+    !hasSelectedRequiredCategoryItem(args.selectedStore, args.quantities)
+  ) {
+    args.setError(formatRequiredCategorySelectionMessage(REQUIRED_MENU_CATEGORY_NAME))
+    args.navigate(`${buildCustomerOrderStoreRoute(args.selectedStore.id)}#${REQUIRED_MENU_CATEGORY_HASH}`)
     return
   }
 
@@ -290,9 +358,10 @@ function restoreCustomerOrderAction(
       return
     }
 
-    nextQuantities[menuItem.id] = cappedQuantity
+    const lineKey = buildCartLineKey(menuItem.id, configuration)
+    nextQuantities[lineKey] = (nextQuantities[lineKey] ?? 0) + cappedQuantity
     if (configuration.selections.length > 0) {
-      nextConfigurations[menuItem.id] = configuration
+      nextConfigurations[lineKey] = configuration
     }
 
     if (cappedQuantity < orderedItem.quantity) {
@@ -371,16 +440,32 @@ export function confirmMenuItemConfigurationAction(
     return
   }
 
+  const currentQuantity = getMenuItemCartQuantity(args.quantities, menuItem.id)
+  const remainingQuantity = menuItem.remainingQuantity
+  const addQuantity =
+    remainingQuantity == null
+      ? quantityAfterConfirm
+      : Math.min(quantityAfterConfirm, Math.max(remainingQuantity - currentQuantity, 0))
+  if (addQuantity <= 0) {
+    args.setMenuItemConfigurationModal(null)
+    args.setError(formatRemainingQuantityMessage(menuItem.name, remainingQuantity ?? 0))
+    return
+  }
+  const lineKey = buildCartLineKey(menuItem.id, nextConfiguration)
   args.setSelectedMenuItemConfigurations((current) => ({
     ...current,
-    [menuItem.id]: nextConfiguration,
+    [lineKey]: nextConfiguration,
   }))
   args.setQuantities((current) => ({
     ...current,
-    [menuItem.id]: quantityAfterConfirm,
+    [lineKey]: (current[lineKey] ?? 0) + addQuantity,
   }))
   args.setMenuItemConfigurationModal(null)
-  args.setError(null)
+  args.setError(
+    addQuantity < quantityAfterConfirm
+      ? formatRemainingQuantityMessage(menuItem.name, remainingQuantity ?? addQuantity)
+      : null,
+  )
 }
 
 export function closeMenuItemConfigurationAction(args: ActionArgs) {

@@ -107,7 +107,9 @@ export const RIDER_AVAILABILITY = {
 
 export const STORE_CATEGORY = {
   chineseFastFood: '中式快餐',
+  westernFastFood: '西式快餐',
   riceMeals: '盖饭简餐',
+  pizzaWestern: '披萨西餐',
   noodles: '面馆粉档',
   spicyPot: '麻辣香锅',
   dumplings: '饺子馄饨',
@@ -138,6 +140,8 @@ export const ROUTE_PATH = {
   customerProfileBlockedStores: '/customer/profile/blocked-stores',
   merchantApplication: '/merchant/application',
   merchantApplicationSubmit: '/merchant/application?merchantView=submit',
+  merchantStore: '/merchant/store',
+  merchantOrders: '/merchant/orders',
   merchantConsole: '/merchant/console',
   merchantProfile: '/merchant/profile',
   merchantProfileAnalytics: '/merchant/profile/analytics',

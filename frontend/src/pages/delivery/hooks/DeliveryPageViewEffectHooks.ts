@@ -45,6 +45,7 @@ export function useDeliveryConsoleGuardEffects(args: DeliveryPageViewEffectsArgs
     searchParams: args.searchParams,
     selectedStore: args.selectedStore,
     quantities: args.quantities,
+    selectedMenuItemConfigurations: args.selectedMenuItemConfigurations,
     navigate: args.navigate,
   })
   useCheckoutCouponValidationEffect({

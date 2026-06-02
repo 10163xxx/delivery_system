@@ -6,8 +6,13 @@ import {
   SelectedStoreTabs,
   SelectedStoreToolbar,
 } from '@/pages/customer/store/CustomerSelectedStoreSections'
+import { CustomerStatusBar } from '@/pages/customer/store/CustomerHomeStatusBar'
 import { CustomerCheckoutBody } from '@/pages/customer/checkout/CustomerCheckoutBody'
 import { SELECTED_STORE_COPY } from '@/features/delivery/DeliveryMessages'
+import {
+  isStoreLocated,
+  useStoreLocationStatus,
+} from '@/features/delivery/DeliveryStoreLocation'
 
 export function StoreReviewList({
   emptyText,
@@ -86,15 +91,23 @@ export function SelectedStoreBanner({
     isStoreCurrentlyOpen,
   } = props
 
+  const storeLocationStatus = useStoreLocationStatus(selectedStore)
+  const storeLocated = isStoreLocated(storeLocationStatus)
   if (!selectedStore) return null
 
   return (
     <>
+      <CustomerStatusBar props={props} />
       <SelectedStoreToolbar props={props} />
 
       {!isStoreCurrentlyOpen(selectedStore) ? (
         <div className="banner warning">
           {SELECTED_STORE_COPY.closedBanner(formatBusinessHours(selectedStore.businessHours))}
+        </div>
+      ) : null}
+      {!storeLocated ? (
+        <div className="banner warning">
+          店铺地址未定位，暂不可营业。
         </div>
       ) : null}
 
@@ -108,7 +121,7 @@ export function SelectedStoreBanner({
               <h3>{selectedStore.name}</h3>
               <p className="meta-line">{SELECTED_STORE_COPY.menuTabHint}</p>
             </div>
-            <CustomerCheckoutBody {...props} />
+            {storeLocated ? <CustomerCheckoutBody {...props} /> : null}
           </>
         ) : (
           <SelectedStoreReviewSection props={props} />

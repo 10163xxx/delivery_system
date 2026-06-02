@@ -9,6 +9,7 @@ import io.circe.generic.semiauto.*
 final case class StoreOperations(
     status: DisplayText,
     storeAddress: AddressText,
+    location: Option[StoreLocation],
     businessHours: BusinessHours,
     avgPrepMinutes: Minutes,
     imageUrl: Option[ImageUrl],
@@ -22,6 +23,11 @@ final case class StoreMetrics(
     revenueCents: CurrencyCents,
 )
 
+final case class StoreLocation(
+    latitude: Double,
+    longitude: Double,
+)
+
 final case class Store(
     id: StoreId,
     merchantName: PersonName,
@@ -32,6 +38,8 @@ final case class Store(
     metrics: StoreMetrics,
 )
 object Store:
+  given Encoder[StoreLocation] = deriveEncoder
+  given Decoder[StoreLocation] = deriveDecoder
   given Encoder[StoreOperations] = deriveEncoder
   given Decoder[StoreOperations] = deriveDecoder
   given Encoder[StoreMetrics] = deriveEncoder
@@ -45,6 +53,7 @@ object Store:
       cuisine: CuisineLabel,
       status: DisplayText,
       storeAddress: AddressText,
+      location: Option[StoreLocation],
       businessHours: BusinessHours,
       avgPrepMinutes: Minutes,
       imageUrl: Option[ImageUrl],
@@ -63,6 +72,7 @@ object Store:
       operations = StoreOperations(
         status = status,
         storeAddress = storeAddress,
+        location = location,
         businessHours = businessHours,
         avgPrepMinutes = avgPrepMinutes,
         imageUrl = imageUrl,
@@ -79,6 +89,7 @@ object Store:
   extension (store: Store)
     def status: DisplayText = store.operations.status
     def storeAddress: AddressText = store.operations.storeAddress
+    def location: Option[StoreLocation] = store.operations.location
     def businessHours: BusinessHours = store.operations.businessHours
     def avgPrepMinutes: Minutes = store.operations.avgPrepMinutes
     def imageUrl: Option[ImageUrl] = store.operations.imageUrl
@@ -104,6 +115,7 @@ object Store:
       cuisine <- cursor.get[CuisineLabel]("cuisine")
       status <- cursor.get[DisplayText]("status")
       storeAddress <- cursor.getOrElse[AddressText]("storeAddress")(new AddressText(""))
+      location <- cursor.get[Option[StoreLocation]]("location")
       businessHours <- cursor.getOrElse[BusinessHours]("businessHours")(BusinessHours.Default)
       avgPrepMinutes <- cursor.get[Minutes]("avgPrepMinutes")
       imageUrl <- cursor.get[Option[ImageUrl]]("imageUrl")
@@ -120,6 +132,7 @@ object Store:
       cuisine = cuisine,
       status = status,
       storeAddress = storeAddress,
+      location = location,
       businessHours = businessHours,
       avgPrepMinutes = avgPrepMinutes,
       imageUrl = imageUrl,

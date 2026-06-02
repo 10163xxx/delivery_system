@@ -8,7 +8,7 @@ import { CUSTOMER_ORDER_SECTION as CUSTOMER_ORDER_SECTIONS } from '@/objects/cus
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { OrderList } from '@/pages/order/OrderList'
 import { CustomerOrderDetailSection } from '@/pages/order/CustomerOrderHelpers'
-import { ORDER_STATUS, type OrderSummary } from '@/objects/core/SharedObjects'
+import { ORDER_STATUS, STORE_STATUS, type OrderSummary, type Store } from '@/objects/core/SharedObjects'
 import {
   buildCustomerOrderDetailRoute,
   CUSTOMER_WORKSPACE_VIEW,
@@ -71,6 +71,44 @@ function getActiveCustomerOrders(customerOrders: OrderSummary[]) {
   return customerOrders.filter((order: OrderSummary) => ACTIVE_ORDER_STATUSES.includes(order.status))
 }
 
+function getRepeatOrderAvailability(
+  order: OrderSummary,
+  stores: Store[],
+  isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen'],
+) {
+  const store = stores.find((entry) => entry.id === order.storeId)
+
+  if (!store) {
+    return {
+      canRepeat: false,
+      reason: CUSTOMER_ORDER_WORKSPACE_COPY.repeatUnavailableStoreMissing,
+    }
+  }
+
+  if (store.status === STORE_STATUS.revoked) {
+    return {
+      canRepeat: false,
+      reason: CUSTOMER_ORDER_WORKSPACE_COPY.repeatUnavailableStoreRevoked,
+    }
+  }
+
+  if (store.menu.length === 0) {
+    return {
+      canRepeat: false,
+      reason: CUSTOMER_ORDER_WORKSPACE_COPY.repeatUnavailableNoMenu,
+    }
+  }
+
+  if (!isStoreCurrentlyOpen(store)) {
+    return {
+      canRepeat: false,
+      reason: CUSTOMER_ORDER_WORKSPACE_COPY.repeatUnavailableStoreClosed,
+    }
+  }
+
+  return { canRepeat: true, reason: '' }
+}
+
 function OrderWorkspaceBanner({
   pendingCustomerReviewOrders,
   REVIEW_WINDOW_DAYS,
@@ -116,21 +154,23 @@ function OrderSectionSwitcher({
 }
 
 function OrderSectionContent({
-  addPreviousOrderToCart,
   formatPrice,
   formatTime,
+  isStoreCurrentlyOpen,
   navigate,
   repeatOrder,
   sectionData,
   statusLabels,
+  stores,
 }: {
-  addPreviousOrderToCart: CustomerRoleProps['addPreviousOrderToCart']
   formatPrice: CustomerRoleProps['formatPrice']
   formatTime: CustomerRoleProps['formatTime']
+  isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen']
   navigate: CustomerRoleProps['navigate']
   repeatOrder: CustomerRoleProps['repeatOrder']
   sectionData: CustomerOrderSectionData | null
   statusLabels: CustomerRoleProps['statusLabels']
+  stores: CustomerRoleProps['stores']
 }) {
   if (!sectionData) {
     return <div className="empty-card">{CUSTOMER_ORDER_WORKSPACE_COPY.emptySelection}</div>
@@ -147,24 +187,28 @@ function OrderSectionContent({
       <OrderList
         orders={sectionData.orders}
         emptyText={sectionData.emptyText}
-        footer={(order) => (
-          <div className="action-row">
-            <button
-              className="primary-button"
-              onClick={() => addPreviousOrderToCart(order)}
-              type="button"
-            >
-              {CUSTOMER_ORDER_WORKSPACE_COPY.addToCartButton}
-            </button>
-            <button
-              className="secondary-button"
-              onClick={() => repeatOrder(order)}
-              type="button"
-            >
-              {CUSTOMER_ORDER_WORKSPACE_COPY.repeatOrderButton}
-            </button>
-          </div>
-        )}
+        footer={(order) => {
+          const repeatAvailability = getRepeatOrderAvailability(order, stores, isStoreCurrentlyOpen)
+
+          return (
+            <div className="action-row">
+              <button
+                className="secondary-button"
+                disabled={!repeatAvailability.canRepeat}
+                onClick={() => {
+                  if (repeatAvailability.canRepeat) repeatOrder(order)
+                }}
+                title={repeatAvailability.canRepeat ? undefined : repeatAvailability.reason}
+                type="button"
+              >
+                {CUSTOMER_ORDER_WORKSPACE_COPY.repeatOrderButton}
+              </button>
+              {!repeatAvailability.canRepeat ? (
+                <small className="meta-line">{repeatAvailability.reason}</small>
+              ) : null}
+            </div>
+          )
+        }}
         formatPrice={formatPrice}
         formatTime={formatTime}
         onOpenOrder={(orderId) => navigate(buildCustomerOrderDetailRoute(orderId))}
@@ -244,11 +288,12 @@ export function CustomerOrdersWorkspace(props: CustomerRoleProps) {
       <OrderSectionContent
         formatPrice={formatPrice}
         formatTime={formatTime}
+        isStoreCurrentlyOpen={props.isStoreCurrentlyOpen}
         navigate={navigate}
-        addPreviousOrderToCart={props.addPreviousOrderToCart}
         repeatOrder={props.repeatOrder}
         sectionData={sectionData}
         statusLabels={props.statusLabels}
+        stores={props.stores}
       />
     </Panel>
   )

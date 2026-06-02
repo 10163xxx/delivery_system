@@ -3,12 +3,10 @@ import type {
   AddressDetailsField,
   AddressDetailsRecord,
 } from '@/components/address/AddressDetailsObjects'
-import { buildAddressMapEmbedUrl } from '@/components/address/AddressMapLinks'
+import { AddressTileMap } from '@/components/address/AddressTileMap'
 import { AddressRoutePreviewMap } from '@/components/address/AddressRoutePreview'
 
 function AddressDetailsFieldRow({ field }: { field: AddressDetailsField }) {
-  const mapUrl = field.mapQuery ? buildAddressMapEmbedUrl(field.mapQuery) : undefined
-
   return (
     <div className={`address-details__field${field.weatherTone === 'rainy' ? ' is-rainy' : ''}`}>
       <div className="address-details__field-head">
@@ -16,13 +14,14 @@ function AddressDetailsFieldRow({ field }: { field: AddressDetailsField }) {
       </div>
       <strong>{field.value}</strong>
       {field.hint ? <small className="address-details__field-hint">{field.hint}</small> : null}
-      {mapUrl ? (
+      {field.mapQuery ? (
         <div className={`address-details__map-preview${field.mapVariant === 'large' ? ' is-large' : ''}`}>
-          <iframe
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            src={mapUrl}
-            title={`${field.label}地图`}
+          <AddressTileMap
+            primaryLabel={field.label}
+            primaryAddress={field.mapQuery}
+            primaryQuery={field.mapQuery || field.value}
+            compact={field.mapVariant !== 'large'}
+            weatherTone={field.weatherTone}
           />
         </div>
       ) : null}

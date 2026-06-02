@@ -3,13 +3,6 @@ import type { MerchantConsolePanelProps } from '@/pages/merchant/hooks/MerchantC
 import type { Store } from '@/objects/core/SharedObjects'
 
 export type MerchantTrendPoint = MerchantRoleProps['merchantMonthlyTrend'][number]
-export const MERCHANT_STORE_SUB_VIEW = {
-  menu: 'menu',
-  orders: 'orders',
-} as const
-
-export type MerchantStoreSubView =
-  (typeof MERCHANT_STORE_SUB_VIEW)[keyof typeof MERCHANT_STORE_SUB_VIEW]
 
 export type MerchantProfileFormProps = Pick<
   MerchantRoleProps,

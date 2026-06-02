@@ -29,8 +29,11 @@ export function getMerchantWorkspaceViewFromUrl(
   locationPathname: string,
 ): MerchantWorkspaceView {
   if (locationPathname === ROUTE_PATH.merchantApplication) return MERCHANT_WORKSPACE_VIEW.application
+  if (locationPathname === ROUTE_PATH.merchantOrders) return MERCHANT_WORKSPACE_VIEW.orders
+  if (locationPathname === ROUTE_PATH.merchantStore) return MERCHANT_WORKSPACE_VIEW.store
   if (locationPathname.startsWith(ROUTE_PATH.merchantProfile)) return MERCHANT_WORKSPACE_VIEW.profile
-  return MERCHANT_WORKSPACE_VIEW.console
+  if (locationPathname === ROUTE_PATH.merchantConsole) return MERCHANT_WORKSPACE_VIEW.store
+  return MERCHANT_WORKSPACE_VIEW.store
 }
 
 export function getMerchantApplicationViewFromUrl(

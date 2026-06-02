@@ -204,7 +204,7 @@ export function getCustomerStoreCollections(
   blockedStoreIds: StoreId[],
 ) {
   const normalizedCustomerStoreSearch = customerStoreSearch.trim().toLowerCase()
-  const referenceAddress = selectedCustomer?.defaultAddress ?? ''
+  const referenceLocation = selectedCustomer?.location
   const allBrowsableStores =
     state?.stores.filter((store: Store) => !blockedStoreIds.includes(store.id)).slice() ?? []
   const sortStoresByDistance = (stores: Store[]) =>
@@ -212,7 +212,7 @@ export function getCustomerStoreCollections(
       .slice()
       .sort(
         (left: Store, right: Store) =>
-          getStoreDeliveryQuote(left, referenceAddress).distanceKm - getStoreDeliveryQuote(right, referenceAddress).distanceKm ||
+          getStoreDeliveryQuote(left, referenceLocation).distanceKm - getStoreDeliveryQuote(right, referenceLocation).distanceKm ||
           right.averageRating - left.averageRating ||
           right.ratingCount - left.ratingCount,
       )

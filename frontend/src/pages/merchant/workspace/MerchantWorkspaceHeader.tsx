@@ -13,9 +13,14 @@ const MERCHANT_WORKSPACE_VIEW_META: Record<MerchantWorkspaceView, MerchantWorksp
     path: buildMerchantApplicationSubmitRoute(),
     resetStoreSelection: true,
   },
-  [MERCHANT_WORKSPACE_VIEW.console]: {
-    title: '控制台',
-    path: ROUTE_PATH.merchantConsole,
+  [MERCHANT_WORKSPACE_VIEW.store]: {
+    title: '店铺页',
+    path: ROUTE_PATH.merchantStore,
+    resetStoreSelection: false,
+  },
+  [MERCHANT_WORKSPACE_VIEW.orders]: {
+    title: '订单页',
+    path: ROUTE_PATH.merchantOrders,
     resetStoreSelection: false,
   },
   [MERCHANT_WORKSPACE_VIEW.profile]: {
@@ -50,11 +55,18 @@ export function MerchantWorkspaceHeader(props: MerchantRoleProps) {
           店家申请
         </button>
         <button
-          className={merchantWorkspaceView === MERCHANT_WORKSPACE_VIEW.console ? 'primary-button' : 'secondary-button'}
-          onClick={() => goToView(MERCHANT_WORKSPACE_VIEW.console)}
+          className={merchantWorkspaceView === MERCHANT_WORKSPACE_VIEW.store ? 'primary-button' : 'secondary-button'}
+          onClick={() => goToView(MERCHANT_WORKSPACE_VIEW.store)}
           type="button"
         >
-          控制台
+          店铺页
+        </button>
+        <button
+          className={merchantWorkspaceView === MERCHANT_WORKSPACE_VIEW.orders ? 'primary-button' : 'secondary-button'}
+          onClick={() => goToView(MERCHANT_WORKSPACE_VIEW.orders)}
+          type="button"
+        >
+          订单页
         </button>
         <button
           className={merchantWorkspaceView === MERCHANT_WORKSPACE_VIEW.profile ? 'primary-button' : 'secondary-button'}

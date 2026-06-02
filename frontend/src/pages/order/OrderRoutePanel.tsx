@@ -43,12 +43,13 @@ function getRouteEtaLabel(order: OrderSummary, estimate: ReturnType<typeof build
 
 function buildOrderRouteDetailsData(props: OrderRoutePanelProps): AddressDetailsCardData {
   const { order, formatTime, storeAddress } = props
+  const resolvedStoreAddress = storeAddress?.trim() || order.storeName
   const estimate = buildDeliveryRouteEstimate({
     avgPrepMinutes: 20,
     status: order.status,
     referenceTime: order.scheduledDeliveryAt,
   })
-  const hasMerchantAddress = Boolean(storeAddress?.trim())
+  const hasMerchantAddress = Boolean(resolvedStoreAddress.trim())
   const hasActiveRoute =
     hasMerchantAddress &&
     (order.status === ORDER_STATUS.pendingMerchantAcceptance ||
@@ -71,12 +72,14 @@ function buildOrderRouteDetailsData(props: OrderRoutePanelProps): AddressDetails
       { label: '订单金额', value: String(order.totalPriceCents / 100) + ' 元' },
       { label: '顾客', value: order.customerName },
     ],
-    routePreview: hasActiveRoute && storeAddress
+    routePreview: hasActiveRoute && resolvedStoreAddress
         ? {
           startLabel: '商家地址',
-          startAddress: storeAddress,
+          startAddress: resolvedStoreAddress,
+          startQuery: storeAddress || order.storeName,
           endLabel: '顾客地址',
           endAddress: order.deliveryAddress,
+          endQuery: order.deliveryAddress,
           statusLabel: getRouteStatusLabel(props, estimate),
           etaLabel: getRouteEtaLabel(order, estimate),
           weatherTone: estimate.weatherTone,
@@ -95,11 +98,11 @@ function buildOrderRouteDetailsData(props: OrderRoutePanelProps): AddressDetails
             label: '店铺',
             value: order.storeName,
           },
-          ...(storeAddress
+          ...(resolvedStoreAddress
             ? [
                 {
                   label: '商家地址',
-                  value: storeAddress,
+                  value: resolvedStoreAddress,
                 },
               ]
             : []),

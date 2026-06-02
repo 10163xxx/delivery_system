@@ -32,7 +32,7 @@ private def sanitizedCustomerAddressEntry(
     for
       label <- sanitizeRequiredText(request.label, DeliveryValidationDefaults.AddressLabelMaxLength, ValidationMessages.Customer.AddressLabelRequired)
       address <- sanitizeRequiredText(request.address, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.Customer.AddressRequired)
-    yield AddressEntry(label, address)
+    yield AddressEntry(label, address, Some(request.location))
 
 private def sanitizedCustomerAddress(
       address: AddressText
@@ -113,10 +113,11 @@ def setDefaultCustomerAddress(
         for
           customer <- findAccountCustomer(current, customerId)
           address <- sanitizedCustomerAddress(request.address)
-          _ <- Either.cond(customer.addresses.exists(_.address == address), (), ValidationMessages.Customer.AddressNotFound)
+          addressEntry <- customer.addresses.find(_.address == address).toRight(ValidationMessages.Customer.AddressNotFound)
+          location <- addressEntry.location.toRight(ValidationMessages.Customer.AddressLocationRequired)
         yield
           withDerivedData(
-            updateCustomerEntry(current, customer.id)(_.copy(defaultAddress = address)),
+            updateCustomerEntry(current, customer.id)(_.copy(defaultAddress = address, location = Some(location))),
             now(),
           )
       }

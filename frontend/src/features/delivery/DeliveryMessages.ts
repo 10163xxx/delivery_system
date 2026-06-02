@@ -17,7 +17,7 @@ export const DELIVERY_CONSOLE_MESSAGES = {
     menuImageUploadFailed: '菜品图片上传失败',
   },
   merchant: {
-    remainingQuantityHint: '可选填写 1 到 10，表示当前仅剩这么多件。',
+    remainingQuantityHint: '可选填写 1 到 10，超过 10 将按不限量处理。',
     merchantNameRequired: '请填写商家名称',
     storeNameRequired: '请填写店铺名称',
     storeCategoryRequired: '请选择店铺大类',
@@ -28,12 +28,12 @@ export const DELIVERY_CONSOLE_MESSAGES = {
     menuItemCategoryInvalid: '菜品分类不能超过 20 个字符',
     menuItemDescriptionRequired: '请填写菜品说明',
     menuItemPriceInvalid: '请填写 0.01 到 9999.99 元之间的价格',
-    menuItemRemainingQuantityInvalid: '限量库存可留空，或填写 1 到 10 的整数',
+    menuItemRemainingQuantityInvalid: '限量库存可留空，或填写大于 0 的整数；超过 10 按不限量处理',
     menuItemImageRequired: '请上传菜品图片或填写可访问的图片 URL',
     menuItemSelectionGroupsInvalid: '商品选项格式不正确，请按示例填写',
     orderRejectReasonRequired: '请填写拒单理由',
     prepMinutesInvalid: '预计出餐时间需在 1 到 120 分钟之间',
-    stockQuantityInvalid: '库存需为 0 到 10，留空表示不限量',
+    stockQuantityInvalid: '库存需为 0 或正整数，留空或超过 10 表示不限量',
     menuItemPriceUpdateInvalid: '价格需在 0.01 到 9999.99 元之间',
     businessHoursInvalid: '请填写有效的营业时间',
     businessHoursOrderInvalid: '打烊时间需晚于开业时间',
@@ -42,6 +42,7 @@ export const DELIVERY_CONSOLE_MESSAGES = {
     notConfigured: '未配置',
     addressLabelRequired: '请填写地址标签',
     addressContentRequired: '请填写地址内容',
+    addressLocationRequired: '该地址无法被真实地图定位，请输入可识别的真实地址',
     contactPhoneRequired: '请填写联系电话',
     contactPhoneInvalid: '联系电话格式不正确',
     bankNameRequired: '请选择开户银行',
@@ -193,6 +194,12 @@ export const CUSTOMER_STORE_BROWSE_LAYOUT = {
   searchHistoryBorder: '1px solid rgba(15, 23, 42, 0.08)',
 } as const
 
+export const CUSTOMER_HOME_COPY = {
+  currentAddressLabel: '当前地址',
+  currentAddressMapLabel: '当前地址地图',
+  currentAddressHint: '地图会在这里展示你当前收货位置。',
+} as const
+
 export const CUSTOMER_ORDER_WORKSPACE_COPY = {
   activeSectionTitle: '待完成',
   addToCartButton: '加入购物车',
@@ -215,6 +222,10 @@ export const CUSTOMER_ORDER_WORKSPACE_COPY = {
   reviewSectionToggleCollapse: '收起待评价',
   reviewSectionToggleExpand: '查看待评价',
   repeatOrderButton: '再来一单',
+  repeatUnavailableNoMenu: '原店铺暂无可点商品，暂时不能再来一单。',
+  repeatUnavailableStoreClosed: '原店铺当前休息中，暂时不能再来一单。',
+  repeatUnavailableStoreMissing: '原店铺已不存在，暂时不能再来一单。',
+  repeatUnavailableStoreRevoked: '原店铺已停止营业，暂时不能再来一单。',
   sectionCountSuffix: ' 单',
   activeSectionToggleCollapse: '收起待完成',
   activeSectionToggleExpand: '查看待完成',

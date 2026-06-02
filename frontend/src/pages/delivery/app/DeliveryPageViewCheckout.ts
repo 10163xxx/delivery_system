@@ -4,6 +4,7 @@ import {
   MAX_RECHARGE_AMOUNT_YUAN,
   MAX_WITHDRAW_AMOUNT_YUAN,
   getCartSubtotalCents,
+  getCustomerAddressCoordinate,
   getStoreDeliveryQuote,
   parseMerchantWithdrawAmount,
   parseRechargeAmount,
@@ -25,7 +26,8 @@ export function getCheckoutSummary(args: CheckoutSummaryArgs) {
     selectedCouponId,
   } = args
   const checkoutAddress = deliveryAddress.trim() || selectedCustomer?.defaultAddress || ''
-  const deliveryQuote = selectedStore ? getStoreDeliveryQuote(selectedStore, checkoutAddress) : null
+  const checkoutCoordinate = getCustomerAddressCoordinate(selectedCustomer, checkoutAddress)
+  const deliveryQuote = selectedStore ? getStoreDeliveryQuote(selectedStore, checkoutCoordinate) : null
   const cartSubtotal = getCartSubtotalCents(
     selectedStore,
     quantities,

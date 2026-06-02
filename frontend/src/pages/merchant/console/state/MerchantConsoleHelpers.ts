@@ -133,7 +133,7 @@ export function createMerchantConsoleValidators() {
     const trimmed = value.trim()
     if (trimmed === '') return null
     const parsed = Number(trimmed)
-    if (!Number.isInteger(parsed) || parsed < MIN_MENU_ITEM_STOCK || parsed > MAX_MENU_ITEM_STOCK) {
+    if (!Number.isInteger(parsed) || parsed < MIN_MENU_ITEM_STOCK) {
       return DELIVERY_CONSOLE_MESSAGES.merchant.stockQuantityInvalid
     }
     return null
@@ -199,11 +199,15 @@ export function createMerchantConsoleActions({
     const trimmed = draft.trim()
     const success = await runAction(() =>
       updateMenuItemStock(storeId, item.id, {
-        remainingQuantity: trimmed === '' ? undefined : Number(trimmed),
+        remainingQuantity:
+          trimmed === '' || Number(trimmed) > MAX_MENU_ITEM_STOCK ? undefined : Number(trimmed),
       }),
     )
     if (!success) return
-    setMenuItemStockDrafts((current) => ({ ...current, [item.id]: trimmed }))
+    setMenuItemStockDrafts((current) => ({
+      ...current,
+      [item.id]: trimmed === '' || Number(trimmed) > MAX_MENU_ITEM_STOCK ? '' : trimmed,
+    }))
   }
 
   async function submitMenuItemPrice(storeId: StoreId, item: MenuItem) {

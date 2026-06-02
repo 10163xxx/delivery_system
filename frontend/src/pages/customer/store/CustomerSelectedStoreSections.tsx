@@ -1,7 +1,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
-import type { MenuItem } from '@/objects/core/SharedObjects'
 import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/objects/customer/page/CustomerPageObjects'
+import { getSelectedCartLines } from '@/features/delivery/DeliveryServices'
 import {
   MAX_RATING,
   MILLISECONDS_PER_DAY,
@@ -46,6 +46,7 @@ export function SelectedStoreToolbar({ props }: { props: CustomerRoleProps }) {
     leaveStore,
     resetStoreCategory,
     quantities,
+    selectedMenuItemConfigurations,
     toggleBlockedStore,
     toggleFavoriteStore,
   } = props
@@ -69,7 +70,7 @@ export function SelectedStoreToolbar({ props }: { props: CustomerRoleProps }) {
       </div>
       <div>
         <p>{SELECTED_STORE_SECTIONS_COPY.selectedItemsLabel}</p>
-        <strong>{selectedStore.menu.reduce((sum: number, item: MenuItem) => sum + (quantities[item.id] ?? 0), 0)}</strong>
+        <strong>{getSelectedCartLines(selectedStore, quantities, selectedMenuItemConfigurations).reduce((sum, line) => sum + line.quantity, 0)}</strong>
       </div>
       <button
         className="secondary-button store-back-button"

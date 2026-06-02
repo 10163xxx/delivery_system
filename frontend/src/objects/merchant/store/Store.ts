@@ -24,10 +24,16 @@ export type StoreIdentity = {
 export type StoreOperations = {
   status: DisplayText
   storeAddress: AddressText
+  location?: StoreLocation
   businessHours: BusinessHours
   avgPrepMinutes: Minutes
   imageUrl?: ImageUrl
   menu: MenuItem[]
+}
+
+export type StoreLocation = {
+  latitude: number
+  longitude: number
 }
 
 export type StoreMetrics = {

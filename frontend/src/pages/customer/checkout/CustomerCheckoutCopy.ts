@@ -27,6 +27,7 @@ export const CUSTOMER_CHECKOUT_COPY = {
   store: {
     expandDisabledForClosedStore: '非营业时间',
     expandDisabledForIncompleteAddress: '先完善默认地址',
+    expandDisabledForUnlocatedAddress: '地址未定位',
     expandDisabledForOutOfRange: '超出 10 公里',
     expandDisabledForNoMenu: '暂无菜品可下单',
     expandDisabledForRevokedStore: '当前不可下单',
@@ -44,6 +45,7 @@ export const CUSTOMER_CHECKOUT_COPY = {
     configurationDialogConfirmButton: '确认并加入',
     configurationDialogDescription: '先选好这份商品的配置，再加入购物车。',
     configurationDialogCancelButton: '取消',
+    configurationDialogSelectedPrefix: '当前已选：',
     configurationGroupRequiredSingle: ' · 必选 1 项',
     configurationGroupSelectionRange: (minSelections: number, maxSelections: number) =>
       ` · 选择 ${minSelections}-${maxSelections} 项`,
@@ -62,6 +64,8 @@ export const CUSTOMER_CHECKOUT_COPY = {
   address: {
     addressPlaceholderError: '默认地址还是占位地址，请先到“个人信息”里修改默认地址后再下单。',
     deliveryAddressTitle: '配送地址',
+    locatingAddress: '正在定位配送地址。',
+    unlocatedAddress: '配送地址未定位，当前不能提交订单。',
     unavailableAddress: '默认地址未完善，当前不能提交订单。',
   },
   schedule: {
@@ -118,10 +122,15 @@ export function getCheckoutPrimaryActionLabel(props: CheckoutPanelProps) {
     selectedStore,
     selectedStoreIsDeliverable,
     selectedStoreHasMenu,
+    deliveryAddressIsLocated,
+    deliveryAddressIsLocating,
   } = props
 
   if (!selectedStore) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForNoMenu
   if (customerRequiresDefaultAddressUpdate) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForIncompleteAddress
+  if (deliveryAddressIsLocating || deliveryAddressIsLocated === false) {
+    return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForUnlocatedAddress
+  }
   if (selectedStore.status === STORE_STATUS.revoked) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForRevokedStore
   if (!isStoreCurrentlyOpen(selectedStore)) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForClosedStore
   if (!selectedStoreIsDeliverable) return CUSTOMER_CHECKOUT_COPY.store.expandDisabledForOutOfRange
@@ -133,6 +142,8 @@ export function getCheckoutPrimaryActionLabel(props: CheckoutPanelProps) {
 export function canBalancePay(props: CheckoutPanelProps) {
   const {
     customerRequiresDefaultAddressUpdate,
+    deliveryAddressIsLocated,
+    deliveryAddressIsLocating,
     payableTotalCents,
     selectedCustomer,
     selectedStoreCanOrder,
@@ -142,6 +153,8 @@ export function canBalancePay(props: CheckoutPanelProps) {
     selectedCustomer &&
       selectedStoreCanOrder &&
       !customerRequiresDefaultAddressUpdate &&
+      deliveryAddressIsLocated === true &&
+      !deliveryAddressIsLocating &&
       selectedCustomer.balanceCents >= payableTotalCents,
   )
 }

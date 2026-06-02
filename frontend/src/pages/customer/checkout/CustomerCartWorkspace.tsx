@@ -11,22 +11,25 @@ import {
 } from '@/pages/customer/checkout/CustomerCheckoutCopy'
 import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
-import { ROUTE_PATH, type MenuItem } from '@/objects/core/SharedObjects'
+import { ROUTE_PATH } from '@/objects/core/SharedObjects'
 import { buildCustomerOrderStoreRoute } from '@/objects/page/DeliveryAppObjects'
 import {
+  getSelectedCartLines,
   getMenuItemConfiguredUnitPriceCents,
   hasSelectedRequiredCategoryItem,
   storeHasRequiredMenuCategory,
 } from '@/features/delivery/DeliveryServices'
 
 function getSelectedCartItems(props: CheckoutPanelProps) {
-  return (
-    props.selectedStore?.menu.filter((item: MenuItem) => (props.quantities[item.id] ?? 0) > 0) ?? []
+  return getSelectedCartLines(
+    props.selectedStore,
+    props.quantities,
+    props.selectedMenuItemConfigurations,
   )
 }
 
 export function CustomerCartWorkspace(props: CheckoutPanelProps & { navigate: NavigateFunction }) {
-  const { formatPrice, navigate, quantities, selectedMenuItemConfigurations, selectedStore, updateQuantity } = props
+  const { formatPrice, navigate, quantities, selectedStore, updateCartLineQuantity } = props
   const selectedItems = getSelectedCartItems(props)
   const requiresRequiredCategory = selectedStore ? storeHasRequiredMenuCategory(selectedStore) : false
   const hasRequiredCategorySelection =
@@ -75,37 +78,34 @@ export function CustomerCartWorkspace(props: CheckoutPanelProps & { navigate: Na
               </p>
             </div>
           ) : null}
-          {selectedItems.map((item) => {
-            const quantity = quantities[item.id] ?? 0
-            const selectedConfiguration = selectedMenuItemConfigurations[item.id]
-
+          {selectedItems.map((line) => {
             return (
-              <div key={item.id} className="customer-cart-item-row">
+              <div key={line.lineKey} className="customer-cart-item-row">
                 <div>
-                  <strong>{item.name}</strong>
+                  <strong>{line.item.name}</strong>
                   <p className="meta-line">
-                    {selectedConfiguration?.summaryText || CUSTOMER_CHECKOUT_COPY.cart.defaultSelectionSummary}
+                    {line.configuration?.summaryText || CUSTOMER_CHECKOUT_COPY.cart.defaultSelectionSummary}
                   </p>
                 </div>
                 <div className="customer-cart-item-actions">
                   <button
                     className="secondary-button"
-                    onClick={() => updateQuantity(item, quantity - 1)}
+                    onClick={() => updateCartLineQuantity(line.item, line.lineKey, line.quantity - 1)}
                     type="button"
                   >
                     {CUSTOMER_CHECKOUT_COPY.cart.decreaseQuantityButton}
                   </button>
-                  <strong>{quantity}</strong>
+                  <strong>{line.quantity}</strong>
                   <button
                     className="secondary-button"
-                    onClick={() => updateQuantity(item, quantity + 1)}
+                    onClick={() => updateCartLineQuantity(line.item, line.lineKey, line.quantity + 1)}
                     type="button"
                   >
                     {CUSTOMER_CHECKOUT_COPY.cart.increaseQuantityButton}
                   </button>
                   <strong>
                     {formatPrice(
-                      getMenuItemConfiguredUnitPriceCents(item, selectedConfiguration) * quantity,
+                      getMenuItemConfiguredUnitPriceCents(line.item, line.configuration) * line.quantity,
                     )}
                   </strong>
                 </div>

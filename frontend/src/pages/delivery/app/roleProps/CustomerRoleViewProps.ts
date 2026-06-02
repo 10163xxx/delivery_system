@@ -103,6 +103,7 @@ function getCustomerMenuActionViewProps(pageView: PageView) {
     openMenuItemConfiguration: pageView.openMenuItemConfiguration,
     openCheckout: pageView.openCheckout,
     repeatOrder: pageView.repeatOrder,
+    updateCartLineQuantity: pageView.updateCartLineQuantity,
     updateQuantity: pageView.updateQuantity,
   }
 }

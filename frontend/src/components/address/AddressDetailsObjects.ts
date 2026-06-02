@@ -1,4 +1,5 @@
 import type { DeliveryWeatherTone } from '@/features/delivery/DeliveryRouteEstimates'
+import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
 
 export type AddressDetailsMetric = {
   label: string
@@ -17,13 +18,18 @@ export type AddressDetailsField = {
 export type AddressRoutePreview = {
   startLabel: string
   startAddress: string
-  endLabel: string
-  endAddress: string
+  startCoordinate?: DeliveryCoordinate
+  startQuery?: string
+  endLabel?: string
+  endAddress?: string
+  endCoordinate?: DeliveryCoordinate
+  endQuery?: string
   statusLabel: string
   etaLabel?: string
   weatherTone?: DeliveryWeatherTone
   showRouteCurve?: boolean
   showDestinationMarker?: boolean
+  compact?: boolean
 }
 
 export type AddressDetailsRecord = {

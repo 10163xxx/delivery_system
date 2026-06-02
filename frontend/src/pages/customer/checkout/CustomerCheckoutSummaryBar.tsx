@@ -10,6 +10,8 @@ export function CustomerCheckoutSummaryBar(props: CheckoutPanelProps) {
     cartSubtotal,
     customerRequiresDefaultAddressUpdate,
     deliveryFeeCents,
+    deliveryAddressIsLocated,
+    deliveryAddressIsLocating,
     formatPrice,
     openCheckout,
     payableTotalCents,
@@ -43,7 +45,7 @@ export function CustomerCheckoutSummaryBar(props: CheckoutPanelProps) {
       </div>
       <button
         className="primary-button"
-        disabled={!selectedStoreCanOrder}
+        disabled={!selectedStoreCanOrder || deliveryAddressIsLocated !== true || deliveryAddressIsLocating}
         onClick={() => openCheckout()}
         type="button"
       >
@@ -51,6 +53,12 @@ export function CustomerCheckoutSummaryBar(props: CheckoutPanelProps) {
       </button>
       {customerRequiresDefaultAddressUpdate ? (
         <div className="banner error">{CUSTOMER_CHECKOUT_COPY.address.addressPlaceholderError}</div>
+      ) : null}
+      {deliveryAddressIsLocating ? (
+        <div className="banner warning">{CUSTOMER_CHECKOUT_COPY.address.locatingAddress}</div>
+      ) : null}
+      {!deliveryAddressIsLocating && deliveryAddressIsLocated === false ? (
+        <div className="banner error">{CUSTOMER_CHECKOUT_COPY.address.unlocatedAddress}</div>
       ) : null}
     </div>
   )

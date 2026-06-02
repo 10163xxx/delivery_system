@@ -168,7 +168,10 @@ export function resetInvalidMerchantStoreSelection(args: ResetInvalidMerchantSto
     setSelectedMerchantStoreId,
   } = args
   if (!selectedMerchantStoreId) return
-  if (merchantWorkspaceView !== MERCHANT_WORKSPACE_VIEW.console) {
+  if (
+    merchantWorkspaceView !== MERCHANT_WORKSPACE_VIEW.store &&
+    merchantWorkspaceView !== MERCHANT_WORKSPACE_VIEW.orders
+  ) {
     setSelectedMerchantStoreId('')
     return
   }

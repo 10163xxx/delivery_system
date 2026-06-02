@@ -261,6 +261,7 @@ def createApprovedStore(application: MerchantApplication): Store =
     cuisine = wrapText[CuisineLabel](application.category.raw),
     status = validationStoreOpen,
     storeAddress = application.storeAddress,
+    location = None,
     businessHours = application.businessHours,
     avgPrepMinutes = application.avgPrepMinutes,
     imageUrl = application.imageUrl,

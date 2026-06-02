@@ -6,6 +6,7 @@ import type {
 } from '@/objects/core/SharedObjects'
 import type { SelectedMenuItemConfiguration } from '@/objects/page/DeliveryAppObjects'
 import { formatStartingPrice } from './DeliveryFormatters'
+import { getSelectedCartLines } from './DeliveryCartLines'
 
 function findSelectionOption(
   group: MenuItemSelectionGroup,
@@ -80,12 +81,9 @@ export function getCartSubtotalCents(
   selectedMenuItemConfigurations: Record<string, SelectedMenuItemConfiguration>,
 ) {
   if (!store) return 0
-  return store.menu.reduce((sum, item) => {
-    const quantity = quantities[item.id] ?? 0
-    if (quantity <= 0) return sum
-    return (
-      sum +
-      getMenuItemConfiguredUnitPriceCents(item, selectedMenuItemConfigurations[item.id]) * quantity
-    )
-  }, 0)
+  return getSelectedCartLines(store, quantities, selectedMenuItemConfigurations).reduce(
+    (sum, line) =>
+      sum + getMenuItemConfiguredUnitPriceCents(line.item, line.configuration) * line.quantity,
+    0,
+  )
 }

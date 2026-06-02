@@ -10,6 +10,7 @@ import {
   DELIVERY_CONSOLE_MESSAGES,
   validateCustomerAddressDraft,
 } from '@/features/delivery/DeliveryServices'
+import { geocodeDeliveryAddress } from '@/features/delivery/DeliveryGeocoding'
 import type { CustomerProfileParams } from '@/objects/customer/page/CustomerActionObjects'
 
 export function createCustomerProfileActions(params: CustomerProfileParams) {
@@ -49,8 +50,13 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
     const nextErrors = validateCustomerAddressDraft(addressDraft)
     setAddressFormErrors(nextErrors)
     if (nextErrors.label || nextErrors.address) return
+    const location = await geocodeDeliveryAddress(addressDraft.address)
+    if (!location) {
+      setAddressFormErrors({ address: DELIVERY_CONSOLE_MESSAGES.profile.addressLocationRequired })
+      return
+    }
     const success = await runAction(() =>
-      addCustomerAddressApi(selectedCustomer.id, buildCustomerAddressPayload(addressDraft)),
+      addCustomerAddressApi(selectedCustomer.id, buildCustomerAddressPayload(addressDraft, location)),
     )
     if (!success) return
     setAddressDraft({ label: '', address: '' })

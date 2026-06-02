@@ -28,6 +28,7 @@ import {
   MAX_MENU_ITEM_SELECTION_GROUP_NAME_LENGTH,
   MAX_MENU_ITEM_SELECTION_OPTION_COUNT,
   MAX_MENU_ITEM_SELECTION_OPTION_LENGTH,
+  MAX_MENU_ITEM_STOCK,
   MAX_MERCHANT_NAME_LENGTH,
   MAX_PREP_MINUTES,
   MAX_STORE_CATEGORY_LENGTH,
@@ -93,7 +94,8 @@ export function buildMenuItemPayload(draft: MenuItemDraft): AddMenuItemRequest {
     priceCents: Number.isFinite(price) ? Math.round(price * CURRENCY_CENTS_SCALE) : 0,
     imageUrl: imageUrl || undefined,
     remainingQuantity:
-      remainingQuantity === ''
+      remainingQuantity === '' ||
+      (Number.isInteger(parsedRemainingQuantity) && parsedRemainingQuantity > MAX_MENU_ITEM_STOCK)
         ? undefined
         : Number.isInteger(parsedRemainingQuantity)
           ? parsedRemainingQuantity

@@ -14,6 +14,7 @@ import {
   openCheckoutAction,
   repeatCustomerOrderAction,
   resetStoreCategoryAction,
+  updateCartLineQuantityAction,
   updateQuantityAction,
   updateReviewDraftAction,
 } from '@/pages/delivery/app/DeliveryPageViewActions'
@@ -130,6 +131,8 @@ function getPageViewMerchantActionProps(actionArgs: ReturnType<typeof buildPageA
   return {
     updateQuantity: (menuItem: MenuItem, nextValue: number) =>
       updateQuantityAction(actionArgs, menuItem, nextValue),
+    updateCartLineQuantity: (menuItem: MenuItem, lineKey: string, nextValue: number) =>
+      updateCartLineQuantityAction(actionArgs, menuItem, lineKey, nextValue),
     openMenuItemConfiguration: (menuItem: MenuItem) =>
       openMenuItemConfigurationAction(actionArgs, menuItem),
     confirmMenuItemConfiguration: (

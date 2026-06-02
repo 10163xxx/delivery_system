@@ -167,7 +167,8 @@ export function isCustomerProfileWorkspaceView(
 
 export const MERCHANT_WORKSPACE_VIEW = {
   application: 'application',
-  console: 'console',
+  store: 'store',
+  orders: 'orders',
   profile: 'profile',
 } as const
 
@@ -298,6 +299,8 @@ export type CustomerOrderRoutePath =
 export type MerchantRoutePath =
   | typeof ROUTE_PATH.merchantApplication
   | typeof ROUTE_PATH.merchantApplicationSubmit
+  | typeof ROUTE_PATH.merchantStore
+  | typeof ROUTE_PATH.merchantOrders
   | typeof ROUTE_PATH.merchantConsole
   | typeof ROUTE_PATH.merchantProfile
   | typeof ROUTE_PATH.merchantProfileAnalytics

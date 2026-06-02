@@ -3,6 +3,7 @@ import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 import type { CustomerWorkspaceView } from '@/objects/page/DeliveryAppObjects'
 import { REVIEW_TARGET } from '@/objects/core/SharedObjects'
 import type { OrderSummary, Store } from '@/objects/core/SharedObjects'
+import type { StoreLocationStatus } from '@/features/delivery/DeliveryStoreLocation'
 
 export const CUSTOMER_ORDER_SECTION = {
   all: 'all',
@@ -54,7 +55,9 @@ export type RecentFrequentStore = CustomerRoleProps['recentFrequentStores'][numb
 export type CustomerStoreBrowseResultCardProps = {
   store: Store
   reviews: StoreCustomerReview[]
-  props: CustomerStoreBrowseCardBindings
+  props: CustomerStoreBrowseCardBindings & {
+    storeLocationStatus?: StoreLocationStatus
+  }
 }
 
 export type CheckoutPanelProps = Pick<
@@ -100,12 +103,16 @@ export type CheckoutPanelProps = Pick<
   | 'submitOrder'
   | 'suggestedDeliveryTime'
   | 'todayDeliveryCutoff'
+  | 'updateCartLineQuantity'
   | 'updateQuantity'
   | 'isStoreCurrentlyOpen'
   | 'selectedStoreDeliveryDistanceLabel'
   | 'selectedStoreDistanceCategory'
   | 'selectedStoreIsDeliverable'
->
+> & {
+  deliveryAddressIsLocated?: boolean
+  deliveryAddressIsLocating?: boolean
+}
 
 export type CustomerOrderSectionData = {
   title: string

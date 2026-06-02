@@ -10,8 +10,18 @@ export const merchantRoutes: RouteObject[] = [
     errorElement: <RouteErrorPage />,
   },
   {
-    path: ROUTE_PATH.merchantConsole,
+    path: ROUTE_PATH.merchantStore,
     element: <DeliveryConsole />,
+    errorElement: <RouteErrorPage />,
+  },
+  {
+    path: ROUTE_PATH.merchantOrders,
+    element: <DeliveryConsole />,
+    errorElement: <RouteErrorPage />,
+  },
+  {
+    path: ROUTE_PATH.merchantConsole,
+    element: <Navigate replace to={ROUTE_PATH.merchantStore} />,
     errorElement: <RouteErrorPage />,
   },
   {
@@ -26,6 +36,6 @@ export const merchantRoutes: RouteObject[] = [
   },
   {
     path: '/merchant/*',
-    element: <Navigate replace to={ROUTE_PATH.merchantConsole} />,
+    element: <Navigate replace to={ROUTE_PATH.merchantStore} />,
   },
 ]

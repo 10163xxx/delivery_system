@@ -3,18 +3,20 @@ import type {
   CustomerAddressField,
 } from '@/objects/page/DeliveryAppObjects'
 import { DELIVERY_CONSOLE_MESSAGES } from './DeliveryMessages'
-import { buildCustomerAddressPayload } from './DeliveryPayloads'
+import { MAX_ADDRESS_LABEL_LENGTH, MAX_ADDRESS_LENGTH } from './DeliveryConstants'
+import { normalizeTextInput } from './DeliveryShared'
 
 export function validateCustomerAddressDraft(
   draft: CustomerAddressDraft,
 ): Partial<Record<CustomerAddressField, string>> {
-  const payload = buildCustomerAddressPayload(draft)
+  const label = normalizeTextInput(draft.label, MAX_ADDRESS_LABEL_LENGTH)
+  const address = normalizeTextInput(draft.address, MAX_ADDRESS_LENGTH)
 
   return {
-    label: payload.label
+    label: label
       ? undefined
       : DELIVERY_CONSOLE_MESSAGES.profile.addressLabelRequired,
-    address: payload.address
+    address: address
       ? undefined
       : DELIVERY_CONSOLE_MESSAGES.profile.addressContentRequired,
   }

@@ -8,6 +8,7 @@ function buildCustomerDeliveryDetailsData(props: CheckoutPanelProps): AddressDet
   const { deliveryAddress, formatPrice, isStoreCurrentlyOpen, scheduledDeliveryTime, selectedCustomer, selectedStore } = props
   const selectedAddress = deliveryAddress.trim() || selectedCustomer?.defaultAddress || ''
   const isStoreOpen = selectedStore ? isStoreCurrentlyOpen(selectedStore) : false
+  const resolvedStoreAddress = selectedStore ? (selectedStore.storeAddress.trim() || selectedStore.name) : ''
   const estimate = selectedStore
     ? buildDeliveryRouteEstimate({
         avgPrepMinutes: selectedStore.avgPrepMinutes,
@@ -23,6 +24,22 @@ function buildCustomerDeliveryDetailsData(props: CheckoutPanelProps): AddressDet
       : '选中店铺后，这里会显示本次订单的真实地址信息。',
     weatherTone: estimate?.weatherTone,
     weatherLabel: estimate?.weatherLabel,
+    routePreview: selectedStore && selectedCustomer && selectedAddress
+      ? {
+          startLabel: '商家地址',
+          startAddress: resolvedStoreAddress,
+          startCoordinate: selectedStore.location,
+          startQuery: selectedStore.storeAddress || selectedStore.name,
+          endLabel: '收货地址',
+          endAddress: selectedAddress,
+          endQuery: selectedAddress,
+          statusLabel: isStoreOpen ? '门店已就绪，正在准备接单' : '门店暂未营业',
+          etaLabel: estimate?.prepEstimateLabel ?? `${selectedStore.avgPrepMinutes} 分钟完成备餐`,
+          weatherTone: estimate?.weatherTone,
+          showRouteCurve: false,
+          showDestinationMarker: false,
+        }
+      : undefined,
     metrics: selectedStore
       ? [
           { label: '门店状态', value: isStoreOpen ? '营业中' : '休息中' },

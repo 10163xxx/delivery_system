@@ -2,6 +2,7 @@ import type {
   AccountStatus,
   AddressText,
   CurrencyCents,
+  DeliveryCoordinate,
   CustomerId,
   EntityCount,
   MembershipTier,
@@ -16,8 +17,11 @@ export type CustomerIdentity = {
   name: PersonName
   phone: PhoneNumber
   defaultAddress: AddressText
+  location?: CustomerLocation
   addresses: AddressEntry[]
 }
+
+export type CustomerLocation = DeliveryCoordinate
 
 export type CustomerMetrics = {
   revokedReviewCount: EntityCount

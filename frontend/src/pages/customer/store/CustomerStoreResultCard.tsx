@@ -5,8 +5,18 @@ import { STORE_STATUS, type Store } from '@/objects/core/SharedObjects'
 import type { CustomerStoreBrowseResultCardProps } from '@/objects/customer/page/CustomerPageObjects'
 import { CUSTOMER_STORE_RESULT_COPY } from '@/features/delivery/DeliveryMessages'
 import { getStoreDeliveryQuote } from '@/features/delivery/DeliveryServices'
+import {
+  isStoreLocated,
+  type StoreLocationStatus,
+  useStoreLocationStatus,
+} from '@/features/delivery/DeliveryStoreLocation'
 
-function getStoreBrowseHint(store: Store, isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen']) {
+function getStoreBrowseHint(
+  store: Store,
+  isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen'],
+  locationStatus: StoreLocationStatus,
+) {
+  if (!isStoreLocated(locationStatus)) return '店铺地址未定位，暂不可营业。'
   if (store.status === STORE_STATUS.revoked) {
     return CUSTOMER_STORE_RESULT_COPY.unavailableStoreHint
   }
@@ -23,7 +33,9 @@ function getStoreBrowseButtonLabel(
   store: Store,
   isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen'],
   isDeliverable: boolean,
+  locationStatus: StoreLocationStatus,
 ) {
+  if (!isStoreLocated(locationStatus)) return '暂不可营业'
   if (store.status === STORE_STATUS.revoked) return CUSTOMER_STORE_RESULT_COPY.unavailableStoreButton
   if (!isStoreCurrentlyOpen(store)) return CUSTOMER_STORE_RESULT_COPY.closedStoreButton
   if (store.menu.length === 0) return CUSTOMER_STORE_RESULT_COPY.emptyMenuButton
@@ -49,9 +61,13 @@ export function CustomerStoreResultCard({
     storeBrowseHighlights,
     toggleBlockedStore,
     toggleFavoriteStore,
+    storeLocationStatus,
   } = props
-  const deliveryQuote = getStoreDeliveryQuote(store, selectedCustomer?.defaultAddress ?? '')
+  const resolvedLocationStatus = useStoreLocationStatus(store)
+  const locationStatus = storeLocationStatus ?? resolvedLocationStatus
+  const deliveryQuote = getStoreDeliveryQuote(store, selectedCustomer?.location)
   const disabled =
+    !isStoreLocated(locationStatus) ||
     store.status === STORE_STATUS.revoked ||
     !isStoreCurrentlyOpen(store) ||
     store.menu.length === 0 ||
@@ -127,9 +143,11 @@ export function CustomerStoreResultCard({
           />
         </div>
         <p className="meta-line compact-store-hint">
-          {!deliveryQuote.isDeliverable
+          {!isStoreLocated(locationStatus)
+            ? getStoreBrowseHint(store, isStoreCurrentlyOpen, locationStatus)
+            : !deliveryQuote.isDeliverable
             ? CUSTOMER_STORE_RESULT_COPY.outOfRangeStoreHint
-            : getStoreBrowseHint(store, isStoreCurrentlyOpen)}
+            : getStoreBrowseHint(store, isStoreCurrentlyOpen, locationStatus)}
         </p>
         <div className="action-row">
           <button
@@ -138,7 +156,7 @@ export function CustomerStoreResultCard({
             onClick={() => enterStore(store.id)}
             type="button"
           >
-            {getStoreBrowseButtonLabel(store, isStoreCurrentlyOpen, deliveryQuote.isDeliverable)}
+            {getStoreBrowseButtonLabel(store, isStoreCurrentlyOpen, deliveryQuote.isDeliverable, locationStatus)}
           </button>
           <button
             className="secondary-button"

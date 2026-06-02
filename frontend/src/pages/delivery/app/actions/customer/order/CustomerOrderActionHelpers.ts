@@ -5,7 +5,9 @@ import {
   formatRequiredCategorySelectionMessage,
   formatBusinessHours,
   formatStoreClosedMessage,
+  getCustomerAddressCoordinate,
   getInitialQuantities,
+  getSelectedCartLines,
   getStoreDeliveryQuote,
   getTodayDeliveryWindow,
   hasSelectedRequiredCategoryItem,
@@ -54,7 +56,10 @@ export function validateCustomerOrderSubmission(params: CustomerOrderParams): Or
     setError(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryAddressPendingProfileUpdate)
     return { ok: false }
   }
-  const deliveryQuote = getStoreDeliveryQuote(selectedStore, address)
+  const deliveryQuote = getStoreDeliveryQuote(
+    selectedStore,
+    getCustomerAddressCoordinate(selectedCustomer, address),
+  )
   if (!deliveryQuote.isDeliverable) {
     setDeliveryAddressError(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryDistanceOutOfRange)
     setError(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryDistanceOutOfRange)
@@ -93,11 +98,11 @@ export function validateCustomerOrderSubmission(params: CustomerOrderParams): Or
     return { ok: false }
   }
   if (
-    selectedStore.menu.some(
-      (item) =>
-        (params.quantities[item.id] ?? 0) > 0 &&
-        !hasValidMenuItemSelections(item, params.selectedMenuItemConfigurations[item.id]),
-    )
+    getSelectedCartLines(
+      selectedStore,
+      params.quantities,
+      params.selectedMenuItemConfigurations,
+    ).some((line) => !hasValidMenuItemSelections(line.item, line.configuration))
   ) {
     setError(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired)
     return { ok: false }

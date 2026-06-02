@@ -19,10 +19,20 @@ final case class Customer(
     name: PersonName,
     phone: PhoneNumber,
     defaultAddress: AddressText,
+    location: Option[CustomerLocation],
     addresses: List[AddressEntry],
     accountStatus: AccountStatus,
     metrics: CustomerMetrics,
 )
+
+final case class CustomerLocation(
+    latitude: Double,
+    longitude: Double,
+)
+object CustomerLocation:
+  given Encoder[CustomerLocation] = deriveEncoder
+  given Decoder[CustomerLocation] = deriveDecoder
+
 object Customer:
   given Encoder[CustomerMetrics] = deriveEncoder
   given Decoder[CustomerMetrics] = deriveDecoder
@@ -32,6 +42,7 @@ object Customer:
       name: PersonName,
       phone: PhoneNumber,
       defaultAddress: AddressText,
+      location: Option[CustomerLocation],
       addresses: List[AddressEntry],
       accountStatus: AccountStatus,
       revokedReviewCount: EntityCount,
@@ -45,6 +56,7 @@ object Customer:
       name = name,
       phone = phone,
       defaultAddress = defaultAddress,
+      location = location,
       addresses = addresses,
       accountStatus = accountStatus,
       metrics = CustomerMetrics(
@@ -79,6 +91,7 @@ object Customer:
       name <- cursor.get[PersonName]("name")
       phone <- cursor.get[PhoneNumber]("phone")
       defaultAddress <- cursor.get[AddressText]("defaultAddress")
+      location <- cursor.get[Option[CustomerLocation]]("location")
       addresses <- cursor.get[List[AddressEntry]]("addresses")
       accountStatus <- cursor.get[AccountStatus]("accountStatus")
       revokedReviewCount <- cursor.get[EntityCount]("revokedReviewCount")
@@ -91,6 +104,7 @@ object Customer:
       name = name,
       phone = phone,
       defaultAddress = defaultAddress,
+      location = location,
       addresses = addresses,
       accountStatus = accountStatus,
       revokedReviewCount = revokedReviewCount,

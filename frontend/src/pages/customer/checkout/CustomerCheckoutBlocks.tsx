@@ -135,6 +135,8 @@ export function CustomerCheckoutPaymentSummary(props: CheckoutPanelProps) {
       </div>
       {!balanceEnough ? <div className="banner error">{CUSTOMER_CHECKOUT_COPY.payment.balanceInsufficient}</div> : null}
       {props.customerRequiresDefaultAddressUpdate ? <div className="banner error">{CUSTOMER_CHECKOUT_COPY.address.unavailableAddress}</div> : null}
+      {props.deliveryAddressIsLocating ? <div className="banner warning">{CUSTOMER_CHECKOUT_COPY.address.locatingAddress}</div> : null}
+      {!props.deliveryAddressIsLocating && props.deliveryAddressIsLocated === false ? <div className="banner error">{CUSTOMER_CHECKOUT_COPY.address.unlocatedAddress}</div> : null}
     </>
   )
 }

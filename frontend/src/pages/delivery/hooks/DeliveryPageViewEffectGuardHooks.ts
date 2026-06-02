@@ -7,7 +7,11 @@ import {
   type OrderSummary,
   type Store,
 } from '@/objects/core/SharedObjects'
-import { canReviewOrder, getCartSubtotalCents } from '@/features/delivery/DeliveryServices'
+import {
+  canReviewOrder,
+  getCartSubtotalCents,
+  getSelectedCartLines,
+} from '@/features/delivery/DeliveryServices'
 import type {
   DeliveryPageState,
   DeliveryPageViewEffectsArgs,
@@ -152,6 +156,7 @@ export function useCustomerWorkspaceNavigationGuards(args: {
   searchParams: URLSearchParams
   selectedStore: Store | undefined
   quantities: Record<string, number>
+  selectedMenuItemConfigurations: Record<string, import('@/objects/page/DeliveryAppObjects').SelectedMenuItemConfiguration>
   navigate: DeliveryPageViewEffectsArgs['navigate']
 }) {
   const {
@@ -161,6 +166,7 @@ export function useCustomerWorkspaceNavigationGuards(args: {
     searchParams,
     selectedStore,
     quantities,
+    selectedMenuItemConfigurations,
     navigate,
   } = args
 
@@ -187,10 +193,21 @@ export function useCustomerWorkspaceNavigationGuards(args: {
       return
     }
 
-    const hasSelectedItems = selectedStore.menu.some((item) => (quantities[item.id] ?? 0) > 0)
+    const hasSelectedItems = getSelectedCartLines(
+      selectedStore,
+      quantities,
+      selectedMenuItemConfigurations,
+    ).length > 0
     if (hasSelectedItems) return
     navigate(buildCustomerOrderStoreRoute(selectedStore.id), { replace: true })
-  }, [customerWorkspaceView, navigate, quantities, searchParams, selectedStore])
+  }, [
+    customerWorkspaceView,
+    navigate,
+    quantities,
+    searchParams,
+    selectedMenuItemConfigurations,
+    selectedStore,
+  ])
 }
 
 export function useCheckoutCouponValidationEffect(args: {

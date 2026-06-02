@@ -290,6 +290,7 @@ def updateStoreOperationalInfo(
                 storeEntry.copy(
                   operations = storeEntry.operations.copy(
                   storeAddress = storeAddress,
+                  location = None,
                   businessHours = businessHours,
                   avgPrepMinutes = avgPrepMinutes,
                 )

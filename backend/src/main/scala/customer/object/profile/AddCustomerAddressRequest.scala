@@ -6,7 +6,11 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 import domain.shared.*
 
-final case class AddCustomerAddressRequest(label: AddressLabel, address: AddressText)
+final case class AddCustomerAddressRequest(
+    label: AddressLabel,
+    address: AddressText,
+    location: CustomerLocation,
+)
 object AddCustomerAddressRequest:
   given Encoder[AddCustomerAddressRequest] = deriveEncoder
   given Decoder[AddCustomerAddressRequest] = deriveDecoder

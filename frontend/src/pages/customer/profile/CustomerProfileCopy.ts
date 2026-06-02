@@ -15,6 +15,8 @@ export const CUSTOMER_PROFILE_COPY = {
   addressNewField: '新增地址',
   addressPageTitle: '地址管理',
   addressSavedBadge: '已保存',
+  addressUnlocatedBadge: '未定位',
+  addressUnlocatedHint: '该地址未完成真实地图定位，不能设为默认地址。',
   addressSetDefaultButton: '设为默认',
   addressDefaultDeleteHint: '如需删除当前默认地址，请先把其他地址设为默认。',
   balanceLabel: '账户余额',

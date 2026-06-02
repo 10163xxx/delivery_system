@@ -1,9 +1,9 @@
 export const MERCHANT_CONSOLE_COPY = {
   panel: {
-    title: '商家控制台',
-    description: '仅已审核通过的店铺可接单和推进出餐状态。',
+    title: '店铺页',
+    description: '仅已审核通过的店铺可在这里维护店铺和菜品。',
     storeEmpty: '当前没有已审核通过的店铺。',
-    orderEmpty: '当前店铺暂无订单。',
+    orderEmpty: '当前没有订单。',
   },
   overview: {
     pendingOrdersOverviewTitle: '待处理订单',

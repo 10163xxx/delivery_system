@@ -24,6 +24,7 @@ function AddressActions({
   setDefaultCustomerAddress: CustomerRoleProps['setDefaultCustomerAddress']
 }) {
   const isDefaultAddress = address.address === defaultAddress
+  const isLocatedAddress = Boolean(address.location)
 
   return (
     <>
@@ -31,6 +32,7 @@ function AddressActions({
         {!isDefaultAddress ? (
           <button
             className="secondary-button"
+            disabled={!isLocatedAddress}
             onClick={() => void setDefaultCustomerAddress(address.address)}
             type="button"
           >
@@ -49,6 +51,11 @@ function AddressActions({
       {isDefaultAddress ? (
         <p className="meta-line" style={{ marginTop: '12px' }}>
           {CUSTOMER_PROFILE_COPY.addressDefaultDeleteHint}
+        </p>
+      ) : null}
+      {!isLocatedAddress ? (
+        <p className="meta-line" style={{ marginTop: '12px' }}>
+          {CUSTOMER_PROFILE_COPY.addressUnlocatedHint}
         </p>
       ) : null}
     </>
@@ -78,7 +85,9 @@ function AddressCards({
             <span className="badge">
               {address.address === defaultAddress
                 ? CUSTOMER_PROFILE_COPY.defaultBadge
-                : CUSTOMER_PROFILE_COPY.addressSavedBadge}
+                : address.location
+                  ? CUSTOMER_PROFILE_COPY.addressSavedBadge
+                  : CUSTOMER_PROFILE_COPY.addressUnlocatedBadge}
             </span>
           </div>
           <p>{address.address}</p>

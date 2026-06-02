@@ -14,7 +14,6 @@ import {
   MAX_CONTACT_PHONE_LENGTH,
   MAX_MENU_ITEM_CATEGORY_LENGTH,
   MAX_MENU_ITEM_PRICE_CENTS,
-  MAX_MENU_ITEM_STOCK,
   MAX_MERCHANT_NAME_LENGTH,
   MAX_ADDRESS_LENGTH,
   MAX_STORE_CATEGORY_LENGTH,
@@ -74,8 +73,7 @@ export function validateMenuItemDraft(
   const hasValidRemainingQuantity =
     remainingQuantityText === '' ||
     (Number.isInteger(parsedRemainingQuantity) &&
-      parsedRemainingQuantity >= MIN_MENU_ITEM_QUANTITY &&
-      parsedRemainingQuantity <= MAX_MENU_ITEM_STOCK)
+      parsedRemainingQuantity >= MIN_MENU_ITEM_QUANTITY)
 
   const selectionGroupParseResult = parseMenuItemSelectionGroups(draft.selectionGroupsText)
 

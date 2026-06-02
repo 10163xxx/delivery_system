@@ -1,6 +1,11 @@
-import type { AddressLabel, AddressText } from '@/objects/domain/DomainObjects'
+import type {
+  AddressLabel,
+  AddressText,
+  DeliveryCoordinate,
+} from '@/objects/domain/DomainObjects'
 
 export type AddCustomerAddressRequest = {
   label: AddressLabel
   address: AddressText
+  location: DeliveryCoordinate
 }

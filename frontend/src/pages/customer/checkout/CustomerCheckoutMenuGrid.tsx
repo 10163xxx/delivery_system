@@ -13,10 +13,10 @@ import type { MenuItem } from '@/objects/core/SharedObjects'
 import {
   CUSTOMER_CHECKOUT_LAYOUT,
   CUSTOMER_CHECKOUT_COPY,
-  getMenuItemQuantity,
 } from '@/pages/customer/checkout/CustomerCheckoutCopy'
 import {
   formatPrice as formatPriceText,
+  getMenuItemCartQuantity,
   getMenuItemDisplayPriceText,
   REQUIRED_MENU_CATEGORY_HASH,
   REQUIRED_MENU_CATEGORY_NAME,
@@ -41,12 +41,12 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
     monthlySalesByMenuItem,
     openMenuItemConfiguration,
     quantities,
-    selectedMenuItemConfigurations,
     selectedStore,
     updateQuantity,
   } = props
   const [activeCategoryId, setActiveCategoryId] = useState<string>('')
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
+  const activeCategoryIdRef = useRef('')
   const menuItems = selectedStore?.menu ?? []
   const configurableItem = menuItems.find((item) => item.id === menuItemConfigurationModal?.itemId) ?? null
 
@@ -70,37 +70,80 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
   }, [menuItems])
 
   useEffect(() => {
-    setActiveCategoryId((current) => (current && sections.some((section) => section.id === current) ? current : (sections[0]?.id ?? '')))
+    setActiveCategoryId((current) => {
+      const nextCategoryId = current && sections.some((section) => section.id === current) ? current : (sections[0]?.id ?? '')
+      activeCategoryIdRef.current = nextCategoryId
+      return nextCategoryId
+    })
   }, [sections])
 
   useEffect(() => {
-    const observers: IntersectionObserver[] = []
+    let animationFrame = 0
+    let scrollSettleTimer = 0
 
-    sections.forEach((section) => {
+    function commitActiveCategory(nextCategoryId: string) {
+      if (!nextCategoryId || activeCategoryIdRef.current === nextCategoryId) return
+      activeCategoryIdRef.current = nextCategoryId
+      setActiveCategoryId(nextCategoryId)
+    }
+
+    function getCategoryIdAtAnchor() {
+      const anchorOffset = Math.min(Math.max(window.innerHeight * 0.32, 160), 260)
+      const currentElement = sectionRefs.current[activeCategoryIdRef.current]
+
+      if (currentElement) {
+        const currentRect = currentElement.getBoundingClientRect()
+        if (currentRect.top <= anchorOffset + 72 && currentRect.bottom >= anchorOffset - 72) {
+          return activeCategoryIdRef.current
+        }
+      }
+
+      const visibleSection = sections.find((section) => {
         const element = sectionRefs.current[section.id]
-        if (!element) return
+        if (!element) return false
+        const rect = element.getBoundingClientRect()
+        return rect.top <= anchorOffset && rect.bottom > anchorOffset
+      })
+      const fallbackSection = sections.find((section) => {
+        const element = sectionRefs.current[section.id]
+        return element ? element.getBoundingClientRect().top > anchorOffset : false
+      })
 
-        const observer = new IntersectionObserver(
-          (entries) => {
-            const visibleEntry = entries
-              .filter((entry) => entry.isIntersecting)
-              .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0]
-            if (visibleEntry) {
-              setActiveCategoryId(section.id)
-            }
-          },
-          {
-            root: null,
-            rootMargin: '0px 0px -55% 0px',
-            threshold: [0.2, 0.45, 0.7],
-          },
-        )
-        observer.observe(element)
-        observers.push(observer)
-    })
+      return visibleSection?.id ?? fallbackSection?.id ?? sections.at(-1)?.id ?? ''
+    }
+
+    function syncActiveCategory(immediate = false) {
+      animationFrame = 0
+      if (immediate) {
+        commitActiveCategory(getCategoryIdAtAnchor())
+        return
+      }
+
+      if (scrollSettleTimer) window.clearTimeout(scrollSettleTimer)
+      scrollSettleTimer = window.setTimeout(() => {
+        scrollSettleTimer = 0
+        commitActiveCategory(getCategoryIdAtAnchor())
+      }, 90)
+    }
+
+    function scheduleSync() {
+      if (animationFrame) return
+      animationFrame = window.requestAnimationFrame(() => syncActiveCategory())
+    }
+
+    function handleResize() {
+      syncActiveCategory(true)
+    }
+
+    syncActiveCategory(true)
+    window.addEventListener('scroll', scheduleSync, { passive: true })
+    window.addEventListener('resize', handleResize)
 
     return () => {
-      observers.forEach((observer) => observer.disconnect())
+      if (animationFrame) window.cancelAnimationFrame(animationFrame)
+      if (scrollSettleTimer) window.clearTimeout(scrollSettleTimer)
+      window.removeEventListener('scroll', scheduleSync)
+      window.removeEventListener('resize', handleResize)
     }
   }, [sections])
 
@@ -109,10 +152,12 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
     const requiredSection = sections.find((section) => section.name === REQUIRED_MENU_CATEGORY_NAME)
     if (!requiredSection) return
     sectionRefs.current[requiredSection.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    activeCategoryIdRef.current = requiredSection.id
     setActiveCategoryId(requiredSection.id)
   }, [sections])
 
   function scrollToCategory(categoryId: string) {
+    activeCategoryIdRef.current = categoryId
     setActiveCategoryId(categoryId)
     sectionRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -163,10 +208,10 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
 
               <div className="menu-category-list">
                 {section.items.map((item: MenuItem) => {
-                  const currentQuantity = getMenuItemQuantity(quantities, item.id)
+                  const currentQuantity = getMenuItemCartQuantity(quantities, item.id)
                   const disableIncrement =
                     item.remainingQuantity != null && currentQuantity >= item.remainingQuantity
-                  const selectedConfiguration = selectedMenuItemConfigurations[item.id]
+                  const requiresConfiguration = item.selectionGroups.length > 0
 
                   return (
                     <article key={item.id} className="menu-card menu-list-card">
@@ -200,20 +245,20 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
                                 .join(CUSTOMER_CHECKOUT_COPY.menu.selectionSummarySeparator)}
                             </p>
                           ) : null}
-                          {selectedConfiguration?.summaryText ? (
+                          {requiresConfiguration && currentQuantity > 0 ? (
                             <p className="meta-line">
                               {CUSTOMER_CHECKOUT_COPY.menu.configurationSummaryLabel}
-                              {selectedConfiguration.summaryText}
+                              {`${currentQuantity} 份已选，可继续添加不同配置`}
                             </p>
                           ) : null}
-                          {item.selectionGroups.length > 0 ? (
+                          {requiresConfiguration ? (
                             <p className="meta-line">
                               <button
                                 className="secondary-button"
                                 onClick={() => openMenuItemConfiguration(item)}
                                 type="button"
                               >
-                                {selectedConfiguration?.summaryText
+                                {currentQuantity > 0
                                   ? CUSTOMER_CHECKOUT_COPY.menu.configurationButtonUpdate
                                   : CUSTOMER_CHECKOUT_COPY.menu.configurationButtonSelect}
                               </button>
@@ -237,7 +282,10 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
                             <button
                               type="button"
                               disabled={disableIncrement}
-                              onClick={() => updateQuantity(item, currentQuantity + 1)}
+                              onClick={() =>
+                                requiresConfiguration
+                                  ? openMenuItemConfiguration(item)
+                                  : updateQuantity(item, currentQuantity + 1)}
                             >
                               +
                             </button>
@@ -323,6 +371,7 @@ function MenuItemConfigurationDialog(props: MenuItemConfigurationDialogProps) {
                       )}
                 </div>
                 <div
+                  className="menu-configuration-options"
                   style={{
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -335,15 +384,23 @@ function MenuItemConfigurationDialog(props: MenuItemConfigurationDialogProps) {
                       <button
                         key={option.name}
                         type="button"
-                        className={`secondary-button${selected ? ' is-active' : ''}`}
+                        aria-pressed={selected}
+                        className={`menu-configuration-option${selected ? ' is-selected' : ''}`}
                         onClick={() => toggleOption(group.name, option.name, group.maxSelections)}
                       >
+                        <span className="menu-configuration-option__check">{selected ? '✓' : ''}</span>
                         {option.name}
                         {option.additionalPriceCents > 0 ? ` +${formatPriceText(option.additionalPriceCents)}` : ''}
                       </button>
                     )
                   })}
                 </div>
+                {selectedOptions.length > 0 ? (
+                  <p className="meta-line menu-configuration-selected">
+                    {CUSTOMER_CHECKOUT_COPY.menu.configurationDialogSelectedPrefix}
+                    {selectedOptions.join(CUSTOMER_CHECKOUT_COPY.menu.selectionSummarySeparator)}
+                  </p>
+                ) : null}
               </section>
             )
           })}

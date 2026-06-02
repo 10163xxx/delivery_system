@@ -1,5 +1,6 @@
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 import type { Store } from '@/objects/core/SharedObjects'
+import type { StoreLocationStatus } from '@/features/delivery/DeliveryStoreLocation'
 import { CustomerStoreResultCard } from '@/pages/customer/store/CustomerStoreResultCard'
 import { CUSTOMER_STORE_VISIBILITY } from '@/objects/page/DeliveryAppObjects'
 import {
@@ -11,7 +12,6 @@ import {
   CUSTOMER_FAVORITE_STORE_CATEGORY,
   getStoreDeliveryQuote,
 } from '@/features/delivery/DeliveryServices'
-import { buildAddressMapEmbedUrl } from '@/components/address/AddressMapLinks'
 
 const SEARCH_HISTORY_WRAPPER_STYLE = {
   flex: 1,
@@ -161,34 +161,6 @@ export function SearchHistoryPanel({ props }: { props: CustomerRoleProps }) {
       >
         {CUSTOMER_STORE_BROWSE_COPY.searchHistoryClearButton}
       </button>
-    </div>
-  )
-}
-
-export function CustomerStatusBar({ props }: { props: CustomerRoleProps }) {
-  const { selectedCustomer } = props
-
-  if (!selectedCustomer) return null
-
-  const addressMapUrl = buildAddressMapEmbedUrl(selectedCustomer.defaultAddress)
-
-  return (
-    <div className="summary-bar customer-home-status">
-      <div className="customer-home-address">
-        <div>
-          <p>当前收货地址</p>
-          <strong>{selectedCustomer.defaultAddress}</strong>
-        </div>
-        {addressMapUrl ? (
-          <iframe
-            className="customer-home-address-map"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            src={addressMapUrl}
-            title="当前收货地址地图"
-          />
-        ) : null}
-      </div>
     </div>
   )
 }
@@ -347,9 +319,11 @@ export function StoreCategoryGrid({ props }: { props: CustomerRoleProps }) {
 
 export function StoreResultsGrid({
   props,
+  storeLocationStatusMap,
   storesToBrowse,
 }: {
   props: CustomerRoleProps
+  storeLocationStatusMap?: Record<string, StoreLocationStatus>
   storesToBrowse: Store[]
 }) {
   const {
@@ -371,12 +345,12 @@ export function StoreResultsGrid({
     storeBrowseHighlights,
     storeCustomerReviews,
   } = props
-  const referenceAddress = selectedCustomer?.defaultAddress ?? ''
+  const referenceLocation = selectedCustomer?.location
   const distanceSortedStores = storesToBrowse
     .slice()
     .sort(
       (left: Store, right: Store) =>
-        getStoreDeliveryQuote(left, referenceAddress).distanceKm - getStoreDeliveryQuote(right, referenceAddress).distanceKm ||
+          getStoreDeliveryQuote(left, referenceLocation).distanceKm - getStoreDeliveryQuote(right, referenceLocation).distanceKm ||
         right.averageRating - left.averageRating ||
         right.ratingCount - left.ratingCount,
     )
@@ -435,6 +409,7 @@ export function StoreResultsGrid({
                 isStoreCurrentlyOpen,
                 monthlyOrdersByStore,
                 selectedCustomer,
+                storeLocationStatus: storeLocationStatusMap?.[store.id],
                 storeBrowseHighlights,
                 favoriteStoreIds,
                 toggleBlockedStore,

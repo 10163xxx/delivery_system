@@ -52,7 +52,9 @@ val RiderIdPrefix = DeliveryBusinessDefaults.RiderIdPrefix
 val DeliveryScheduleZone = ZoneId.systemDefault()
 val StoreCategories = List(
   new DisplayText("中式快餐"),
+  new DisplayText("西式快餐"),
   new DisplayText("盖饭简餐"),
+  new DisplayText("披萨西餐"),
   new DisplayText("面馆粉档"),
   new DisplayText("麻辣香锅"),
   new DisplayText("饺子馄饨"),
@@ -62,7 +64,7 @@ val StoreCategories = List(
   new DisplayText("夜宵小吃"),
 )
 val SpendRewardCouponTemplates = DeliveryBusinessDefaults.SpendRewardCouponTemplates
-private val pendingAddress = new AddressText("上海市浦东新区世纪大道100号上海环球金融中心")
+private val pendingAddress = DeliveryDefaultCustomerAddress
 private val defaultAddressLabel = new AddressLabel("默认")
 private val riderVehiclePending = new VehicleLabel("待完善")
 private val riderZonePending = new ZoneLabel("待分区")
@@ -117,9 +119,10 @@ def registerUserProfile(role: UserRole, displayName: PersonName): Either[ErrorMe
                           customerPhonePrefix,
                           customerId.raw.filter(_.isDigit).padTo(AuthDefaults.GeneratedIdSuffixLength, NumericDefaults.ZeroDigitChar).mkString.take(AuthDefaults.GeneratedIdSuffixLength),
                         ).mkString
-                      ),
+                    ),
                     defaultAddress = pendingAddress,
-                    addresses = List(AddressEntry(defaultAddressLabel, pendingAddress)),
+                    location = None,
+                    addresses = List(AddressEntry(defaultAddressLabel, pendingAddress, None)),
                     accountStatus = AccountStatus.Active,
                     revokedReviewCount = NumericDefaults.ZeroCount,
                     membershipTier = MembershipTier.Standard,

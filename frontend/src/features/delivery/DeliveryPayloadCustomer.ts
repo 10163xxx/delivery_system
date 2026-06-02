@@ -1,6 +1,7 @@
 import type {
   AddCustomerAddressRequest,
   CreateOrderRequest,
+  DeliveryCoordinate,
   MenuItem,
   RechargeBalanceRequest,
   ReviewOrderRequest,
@@ -39,6 +40,10 @@ import {
   createInitialPartialRefundDraft,
   createInitialReviewDraft,
 } from './DeliveryDrafts'
+import {
+  getMenuItemCartQuantity,
+  getSelectedCartLines,
+} from './DeliveryCartLines'
 
 export const REQUIRED_MENU_CATEGORY_NAME = '必选品'
 export const REQUIRED_MENU_CATEGORY_HASH = 'required-category'
@@ -53,13 +58,15 @@ export function buildOrderPayload(
   quantities: Record<string, number>,
   selectedMenuItemConfigurations: Record<string, SelectedMenuItemConfiguration>,
 ): CreateOrderRequest {
-  const items = store.menu
-    .map((item) => ({
-      menuItemId: item.id,
-      quantity: quantities[item.id] ?? 0,
-      selections: selectedMenuItemConfigurations[item.id]?.selections ?? [],
-    }))
-    .filter((item) => item.quantity > 0)
+  const items = getSelectedCartLines(
+    store,
+    quantities,
+    selectedMenuItemConfigurations,
+  ).map((line) => ({
+    menuItemId: line.item.id,
+    quantity: line.quantity,
+    selections: line.configuration?.selections ?? [],
+  }))
 
   return {
     customerId,
@@ -101,7 +108,9 @@ export function hasSelectedRequiredCategoryItem(
   quantities: Record<string, number>,
 ) {
   return store.menu.some(
-    (item) => item.category?.trim() === REQUIRED_MENU_CATEGORY_NAME && (quantities[item.id] ?? 0) > 0,
+    (item) =>
+      item.category?.trim() === REQUIRED_MENU_CATEGORY_NAME &&
+      getMenuItemCartQuantity(quantities, item.id) > 0,
   )
 }
 
@@ -138,10 +147,14 @@ export function buildCustomerProfilePayload(name: string): UpdateCustomerProfile
   return { name: normalizeTextInput(name, MAX_CUSTOMER_NAME_LENGTH) }
 }
 
-export function buildCustomerAddressPayload(draft: CustomerAddressDraft): AddCustomerAddressRequest {
+export function buildCustomerAddressPayload(
+  draft: CustomerAddressDraft,
+  location: DeliveryCoordinate,
+): AddCustomerAddressRequest {
   return {
     label: normalizeTextInput(draft.label, MAX_ADDRESS_LABEL_LENGTH),
     address: normalizeTextInput(draft.address, MAX_ADDRESS_LENGTH),
+    location,
   }
 }
 

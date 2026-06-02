@@ -9,6 +9,11 @@ import domain.order.*
 import domain.review.*
 import domain.shared.*
 
+private def normalizeMenuItemRemainingQuantity(
+      quantity: Option[Quantity]
+  ): Option[Quantity] =
+    quantity.filter(_ <= DeliveryValidationDefaults.MenuItemStockMax)
+
 def validateMerchantRegistration(
       request: MerchantRegistrationRequest
   ): Either[ErrorMessage, MerchantRegistrationRequest] =
@@ -55,8 +60,7 @@ def validateMenuItemRequest(
       )
       _ <- Either.cond(
         request.remainingQuantity.forall(quantity =>
-          quantity >= DeliveryValidationDefaults.MenuItemQuantityMin &&
-            quantity <= DeliveryValidationDefaults.MenuItemStockMax
+          quantity >= DeliveryValidationDefaults.MenuItemQuantityMin
         ),
         (),
         ValidationMessages.Merchant.MenuItemRemainingQuantityInvalid,
@@ -69,7 +73,7 @@ def validateMenuItemRequest(
       description = description,
       priceCents = request.priceCents,
       imageUrl = Some(imageUrl),
-      remainingQuantity = request.remainingQuantity,
+      remainingQuantity = normalizeMenuItemRemainingQuantity(request.remainingQuantity),
       selectionGroups = selectionGroups,
     )
 
@@ -115,10 +119,9 @@ def validateMenuItemStockRequest(
   ): Either[ErrorMessage, UpdateMenuItemStockRequest] =
     Either.cond(
       request.remainingQuantity.forall(quantity =>
-        quantity >= DeliveryValidationDefaults.MenuItemStockMin &&
-          quantity <= DeliveryValidationDefaults.MenuItemStockMax
+        quantity >= DeliveryValidationDefaults.MenuItemStockMin
       ),
-      request,
+      request.copy(remainingQuantity = normalizeMenuItemRemainingQuantity(request.remainingQuantity)),
       ValidationMessages.Merchant.MenuItemStockInvalid,
     )
 
