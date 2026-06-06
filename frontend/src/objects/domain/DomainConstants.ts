@@ -147,7 +147,13 @@ export const ROUTE_PATH = {
   merchantProfileAnalytics: '/merchant/profile/analytics',
 } as const
 
+export const ROUTE_PATH_PREFIX = {
+  customer: '/customer/',
+  merchant: '/merchant/',
+} as const
+
 export const ROUTE_QUERY_KEY = {
+  category: 'category',
   merchantView: 'merchantView',
   store: 'store',
 } as const

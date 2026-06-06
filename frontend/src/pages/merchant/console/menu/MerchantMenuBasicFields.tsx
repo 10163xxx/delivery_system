@@ -1,5 +1,5 @@
-import type { MerchantMenuBasicFieldsProps } from '@/objects/merchant/page/MerchantConsoleObjects'
-import { MENU_ITEM_FORM_FIELD } from '@/objects/page/DeliveryAppObjects'
+import type { MerchantMenuBasicFieldsProps } from '@/pages/merchant/objects/MerchantConsoleObjects'
+import { MENU_ITEM_FORM_FIELD } from '@/pages/delivery/objects/DeliveryAppObjects'
 import { DELIVERY_CONSOLE_MESSAGES } from '@/features/delivery/DeliveryServices'
 
 function MerchantMenuNameField({ storeId, props }: MerchantMenuBasicFieldsProps) {

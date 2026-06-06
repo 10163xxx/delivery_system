@@ -1,6 +1,7 @@
 import { AddressDetailsCard } from '@/components/address/AddressDetailsCard'
 import type { AddressDetailsCardData } from '@/components/address/AddressDetailsObjects'
 import type { RiderRoleProps } from '@/pages/delivery/app/roleProps'
+import { DEFAULT_MERCHANT_PREP_MINUTES } from '@/features/delivery/DeliveryConstants'
 import { buildDeliveryRouteEstimate } from '@/features/delivery/DeliveryRouteEstimates'
 import { ORDER_STATUS } from '@/objects/core/SharedObjects'
 
@@ -12,7 +13,7 @@ function buildRiderDetailsData(props: RiderRoleProps): AddressDetailsCardData {
   const firstStore = props.state?.stores.find((store) => store.id === firstOrder?.storeId)
   const estimate = firstOrder
     ? buildDeliveryRouteEstimate({
-        avgPrepMinutes: firstStore?.avgPrepMinutes ?? 20,
+        avgPrepMinutes: firstStore?.avgPrepMinutes ?? DEFAULT_MERCHANT_PREP_MINUTES,
         status: firstOrder.status,
         referenceTime: firstOrder.scheduledDeliveryAt,
       })

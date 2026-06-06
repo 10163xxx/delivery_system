@@ -3,7 +3,7 @@ import type {
   CustomerOrderDetailHeaderProps,
   CustomerOrderPriceBreakdownProps,
   CustomerOrderSummaryBarProps,
-} from '@/objects/order/page/OrderPageObjects'
+} from '@/pages/order/objects/OrderPageObjects'
 
 export function CustomerOrderDetailHeader({
   navigate,

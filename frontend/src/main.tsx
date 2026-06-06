@@ -1,3 +1,4 @@
+// Application bootstrap: attach the router and shared style bundles once at startup.
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'

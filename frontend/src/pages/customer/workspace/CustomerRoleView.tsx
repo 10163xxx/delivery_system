@@ -7,7 +7,7 @@ import { CustomerWorkspaceHeader } from '@/pages/customer/workspace/CustomerWork
 import {
   CUSTOMER_WORKSPACE_VIEW,
   isCustomerProfileWorkspaceView,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 
 export function CustomerRoleView(props: CustomerRoleProps) {

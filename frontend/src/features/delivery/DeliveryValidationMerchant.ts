@@ -1,4 +1,4 @@
-import { PAYOUT_ACCOUNT_TYPE } from '@/objects/core/SharedObjects'
+import { PAYOUT_ACCOUNT_TYPE, type DisplayText } from '@/objects/core/SharedObjects'
 import type {
   MenuItemDraft,
   MenuItemFormField,
@@ -6,7 +6,7 @@ import type {
   MerchantFormField,
   MerchantProfileDraft,
   MerchantProfileFormField,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   MAX_ACCOUNT_HOLDER_LENGTH,
   MAX_ACCOUNT_NUMBER_LENGTH,
@@ -23,11 +23,15 @@ import {
 import { DELIVERY_CONSOLE_MESSAGES } from './DeliveryMessages'
 import { buildMenuItemPayload, parseMenuItemSelectionGroups } from './DeliveryPayloads'
 import { validateBusinessHours } from './DeliverySchedule'
-import { isValidContactPhone, normalizeTextInput } from './DeliveryShared'
+import { asDomainText, isValidContactPhone, normalizeTextInput } from './DeliveryShared'
+
+function toDisplayText(value: string | undefined) {
+  return value === undefined ? undefined : asDomainText<DisplayText>(value)
+}
 
 export function validateMerchantDraft(
   draft: MerchantDraft,
-): Partial<Record<MerchantFormField, string>> {
+): Partial<Record<MerchantFormField, DisplayText>> {
   const merchantName = normalizeTextInput(
     draft.merchantName,
     MAX_MERCHANT_NAME_LENGTH,
@@ -44,27 +48,27 @@ export function validateMerchantDraft(
   return {
     merchantName: merchantName
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.merchantNameRequired,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.merchantNameRequired),
     storeName: storeName
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.storeNameRequired,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.storeNameRequired),
     category: category
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.storeCategoryRequired,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.storeCategoryRequired),
     storeAddress: storeAddress
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.storeAddressRequired,
-    openTime: businessHoursError,
-    closeTime: businessHoursError,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.storeAddressRequired),
+    openTime: toDisplayText(businessHoursError),
+    closeTime: toDisplayText(businessHoursError),
     imageUrl: imageUrl
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.storeImageRequired,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.storeImageRequired),
   }
 }
 
 export function validateMenuItemDraft(
   draft: MenuItemDraft,
-): Partial<Record<MenuItemFormField, string>> {
+): Partial<Record<MenuItemFormField, DisplayText>> {
   const payload = buildMenuItemPayload(draft)
   const category = normalizeTextInput(draft.category, MAX_MENU_ITEM_CATEGORY_LENGTH)
   const price = Number(draft.priceYuan.trim())
@@ -80,32 +84,32 @@ export function validateMenuItemDraft(
   return {
     name: payload.name
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemNameRequired,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemNameRequired),
     category: category
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryRequired,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryRequired),
     description: payload.description
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemDescriptionRequired,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemDescriptionRequired),
     priceYuan:
       Number.isFinite(price) &&
       payload.priceCents > 0 &&
       payload.priceCents <= MAX_MENU_ITEM_PRICE_CENTS
         ? undefined
-        : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemPriceInvalid,
+        : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemPriceInvalid),
     remainingQuantity: hasValidRemainingQuantity
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemRemainingQuantityInvalid,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemRemainingQuantityInvalid),
     imageUrl: payload.imageUrl
       ? undefined
-      : DELIVERY_CONSOLE_MESSAGES.merchant.menuItemImageRequired,
-    selectionGroupsText: selectionGroupParseResult.errorText ?? undefined,
+      : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemImageRequired),
+    selectionGroupsText: toDisplayText(selectionGroupParseResult.errorText ?? undefined),
   }
 }
 
 export function validateMerchantProfileDraft(
   draft: MerchantProfileDraft,
-): Partial<Record<MerchantProfileFormField, string>> {
+): Partial<Record<MerchantProfileFormField, DisplayText>> {
   const contactPhone = normalizeTextInput(
     draft.contactPhone,
     MAX_CONTACT_PHONE_LENGTH,
@@ -123,25 +127,25 @@ export function validateMerchantProfileDraft(
   return {
     contactPhone:
       !contactPhone
-        ? DELIVERY_CONSOLE_MESSAGES.profile.contactPhoneRequired
+        ? toDisplayText(DELIVERY_CONSOLE_MESSAGES.profile.contactPhoneRequired)
         : isValidContactPhone(contactPhone)
           ? undefined
-          : DELIVERY_CONSOLE_MESSAGES.profile.contactPhoneInvalid,
+          : toDisplayText(DELIVERY_CONSOLE_MESSAGES.profile.contactPhoneInvalid),
     bankName:
       draft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank
         ? bankName
           ? undefined
-          : DELIVERY_CONSOLE_MESSAGES.profile.bankNameRequired
+          : toDisplayText(DELIVERY_CONSOLE_MESSAGES.profile.bankNameRequired)
         : undefined,
     accountNumber: accountNumber
       ? undefined
       : draft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank
-        ? DELIVERY_CONSOLE_MESSAGES.profile.bankCardNumberRequired
-        : DELIVERY_CONSOLE_MESSAGES.profile.alipayAccountRequired,
+        ? toDisplayText(DELIVERY_CONSOLE_MESSAGES.profile.bankCardNumberRequired)
+        : toDisplayText(DELIVERY_CONSOLE_MESSAGES.profile.alipayAccountRequired),
     accountHolder: accountHolder
       ? undefined
       : draft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank
-        ? DELIVERY_CONSOLE_MESSAGES.profile.bankAccountHolderRequired
-        : DELIVERY_CONSOLE_MESSAGES.profile.genericAccountHolderRequired,
+        ? toDisplayText(DELIVERY_CONSOLE_MESSAGES.profile.bankAccountHolderRequired)
+        : toDisplayText(DELIVERY_CONSOLE_MESSAGES.profile.genericAccountHolderRequired),
   }
 }

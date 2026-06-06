@@ -2,6 +2,8 @@ package table
 
 import domain.shared.given
 
+// Persistence adapter for the delivery demo state, storing each aggregate as JSONB rows.
+
 import cats.effect.IO
 import domain.admin.{AdminProfile, AdminTicket}
 import domain.customer.Customer

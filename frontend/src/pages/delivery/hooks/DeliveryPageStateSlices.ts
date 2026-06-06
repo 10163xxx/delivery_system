@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import type {
+  AddressLabel,
+  AddressText,
   EligibilityReviewId,
   CouponId,
   CustomerId,
   DisplayText,
+  IsoDateTime,
   MerchantApplicationId,
   MenuItemId,
   OrderId,
@@ -16,10 +19,10 @@ import type {
   TicketId,
 } from '@/objects/core/SharedObjects'
 import { createInitialMerchantDraft, createInitialMerchantProfileDraft } from '@/features/delivery/DeliveryServices'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   CUSTOMER_STORE_VISIBILITY,
   type CustomerStoreVisibility,
-  CUSTOMER_ADDRESS_FIELD as CUSTOMER_ADDRESS_FIELDS,
   type AfterSalesDraft,
   type AfterSalesResolutionDraft,
   type AppealResolutionDraft,
@@ -41,11 +44,11 @@ import {
   type ReviewDraftKey,
   type ReviewDraft,
   type SelectedMenuItemConfiguration,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 
 export function useSelectionState() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<CustomerId | ''>('')
-  const [selectedStoreCategory, setSelectedStoreCategory] = useState('')
+  const [selectedStoreCategory, setSelectedStoreCategory] = useState<DisplayText>(asDomainText<DisplayText>(''))
   const [selectedStoreId, setSelectedStoreId] = useState<StoreId | ''>('')
   const [selectedMerchantStoreId, setSelectedMerchantStoreId] = useState<StoreId | ''>('')
   const [selectedRiderId, setSelectedRiderId] = useState<RiderId | ''>('')
@@ -73,27 +76,27 @@ export function useSelectionState() {
 }
 
 export function useCustomerPageState() {
-  const [customerStoreSearchDraft, setCustomerStoreSearchDraft] = useState<DisplayText>('')
-  const [customerStoreSearch, setCustomerStoreSearch] = useState<DisplayText>('')
+  const [customerStoreSearchDraft, setCustomerStoreSearchDraft] = useState<DisplayText>(asDomainText<DisplayText>(''))
+  const [customerStoreSearch, setCustomerStoreSearch] = useState<DisplayText>(asDomainText<DisplayText>(''))
   const [customerStoreVisibility, setCustomerStoreVisibility] =
     useState<CustomerStoreVisibility>(CUSTOMER_STORE_VISIBILITY.orderableOnly)
-  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [deliveryAddress, setDeliveryAddress] = useState<AddressText>(asDomainText<AddressText>(''))
   const [deliveryAddressError, setDeliveryAddressError] = useState<DisplayText | null>(null)
-  const [scheduledDeliveryTime, setScheduledDeliveryTime] = useState('')
+  const [scheduledDeliveryTime, setScheduledDeliveryTime] = useState<IsoDateTime | DisplayText>(asDomainText<DisplayText>(''))
   const [scheduledDeliveryError, setScheduledDeliveryError] = useState<DisplayText | null>(null)
   const [scheduledDeliveryTouched, setScheduledDeliveryTouched] = useState(false)
-  const [remark, setRemark] = useState('')
+  const [remark, setRemark] = useState<DisplayText>(asDomainText<DisplayText>(''))
   const [isCheckoutExpanded, setIsCheckoutExpanded] = useState(false)
   const [selectedCouponId, setSelectedCouponId] = useState<CouponId | ''>('')
-  const [customerNameDraft, setCustomerNameDraft] = useState<PersonName>('')
+  const [customerNameDraft, setCustomerNameDraft] = useState<PersonName>(asDomainText<PersonName>(''))
   const [addressDraft, setAddressDraft] = useState<CustomerAddressDraft>({
-    label: '' as CustomerAddressDraft[typeof CUSTOMER_ADDRESS_FIELDS.label],
-    address: '' as CustomerAddressDraft[typeof CUSTOMER_ADDRESS_FIELDS.address],
+    label: asDomainText<AddressLabel>(''),
+    address: asDomainText<AddressText>(''),
   })
   const [addressFormErrors, setAddressFormErrors] = useState<
     Partial<Record<CustomerAddressField, DisplayText>>
   >({})
-  const [customRechargeAmount, setCustomRechargeAmount] = useState<DisplayText>('')
+  const [customRechargeAmount, setCustomRechargeAmount] = useState<DisplayText>(asDomainText<DisplayText>(''))
   const [selectedRechargeAmount, setSelectedRechargeAmount] = useState<number | null>(null)
   const [rechargeFieldError, setRechargeFieldError] = useState<DisplayText | null>(null)
   const [quantities, setQuantities] = useState<Record<MenuItemId, number>>({})
@@ -157,7 +160,7 @@ export function useMerchantPageState() {
   const [merchantProfileFormErrors, setMerchantProfileFormErrors] = useState<
     Partial<Record<MerchantProfileFormField, DisplayText>>
   >({})
-  const [merchantWithdrawAmount, setMerchantWithdrawAmount] = useState<DisplayText>('')
+  const [merchantWithdrawAmount, setMerchantWithdrawAmount] = useState<DisplayText>(asDomainText<DisplayText>(''))
   const [merchantWithdrawFieldError, setMerchantWithdrawFieldError] = useState<DisplayText | null>(null)
   const [merchantDraft, setMerchantDraft] = useState<MerchantDraft>(createInitialMerchantDraft())
   const [merchantFormErrors, setMerchantFormErrors] = useState<
@@ -209,7 +212,7 @@ export function useMerchantPageState() {
   }
 }
 
-export function useReviewAndSupportState() {
+export function useReviewAndTicketState() {
   const [orderChatDrafts, setOrderChatDrafts] = useState<Record<OrderId, DisplayText>>({})
   const [orderChatErrors, setOrderChatErrors] = useState<Record<OrderId, DisplayText>>({})
   const [reviewDrafts, setReviewDrafts] = useState<Record<ReviewDraftKey, ReviewDraft>>({})

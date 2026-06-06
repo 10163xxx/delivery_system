@@ -1,4 +1,4 @@
-import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CheckoutPanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import {
   CUSTOMER_CHECKOUT_COPY,
 } from '@/pages/customer/checkout/CustomerCheckoutCopy'

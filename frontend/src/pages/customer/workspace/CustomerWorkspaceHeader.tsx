@@ -2,8 +2,8 @@ import {
   CUSTOMER_WORKSPACE_HEADER_TABS,
   CUSTOMER_WORKSPACE_VIEW_META,
 } from '@/components/primitives/DeliveryConsoleCopy'
-import { CUSTOMER_WORKSPACE_VIEW } from '@/objects/page/DeliveryAppObjects'
-import type { CustomerWorkspaceHeaderProps } from '@/objects/customer/page/CustomerPageObjects'
+import { CUSTOMER_WORKSPACE_VIEW } from '@/pages/delivery/objects/DeliveryAppObjects'
+import type { CustomerWorkspaceHeaderProps } from '@/pages/customer/objects/CustomerPageObjects'
 
 export function CustomerWorkspaceHeader({
   customerWorkspaceView,

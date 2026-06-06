@@ -1,5 +1,5 @@
 import { isRouteErrorResponse, Link, useLocation, useRouteError } from 'react-router-dom'
-import { ROUTE_PATH } from '@/objects/core/SharedObjects'
+import { ROUTE_PATH, ROUTE_PATH_PREFIX } from '@/objects/core/SharedObjects'
 import type { ErrorContent, RouteStatusCardProps } from '@/objects/core/SharedViewObjects'
 
 const ROUTE_ERROR_PAGE_DEFAULTS = {
@@ -10,7 +10,7 @@ const ROUTE_ERROR_PAGE_DEFAULTS = {
 } as const
 
 function getFallbackPath(pathname: string) {
-  if (pathname.startsWith('/customer/')) {
+  if (pathname.startsWith(ROUTE_PATH_PREFIX.customer)) {
     return ROUTE_ERROR_PAGE_DEFAULTS.customerFallbackPath
   }
 

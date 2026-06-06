@@ -166,7 +166,7 @@ def couponThresholdNotMet(couponTitle: DisplayText): ErrorMessage =
 
 def requiredCategoryItemMissing(categoryName: DisplayText): ErrorMessage =
   errorMessage(
-    s"${ValidationMessages.Order.RequiredCategoryItemMissingPrefix.raw}${categoryName.raw}${ValidationMessages.Order.RequiredCategoryItemMissingSuffix.raw}"
+    s"下单前必须在“${categoryName.raw}”分区至少选择 1 件商品，请回到该分区选择餐具、打包选项或门店要求的必选项后再提交。"
   )
 
 def reviewWindowExpired(days: DurationDays): ErrorMessage =

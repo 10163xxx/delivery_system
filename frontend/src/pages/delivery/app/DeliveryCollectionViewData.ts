@@ -25,7 +25,7 @@ import {
 import type {
   DeliveryPageDerivedState,
   SessionState,
-} from '@/objects/page/DeliveryPageObjects'
+} from '@/pages/delivery/objects/DeliveryPageObjects'
 import {
   getAnalyticsCollections,
   getResolvedAfterSalesNoticeIds,
@@ -38,7 +38,7 @@ export function getActiveCustomerId(
   selectedCustomerId: CustomerId | '',
 ) {
   return session?.user.role === ROLE.customer && session.user.linkedProfileId
-    ? (session.user.linkedProfileId as CustomerId)
+    ? (session.user.linkedProfileId as unknown as CustomerId)
     : selectedCustomerId
 }
 
@@ -84,7 +84,7 @@ export function getRiderOrders(
 ) {
   const activeRiderId =
     session?.user.role === ROLE.rider && session.user.linkedProfileId
-      ? (session.user.linkedProfileId as RiderId)
+      ? (session.user.linkedProfileId as unknown as RiderId)
       : selectedRiderId
 
   const isActiveRiderOrder = (order: OrderSummary) =>
@@ -154,7 +154,7 @@ export function getMerchantApplicationCollections(
   }
 }
 
-export function getReviewAndSupportCollections(state: DeliveryPageDerivedState) {
+export function getReviewAndTicketCollections(state: DeliveryPageDerivedState) {
   return {
     pendingAppeals:
       state?.reviewAppeals.filter(
@@ -246,7 +246,7 @@ export function getCustomerStoreCollections(
 export function getDerivedCollections(
   state: DeliveryPageDerivedState,
   session: SessionState['session'],
-  activeCustomerId: string,
+  activeCustomerId: CustomerId | '',
   routeOrderId: OrderId | undefined,
   customerStoreSearch: string,
   selectedStoreCategory: string,
@@ -259,7 +259,7 @@ export function getDerivedCollections(
   return {
     ...customerOrders,
     ...getMerchantApplicationCollections(state, session),
-    ...getReviewAndSupportCollections(state),
+    ...getReviewAndTicketCollections(state),
     ...getCustomerNoticeCollections(
       state?.customers.find((customer) => customer.id === activeCustomerId),
       customerOrders.customerOrders,
@@ -274,7 +274,7 @@ export function getDerivedCollections(
       favoriteStoreIds,
       blockedStoreIds,
     ),
-    ...getAnalyticsCollections(state, merchantStores, selectedStore),
+    ...getAnalyticsCollections(state, merchantStores, selectedStore, customerOrders.customerOrders),
     storeCategories: [...STORE_CATEGORIES, CUSTOMER_FAVORITE_STORE_CATEGORY],
   }
 }

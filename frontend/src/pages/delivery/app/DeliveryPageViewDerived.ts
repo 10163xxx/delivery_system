@@ -1,5 +1,5 @@
 import type { DeliveryAppState } from '@/objects/core/SharedObjects'
-import type { DeliveryPageViewDerivedArgs } from '@/objects/page/DeliveryPageObjects'
+import type { DeliveryPageViewDerivedArgs } from '@/pages/delivery/objects/DeliveryPageObjects'
 import {
   getActiveCustomerId,
   getDerivedCollections,

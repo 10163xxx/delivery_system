@@ -1,8 +1,9 @@
 import type { RiderRoleProps } from '@/pages/delivery/app/roleProps'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { OrderList } from '@/pages/order/OrderList'
-import { RIDER_CONSOLE_COPY } from '@/objects/rider/page/RiderWorkspaceObjects'
-import { RIDER_AVAILABILITY } from '@/objects/core/SharedObjects'
+import { RIDER_CONSOLE_COPY } from '@/pages/rider/objects/RiderWorkspaceObjects'
+import { RIDER_AVAILABILITY, type RiderId } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 function RiderAcceptanceAvailabilityBar({ props }: { props: RiderRoleProps }) {
   const selectedRider = props.selectedRider
@@ -61,7 +62,8 @@ function RiderAcceptOrderFooter({
   order: RiderRoleProps['riderAvailableOrders'][number]
   props: RiderRoleProps
 }) {
-  const canAccept = props.selectedRider?.availability === RIDER_AVAILABILITY.available
+  const selectedRiderId = props.selectedRider?.id ?? asDomainText<RiderId>('')
+  const canAccept = props.selectedRider?.availability === RIDER_AVAILABILITY.available && Boolean(selectedRiderId)
 
   return (
     <div className="action-row">
@@ -70,7 +72,7 @@ function RiderAcceptOrderFooter({
         disabled={!canAccept}
         onClick={() =>
           void props.runAction(() =>
-            props.assignRider(order.id, { riderId: props.selectedRiderId }),
+            props.assignRider(order.id, { riderId: selectedRiderId }),
           )
         }
         type="button"

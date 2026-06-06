@@ -1,5 +1,5 @@
-import type { MerchantMenuImageFieldsProps } from '@/objects/merchant/page/MerchantConsoleObjects'
-import { MENU_ITEM_FORM_FIELD } from '@/objects/page/DeliveryAppObjects'
+import type { MerchantMenuImageFieldsProps } from '@/pages/merchant/objects/MerchantConsoleObjects'
+import { MENU_ITEM_FORM_FIELD } from '@/pages/delivery/objects/DeliveryAppObjects'
 import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
 
 function MerchantMenuImageUploadField({ storeId, props }: MerchantMenuImageFieldsProps) {

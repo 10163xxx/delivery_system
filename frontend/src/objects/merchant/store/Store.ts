@@ -8,7 +8,9 @@ import type {
   Minutes,
   PersonName,
   AverageRating,
+  DeliveryCoordinate,
   StoreId,
+  StoreStatus,
 } from '@/objects/domain/DomainObjects'
 import type { MenuItem } from '@/objects/merchant/menu/MenuItem'
 import type { BusinessHours } from '@/objects/merchant/store/BusinessHours'
@@ -22,7 +24,7 @@ export type StoreIdentity = {
 }
 
 export type StoreOperations = {
-  status: DisplayText
+  status: StoreStatus
   storeAddress: AddressText
   location?: StoreLocation
   businessHours: BusinessHours
@@ -31,10 +33,7 @@ export type StoreOperations = {
   menu: MenuItem[]
 }
 
-export type StoreLocation = {
-  latitude: number
-  longitude: number
-}
+export type StoreLocation = DeliveryCoordinate
 
 export type StoreMetrics = {
   averageRating: AverageRating

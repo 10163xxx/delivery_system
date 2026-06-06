@@ -6,12 +6,12 @@ import { RiderAcceptanceWorkspace } from '@/pages/rider/workspace/RiderAcceptanc
 import { RiderConsoleWorkspace } from '@/pages/rider/workspace/RiderConsoleWorkspace'
 import { RiderProfileWorkspace } from '@/pages/rider/profile/RiderProfileWorkspace'
 import { RiderWorkspaceTabs } from '@/pages/rider/workspace/RiderWorkspaceTabs'
-import { getVisibleRiders } from '@/pages/rider/workspace/RiderSupport'
+import { getVisibleRiders } from '@/pages/rider/workspace/RiderVisibility'
 import {
   RIDER_CONSOLE_COPY,
   RIDER_WORKSPACE_VIEW,
   type RiderWorkspaceView,
-} from '@/objects/rider/page/RiderWorkspaceObjects'
+} from '@/pages/rider/objects/RiderWorkspaceObjects'
 
 type RiderProfileSection = 'overview' | 'history' | 'withdraw'
 

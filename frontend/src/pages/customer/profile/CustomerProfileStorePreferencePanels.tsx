@@ -1,5 +1,5 @@
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
-import type { CustomerRolePanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CustomerRolePanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { ROUTE_PATH, STORE_STATUS, type Store } from '@/objects/core/SharedObjects'
 import { CUSTOMER_PROFILE_COPY } from '@/pages/customer/profile/CustomerProfileCopy'

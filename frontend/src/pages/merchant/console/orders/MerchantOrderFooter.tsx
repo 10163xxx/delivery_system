@@ -1,4 +1,4 @@
-import type { MerchantStorePanelProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import type { MerchantStorePanelProps } from '@/pages/merchant/objects/MerchantConsoleObjects'
 import type { OrderSummary } from '@/objects/core/SharedObjects'
 import { MerchantOrderActionRow } from '@/pages/merchant/console/orders/MerchantOrderActionSections'
 import { MerchantOrderChat } from '@/pages/merchant/console/orders/MerchantOrderChatSection'
@@ -15,7 +15,12 @@ export function MerchantOrderFooter({
 }) {
   return (
     <>
-      <OrderRoutePanel order={order} formatTime={props.formatTime} />
+      <OrderRoutePanel
+        order={order}
+        formatTime={props.formatTime}
+        storeAddress={store.storeAddress}
+        storeCoordinate={store.location}
+      />
       <MerchantRefundResolutionList order={order} {...props} />
       <MerchantOrderActionRow order={order} props={props} state={state} />
       <MerchantOrderChat order={order} store={store} {...props} />

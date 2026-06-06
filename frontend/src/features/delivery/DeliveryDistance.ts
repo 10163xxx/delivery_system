@@ -8,7 +8,7 @@ import type {
 import {
   DELIVERY_DISTANCE_LIMIT_KM,
   DELIVERY_EARTH_RADIUS_KM,
-} from '@/features/delivery/DeliveryMapSupport'
+} from '@/features/delivery/DeliveryMapConstants'
 import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
 
 export type StoreDeliveryDistanceCategory =

@@ -1,7 +1,14 @@
-import { buildRiderProfileDraft, type RiderProfileDraft, type RiderProfileErrors } from '@/objects/rider/page/RiderWorkspaceObjects'
-import type { RiderProfileAccountSectionProps, RiderProfileWorkspaceProps } from '@/objects/rider/page/RiderPageObjects'
-import { PAYOUT_ACCOUNT_TYPE } from '@/objects/core/SharedObjects'
+import { buildRiderProfileDraft, type RiderProfileDraft, type RiderProfileErrors } from '@/pages/rider/objects/RiderWorkspaceObjects'
+import type { RiderProfileAccountSectionProps, RiderProfileWorkspaceProps } from '@/pages/rider/objects/RiderPageObjects'
+import {
+  PAYOUT_ACCOUNT_TYPE,
+  type AccountHolderName,
+  type AccountNumber,
+  type BankName,
+  type DisplayText,
+} from '@/objects/core/SharedObjects'
 import { DELIVERY_CONSOLE_MESSAGES, isValidBankAccountNumber } from '@/features/delivery/DeliveryServices'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   RiderProfileCurrentAccountSummary,
   RiderProfilePayoutFields,
@@ -17,16 +24,16 @@ function validateProfileDraft(profileDraft: RiderProfileDraft) {
   const accountHolder = profileDraft.accountHolder.trim()
   const bankName = profileDraft.bankName.trim()
   const nextErrors: RiderProfileErrors = {
-    bankName: profileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? (bankName ? undefined : '请选择开户银行') : undefined,
-    accountNumber: accountNumber ? undefined : DELIVERY_CONSOLE_MESSAGES.profile.payoutAccountNumberRequired,
-    accountHolder: accountHolder ? undefined : DELIVERY_CONSOLE_MESSAGES.profile.payoutAccountHolderRequired,
+    bankName: profileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? (bankName ? undefined : asDomainText<DisplayText>('请选择开户银行')) : undefined,
+    accountNumber: accountNumber ? undefined : asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.profile.payoutAccountNumberRequired),
+    accountHolder: accountHolder ? undefined : asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.profile.payoutAccountHolderRequired),
   }
 
   if (profileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.alipay && accountNumber && accountNumber.length < 4) {
-    nextErrors.accountNumber = DELIVERY_CONSOLE_MESSAGES.profile.alipayAccountInvalid
+    nextErrors.accountNumber = asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.profile.alipayAccountInvalid)
   }
   if (profileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank && accountNumber && !isValidBankAccountNumber(accountNumber)) {
-    nextErrors.accountNumber = DELIVERY_CONSOLE_MESSAGES.profile.bankAccountInvalid
+    nextErrors.accountNumber = asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.profile.bankAccountInvalid)
   }
   return nextErrors
 }
@@ -50,9 +57,9 @@ export function RiderProfileAccountSection({
       updateRiderProfile(selectedRider.id, {
         payoutAccount: {
           accountType: profileDraft.payoutAccountType,
-          bankName: profileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? profileDraft.bankName.trim() : undefined,
-          accountNumber: profileDraft.accountNumber.trim(),
-          accountHolder: profileDraft.accountHolder.trim(),
+          bankName: profileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? asDomainText<BankName>(profileDraft.bankName.trim()) : undefined,
+          accountNumber: asDomainText<AccountNumber>(profileDraft.accountNumber.trim()),
+          accountHolder: asDomainText<AccountHolderName>(profileDraft.accountHolder.trim()),
         },
       }),
     )

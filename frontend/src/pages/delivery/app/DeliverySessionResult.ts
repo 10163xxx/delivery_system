@@ -1,5 +1,10 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { AuthSession, DeliveryAppState, DisplayText } from '@/objects/core/SharedObjects'
+import type {
+  AuthSession,
+  DeliveryAppState,
+  DisplayText,
+  StoreId,
+} from '@/objects/core/SharedObjects'
 import {
   clearSessionToken,
   delay,
@@ -12,7 +17,8 @@ import {
 import {
   LOGOUT_TRANSITION_MS,
 } from '@/features/delivery/DeliveryServices'
-import { HEADER_ACTION, type HeaderAction } from '@/objects/page/DeliveryAppObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
+import { HEADER_ACTION, type HeaderAction } from '@/pages/delivery/objects/DeliveryAppObjects'
 
 const LOAD_FAILED_MESSAGE = '加载失败'
 const ACTION_FAILED_MESSAGE = '操作失败'
@@ -70,10 +76,10 @@ export function buildSessionServiceResult(args: {
   showLogoutModal: boolean
   customerStoreSearchHistory: string[]
   setCustomerStoreSearchHistory: Dispatch<SetStateAction<string[]>>
-  favoriteStoreIds: string[]
-  setFavoriteStoreIds: Dispatch<SetStateAction<string[]>>
-  blockedStoreIds: string[]
-  setBlockedStoreIds: Dispatch<SetStateAction<string[]>>
+  favoriteStoreIds: StoreId[]
+  setFavoriteStoreIds: Dispatch<SetStateAction<StoreId[]>>
+  blockedStoreIds: StoreId[]
+  setBlockedStoreIds: Dispatch<SetStateAction<StoreId[]>>
   loadState: () => Promise<void>
   logout: () => Promise<void>
   runAction: (action: () => Promise<DeliveryAppState>) => Promise<boolean>
@@ -100,7 +106,7 @@ export async function loadState(args: SessionStateArgs) {
     args.setState(nextState)
     args.setError(null)
   } catch (loadError) {
-    args.setError(getErrorMessage(loadError, LOAD_FAILED_MESSAGE))
+    args.setError(asDomainText<DisplayText>(getErrorMessage(loadError, LOAD_FAILED_MESSAGE)))
   } finally {
     args.setBusy(false)
     args.setHeaderAction(null)
@@ -145,7 +151,7 @@ export async function runAction(args: SessionActionArgs) {
     args.setError(null)
     return true
   } catch (actionError) {
-    args.setError(getErrorMessage(actionError, ACTION_FAILED_MESSAGE))
+    args.setError(asDomainText<DisplayText>(getErrorMessage(actionError, ACTION_FAILED_MESSAGE)))
     return false
   } finally {
     args.setBusy(false)

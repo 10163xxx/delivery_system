@@ -1,8 +1,14 @@
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
-import type { CustomerRolePanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CustomerRolePanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
-import { ROUTE_PATH, type AddressEntry } from '@/objects/core/SharedObjects'
+import {
+  ROUTE_PATH,
+  type AddressEntry,
+  type AddressLabel,
+  type AddressText,
+} from '@/objects/core/SharedObjects'
 import { CUSTOMER_PROFILE_COPY } from '@/pages/customer/profile/CustomerProfileCopy'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 function ReturnToProfileButton({ navigate }: Pick<CustomerRoleProps, 'navigate'>) {
   return (
@@ -141,7 +147,7 @@ export function CustomerProfileAddressesPanel({ props }: CustomerRolePanelProps)
                 className={addressFormErrors.label ? 'field-error' : undefined}
                 value={addressDraft.label}
                 onChange={(event) => {
-                  setAddressDraft((current) => ({ ...current, label: event.target.value }))
+                  setAddressDraft((current) => ({ ...current, label: asDomainText<AddressLabel>(event.target.value) }))
                   setAddressFormErrors((current) => ({ ...current, label: undefined }))
                 }}
               />
@@ -155,7 +161,7 @@ export function CustomerProfileAddressesPanel({ props }: CustomerRolePanelProps)
                 className={addressFormErrors.address ? 'field-error' : undefined}
                 value={addressDraft.address}
                 onChange={(event) => {
-                  setAddressDraft((current) => ({ ...current, address: event.target.value }))
+                  setAddressDraft((current) => ({ ...current, address: asDomainText<AddressText>(event.target.value) }))
                   setAddressFormErrors((current) => ({ ...current, address: undefined }))
                 }}
               />

@@ -1,7 +1,7 @@
 import {
   CUSTOMER_WORKSPACE_VIEW,
   type CustomerWorkspaceView,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import { ROUTE_PATH } from '@/objects/core/SharedObjects'
 import type {
   CustomerWorkspaceHeaderTab,

@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
-import { CUSTOMER_STORE_TAB, type CustomerStoreTab, type StoreCustomerReview } from '@/objects/customer/page/CustomerPageObjects'
+import { CUSTOMER_STORE_TAB, type CustomerStoreTab, type StoreCustomerReview } from '@/pages/customer/objects/CustomerPageObjects'
 import {
   SelectedStoreReviewSection,
   SelectedStoreTabs,
@@ -8,11 +8,17 @@ import {
 } from '@/pages/customer/store/CustomerSelectedStoreSections'
 import { CustomerStatusBar } from '@/pages/customer/store/CustomerHomeStatusBar'
 import { CustomerCheckoutBody } from '@/pages/customer/checkout/CustomerCheckoutBody'
-import { SELECTED_STORE_COPY } from '@/features/delivery/DeliveryMessages'
+import {
+  DELIVERY_UI,
+  SELECTED_STORE_COPY,
+  SELECTED_STORE_LAYOUT,
+  formatSelectedStoreClosedBanner,
+} from '@/features/delivery/DeliveryMessages'
 import {
   isStoreLocated,
   useStoreLocationStatus,
 } from '@/features/delivery/DeliveryStoreLocation'
+import { ZERO_COUNT } from '@/features/delivery/DeliveryConstants'
 
 export function StoreReviewList({
   emptyText,
@@ -25,31 +31,35 @@ export function StoreReviewList({
   reviews: StoreCustomerReview[]
   variant?: StoreReviewListVariant
 }) {
-  if (reviews.length === 0) {
-    return <p className="meta-line store-review-empty">{emptyText}</p>
+  if (reviews.length === ZERO_COUNT) {
+    return <p className={SELECTED_STORE_LAYOUT.reviewEmptyClassName}>{emptyText}</p>
   }
+  const reviewListClassName =
+    variant === STORE_REVIEW_LIST_VARIANT.compact
+      ? SELECTED_STORE_LAYOUT.compactReviewListClassName
+      : SELECTED_STORE_LAYOUT.reviewListClassName
 
   return (
-    <div className={`store-review-list ${variant === STORE_REVIEW_LIST_VARIANT.compact ? 'is-compact' : ''}`}>
+    <div className={reviewListClassName}>
       {reviews.map((review) => (
-        <article key={review.id} className="store-review-item">
-          <div className="store-review-header">
+        <article key={review.id} className={SELECTED_STORE_LAYOUT.reviewItemClassName}>
+          <div className={SELECTED_STORE_LAYOUT.reviewHeaderClassName}>
             <strong>{review.customerName}</strong>
             <span>{review.rating} 星</span>
           </div>
           <p>{review.comment ?? SELECTED_STORE_COPY.reviewCommentFallback}</p>
           {review.extraNote ? (
-            <p className="meta-line">
+            <p className={DELIVERY_UI.metaLineClassName}>
               {SELECTED_STORE_COPY.reviewExtraNotePrefix}
               {review.extraNote}
             </p>
           ) : null}
           {review.merchantReply ? (
-            <div className="banner info">
+            <div className={DELIVERY_UI.bannerInfoClassName}>
               <strong>{SELECTED_STORE_COPY.reviewMerchantReplyTitle}</strong>
               <p>{review.merchantReply}</p>
               {review.merchantReplyAt ? (
-                <p className="meta-line">
+                <p className={DELIVERY_UI.metaLineClassName}>
                   {SELECTED_STORE_COPY.reviewReplyTimePrefix}
                   {formatTime(review.merchantReplyAt)}
                 </p>
@@ -57,7 +67,7 @@ export function StoreReviewList({
             </div>
           ) : null}
           {variant === STORE_REVIEW_LIST_VARIANT.full ? (
-            <p className="meta-line">
+            <p className={DELIVERY_UI.metaLineClassName}>
               {SELECTED_STORE_COPY.reviewCompletedAtPrefix}
               {formatTime(review.completedAt)}
             </p>
@@ -101,25 +111,25 @@ export function SelectedStoreBanner({
       <SelectedStoreToolbar props={props} />
 
       {!isStoreCurrentlyOpen(selectedStore) ? (
-        <div className="banner warning">
-          {SELECTED_STORE_COPY.closedBanner(formatBusinessHours(selectedStore.businessHours))}
+        <div className={DELIVERY_UI.bannerWarningClassName}>
+          {formatSelectedStoreClosedBanner(formatBusinessHours(selectedStore.businessHours))}
         </div>
       ) : null}
       {!storeLocated ? (
-        <div className="banner warning">
-          店铺地址未定位，暂不可营业。
+        <div className={DELIVERY_UI.bannerWarningClassName}>
+          {SELECTED_STORE_COPY.locationUnavailableBanner}
         </div>
       ) : null}
 
-      <section className="store-detail-panel">
+      <section className={SELECTED_STORE_LAYOUT.detailPanelClassName}>
         <SelectedStoreTabs selectedStoreName={selectedStore.name} selectedStoreTab={selectedStoreTab} setSelectedStoreTab={setSelectedStoreTab} />
 
         {selectedStoreTab === CUSTOMER_STORE_TAB.menu ? (
           <>
-            <div className="store-detail-summary">
-              <p className="ticket-kind">{SELECTED_STORE_COPY.menuTicketKind}</p>
+            <div className={SELECTED_STORE_LAYOUT.detailSummaryClassName}>
+              <p className={DELIVERY_UI.ticketKindClassName}>{SELECTED_STORE_COPY.menuTicketKind}</p>
               <h3>{selectedStore.name}</h3>
-              <p className="meta-line">{SELECTED_STORE_COPY.menuTabHint}</p>
+              <p className={DELIVERY_UI.metaLineClassName}>{SELECTED_STORE_COPY.menuTabHint}</p>
             </div>
             {storeLocated ? <CustomerCheckoutBody {...props} /> : null}
           </>

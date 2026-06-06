@@ -4,27 +4,28 @@ import {
   MERCHANT_WORKSPACE_VIEW,
   type MerchantWorkspaceRouteMeta,
   type MerchantWorkspaceView,
-} from '@/objects/page/DeliveryAppObjects'
-import { ROUTE_PATH } from '@/objects/core/SharedObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
+import { ROUTE_PATH, type DisplayText } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 const MERCHANT_WORKSPACE_VIEW_META: Record<MerchantWorkspaceView, MerchantWorkspaceRouteMeta> = {
   [MERCHANT_WORKSPACE_VIEW.application]: {
-    title: '店家申请',
+    title: asDomainText<DisplayText>('店家申请'),
     path: buildMerchantApplicationSubmitRoute(),
     resetStoreSelection: true,
   },
   [MERCHANT_WORKSPACE_VIEW.store]: {
-    title: '店铺页',
+    title: asDomainText<DisplayText>('店铺页'),
     path: ROUTE_PATH.merchantStore,
     resetStoreSelection: false,
   },
   [MERCHANT_WORKSPACE_VIEW.orders]: {
-    title: '订单页',
+    title: asDomainText<DisplayText>('订单页'),
     path: ROUTE_PATH.merchantOrders,
     resetStoreSelection: false,
   },
   [MERCHANT_WORKSPACE_VIEW.profile]: {
-    title: '个人信息',
+    title: asDomainText<DisplayText>('个人信息'),
     path: ROUTE_PATH.merchantProfile,
     resetStoreSelection: true,
   },

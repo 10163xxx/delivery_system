@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
-import type { AuthSession, DeliveryAppState } from '@/objects/core/SharedObjects'
+import type {
+  AuthSession,
+  DeliveryAppState,
+  DisplayText,
+  StoreId,
+} from '@/objects/core/SharedObjects'
 import { STATE_POLL_INTERVAL_MS } from '@/features/delivery/DeliveryServices'
-import type { HeaderAction } from '@/objects/page/DeliveryAppObjects'
+import type { HeaderAction } from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   clearCustomerStoreSearchHistory,
   startInterval,
@@ -19,7 +24,7 @@ import {
 export function useDeliveryConsoleSessionService() {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [state, setState] = useState<DeliveryAppState | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<DisplayText | null>(null)
   const [busy, setBusy] = useState(false)
   const [headerAction, setHeaderAction] = useState<HeaderAction>(null)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
@@ -31,8 +36,8 @@ export function useDeliveryConsoleSessionService() {
       return []
     }
   })
-  const [favoriteStoreIds, setFavoriteStoreIds] = useState<string[]>([])
-  const [blockedStoreIds, setBlockedStoreIds] = useState<string[]>([])
+  const [favoriteStoreIds, setFavoriteStoreIds] = useState<StoreId[]>([])
+  const [blockedStoreIds, setBlockedStoreIds] = useState<StoreId[]>([])
   useEffect(() => {
     void restoreSession({
       setSession,

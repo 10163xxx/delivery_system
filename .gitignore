@@ -10,10 +10,7 @@ backend/.coursier/
 backend/.idea/
 backend/.ivy2/
 backend/.runtime/
-backend/.sbt-boot/
-backend/.sbt-global/
 backend/uploads/
-backend/manual-classes/
 .idea/
 .codex
 .codex/

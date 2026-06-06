@@ -4,7 +4,7 @@ import type {
   OrderRejectDraftMap,
   StoreReviewReplyDraftMap,
 } from '@/pages/merchant/hooks/MerchantConsoleState'
-import type { MerchantStorePanelProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import type { MerchantStorePanelProps } from '@/pages/merchant/objects/MerchantConsoleObjects'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/merchant/console/shell/MerchantConsoleCopy'
 import {
   MAX_REVIEW_EXTRA_NOTE_LENGTH,
@@ -15,8 +15,10 @@ import {
   APPLICATION_STATUS,
   ORDER_STATUS,
   REVIEW_STATUS,
+  type NoteText,
   type OrderSummary,
 } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 function MerchantOrderStatusActions({
   order,
@@ -121,8 +123,10 @@ function MerchantReviewReplyAction({
 }) {
   const hasSubmittedStoreReview = order.storeRating != null
   const hasMerchantReply = Boolean(order.storeMerchantReply)
-  const draft = props.storeReviewReplyDrafts[order.id] ?? ''
-  const normalizedReply = normalizeWhitespace(draft).trim().slice(0, MAX_REVIEW_EXTRA_NOTE_LENGTH)
+  const draft = props.storeReviewReplyDrafts[order.id] ?? asDomainText<NoteText>('')
+  const normalizedReply = asDomainText<NoteText>(
+    normalizeWhitespace(draft).trim().slice(0, MAX_REVIEW_EXTRA_NOTE_LENGTH),
+  )
 
   if (order.reviewStatus !== REVIEW_STATUS.active || !hasSubmittedStoreReview) return null
 
@@ -139,7 +143,7 @@ function MerchantReviewReplyAction({
         onChange={(event) =>
           props.setStoreReviewReplyDrafts((current: StoreReviewReplyDraftMap) => ({
             ...current,
-            [order.id]: event.target.value,
+            [order.id]: asDomainText<NoteText>(event.target.value),
           }))
         }
       />
@@ -153,7 +157,7 @@ function MerchantReviewReplyAction({
             if (!success) return
             props.setStoreReviewReplyDrafts((current: StoreReviewReplyDraftMap) => ({
               ...current,
-              [order.id]: '',
+              [order.id]: asDomainText<NoteText>(''),
             }))
           })
         }

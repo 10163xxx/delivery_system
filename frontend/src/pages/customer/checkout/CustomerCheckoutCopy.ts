@@ -1,6 +1,6 @@
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
-import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
-import { STORE_STATUS } from '@/objects/core/SharedObjects'
+import type { CheckoutPanelProps } from '@/pages/customer/objects/CustomerPageObjects'
+import { STORE_STATUS, type MenuItemId } from '@/objects/core/SharedObjects'
 import { MIN_SCHEDULE_LEAD_MINUTES } from '@/features/delivery/DeliveryServices'
 
 export const CUSTOMER_CHECKOUT_COPY = {
@@ -111,7 +111,7 @@ export const CUSTOMER_CHECKOUT_LAYOUT = {
   configurationOptionGap: 8,
 } as const
 
-export function getMenuItemQuantity(quantities: CustomerRoleProps['quantities'], itemId: string) {
+export function getMenuItemQuantity(quantities: CustomerRoleProps['quantities'], itemId: MenuItemId) {
   return quantities[itemId] ?? 0
 }
 
@@ -141,21 +141,13 @@ export function getCheckoutPrimaryActionLabel(props: CheckoutPanelProps) {
 
 export function canBalancePay(props: CheckoutPanelProps) {
   const {
-    customerRequiresDefaultAddressUpdate,
-    deliveryAddressIsLocated,
-    deliveryAddressIsLocating,
-    payableTotalCents,
     selectedCustomer,
-    selectedStoreCanOrder,
+    selectedStore,
   } = props
 
   return Boolean(
     selectedCustomer &&
-      selectedStoreCanOrder &&
-      !customerRequiresDefaultAddressUpdate &&
-      deliveryAddressIsLocated === true &&
-      !deliveryAddressIsLocating &&
-      selectedCustomer.balanceCents >= payableTotalCents,
+      selectedStore,
   )
 }
 

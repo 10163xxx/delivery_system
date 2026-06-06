@@ -8,11 +8,17 @@ import {
 } from '@/system/api/SharedApi'
 import type {
   DisplayText,
+  CurrencyCents,
+  AddressText,
   MenuItem,
   OrderId,
+  Quantity,
+  ReasonText,
+  Minutes,
   Store,
   StoreId,
 } from '@/objects/core/SharedObjects'
+import { asDomainNumber, asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   DELIVERY_CONSOLE_MESSAGES,
   CURRENCY_CENTS_SCALE,
@@ -28,6 +34,7 @@ import {
   isValidBusinessTime,
   normalizeWhitespace,
 } from '@/features/delivery/DeliveryServices'
+import { geocodeDeliveryAddress } from '@/features/delivery/DeliveryGeocoding'
 import type {
   MenuItemCategoryDraftMap,
   MenuItemPriceDraftMap,
@@ -38,14 +45,18 @@ import type {
   StoreOperationDraftMap,
   StoreOperationErrorMap,
   StoreOperationErrors,
-} from '@/objects/merchant/page/MerchantConsoleObjects'
+} from '@/pages/merchant/objects/MerchantConsoleObjects'
+
+function toDisplayText(value: string) {
+  return asDomainText<DisplayText>(value)
+}
 
 export function buildStoreOperationDraft(store: Store): StoreOperationDraft {
   return {
     storeAddress: store.storeAddress,
     openTime: store.businessHours.openTime,
     closeTime: store.businessHours.closeTime,
-    avgPrepMinutes: String(store.avgPrepMinutes),
+    avgPrepMinutes: toDisplayText(String(store.avgPrepMinutes)),
   }
 }
 
@@ -67,15 +78,15 @@ export function validateStoreOperationDraft(draft: StoreOperationDraft): StoreOp
         : undefined
 
   return {
-    storeAddress: storeAddress ? undefined : DELIVERY_CONSOLE_MESSAGES.merchant.storeAddressRequired,
-    openTime: businessHoursError,
-    closeTime: businessHoursError,
+    storeAddress: storeAddress ? undefined : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.storeAddressRequired),
+    openTime: businessHoursError ? toDisplayText(businessHoursError) : undefined,
+    closeTime: businessHoursError ? toDisplayText(businessHoursError) : undefined,
     avgPrepMinutes:
       Number.isInteger(avgPrepMinutes) &&
       avgPrepMinutes >= MIN_PREP_MINUTES &&
       avgPrepMinutes <= MAX_PREP_MINUTES
         ? undefined
-        : DELIVERY_CONSOLE_MESSAGES.merchant.prepMinutesInvalid,
+        : toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.prepMinutesInvalid),
   }
 }
 
@@ -95,23 +106,23 @@ export function createMerchantConsoleSelectors({
   storeOperationDrafts: StoreOperationDraftMap
 }) {
   function getMenuItemStockDraft(item: MenuItem) {
-    return menuItemStockDrafts[item.id] ?? (item.remainingQuantity == null ? '' : String(item.remainingQuantity))
+    return menuItemStockDrafts[item.id] ?? toDisplayText(item.remainingQuantity == null ? '' : String(item.remainingQuantity))
   }
 
   function getMenuItemCategoryDraft(item: MenuItem) {
-    return menuItemCategoryDrafts[item.id] ?? (item.category ?? '')
+    return menuItemCategoryDrafts[item.id] ?? toDisplayText(item.category ?? '')
   }
 
   function getMenuItemPriceDraft(item: MenuItem) {
-    return menuItemPriceDrafts[item.id] ?? (item.priceCents / CURRENCY_CENTS_SCALE).toFixed(CURRENCY_DECIMAL_PLACES)
+    return menuItemPriceDrafts[item.id] ?? toDisplayText((item.priceCents / CURRENCY_CENTS_SCALE).toFixed(CURRENCY_DECIMAL_PLACES))
   }
 
   function getOrderRejectDraft(orderId: OrderId) {
-    return orderRejectDrafts[orderId] ?? ''
+    return orderRejectDrafts[orderId] ?? toDisplayText('')
   }
 
   function getOrderRejectError(orderId: OrderId) {
-    return orderRejectErrors[orderId] ?? ''
+    return orderRejectErrors[orderId] ?? toDisplayText('')
   }
 
   function getStoreOperationDraft(store: Store): StoreOperationDraft {
@@ -134,7 +145,7 @@ export function createMerchantConsoleValidators() {
     if (trimmed === '') return null
     const parsed = Number(trimmed)
     if (!Number.isInteger(parsed) || parsed < MIN_MENU_ITEM_STOCK) {
-      return DELIVERY_CONSOLE_MESSAGES.merchant.stockQuantityInvalid
+      return toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.stockQuantityInvalid)
     }
     return null
   }
@@ -144,16 +155,16 @@ export function createMerchantConsoleValidators() {
     const parsed = Number(trimmed)
     const priceCents = Number.isFinite(parsed) ? Math.round(parsed * CURRENCY_CENTS_SCALE) : 0
     if (!Number.isFinite(parsed) || priceCents <= 0 || priceCents > MAX_MENU_ITEM_PRICE_CENTS) {
-      return DELIVERY_CONSOLE_MESSAGES.merchant.menuItemPriceUpdateInvalid
+      return toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemPriceUpdateInvalid)
     }
     return null
   }
 
   function getMenuItemCategoryError(value: string) {
     const trimmed = normalizeWhitespace(value).trim()
-    if (!trimmed) return DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryRequired
+    if (!trimmed) return toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryRequired)
     if (trimmed.length > MAX_MENU_ITEM_CATEGORY_LENGTH) {
-      return DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryInvalid
+      return toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemCategoryInvalid)
     }
     return null
   }
@@ -200,13 +211,15 @@ export function createMerchantConsoleActions({
     const success = await runAction(() =>
       updateMenuItemStock(storeId, item.id, {
         remainingQuantity:
-          trimmed === '' || Number(trimmed) > MAX_MENU_ITEM_STOCK ? undefined : Number(trimmed),
+          trimmed === '' || Number(trimmed) > MAX_MENU_ITEM_STOCK
+            ? undefined
+            : asDomainNumber<Quantity>(Number(trimmed)),
       }),
     )
     if (!success) return
     setMenuItemStockDrafts((current) => ({
       ...current,
-      [item.id]: trimmed === '' || Number(trimmed) > MAX_MENU_ITEM_STOCK ? '' : trimmed,
+      [item.id]: toDisplayText(trimmed === '' || Number(trimmed) > MAX_MENU_ITEM_STOCK ? '' : trimmed),
     }))
   }
 
@@ -215,29 +228,30 @@ export function createMerchantConsoleActions({
     if (getMenuItemPriceError(draft)) return
     const priceCents = Math.round(Number(draft.trim()) * CURRENCY_CENTS_SCALE)
     const success = await runAction(() =>
-      updateMenuItemPrice(storeId, item.id, { priceCents }),
+      updateMenuItemPrice(storeId, item.id, { priceCents: asDomainNumber<CurrencyCents>(priceCents) }),
     )
     if (!success) return
     setMenuItemPriceDrafts((current) => ({
       ...current,
-      [item.id]: (priceCents / CURRENCY_CENTS_SCALE).toFixed(CURRENCY_DECIMAL_PLACES),
+      [item.id]: toDisplayText((priceCents / CURRENCY_CENTS_SCALE).toFixed(CURRENCY_DECIMAL_PLACES)),
     }))
   }
 
   async function submitMenuItemCategory(storeId: StoreId, item: MenuItem) {
     const category = normalizeWhitespace(getMenuItemCategoryDraft(item)).trim()
-    if (getMenuItemCategoryError(category)) return
+    const categoryText = toDisplayText(category)
+    if (getMenuItemCategoryError(categoryText)) return
     const success = await runAction(() =>
-      updateMenuItemCategory(storeId, item.id, { category }),
+      updateMenuItemCategory(storeId, item.id, { category: categoryText }),
     )
     if (!success) return
-    setMenuItemCategoryDrafts((current) => ({ ...current, [item.id]: category }))
+    setMenuItemCategoryDrafts((current) => ({ ...current, [item.id]: categoryText }))
   }
 
   async function submitOrderReject(orderId: OrderId) {
     const reason = normalizeWhitespace(getOrderRejectDraft(orderId)).trim().slice(0, MAX_REJECT_ORDER_REASON_LENGTH)
     if (!reason) {
-      setOrderRejectErrors((current) => ({ ...current, [orderId]: DELIVERY_CONSOLE_MESSAGES.merchant.orderRejectReasonRequired }))
+      setOrderRejectErrors((current) => ({ ...current, [orderId]: toDisplayText(DELIVERY_CONSOLE_MESSAGES.merchant.orderRejectReasonRequired) }))
       return
     }
     setOrderRejectErrors((current) => {
@@ -245,9 +259,9 @@ export function createMerchantConsoleActions({
       delete next[orderId]
       return next
     })
-    const success = await runAction(() => rejectOrder(orderId, { reason }))
+    const success = await runAction(() => rejectOrder(orderId, { reason: asDomainText<ReasonText>(reason) }))
     if (!success) return
-    setOrderRejectDrafts((current) => ({ ...current, [orderId]: '' }))
+    setOrderRejectDrafts((current) => ({ ...current, [orderId]: toDisplayText('') }))
   }
 
   async function submitStoreOperationalInfo(store: Store) {
@@ -257,11 +271,24 @@ export function createMerchantConsoleActions({
       setStoreOperationErrors((current) => ({ ...current, [store.id]: errors }))
       return
     }
+    const storeAddress = normalizeWhitespace(draft.storeAddress).trim()
+    const location = await geocodeDeliveryAddress(storeAddress)
+    if (!location) {
+      setStoreOperationErrors((current) => ({
+        ...current,
+        [store.id]: {
+          ...errors,
+          storeAddress: toDisplayText(DELIVERY_CONSOLE_MESSAGES.profile.addressLocationRequired),
+        },
+      }))
+      return
+    }
     const success = await runAction(() =>
       updateStoreOperationalInfo(store.id, {
-        storeAddress: normalizeWhitespace(draft.storeAddress).trim(),
+        storeAddress: asDomainText<AddressText>(storeAddress),
+        location,
         businessHours: { openTime: draft.openTime, closeTime: draft.closeTime },
-        avgPrepMinutes: Number(draft.avgPrepMinutes.trim()),
+        avgPrepMinutes: asDomainNumber<Minutes>(Number(draft.avgPrepMinutes.trim())),
       }),
     )
     if (!success) return
@@ -279,7 +306,7 @@ export function createMerchantConsoleActions({
       }),
     )
     if (!success) return
-    setMenuItemStockDrafts((current) => ({ ...current, [item.id]: '' }))
+    setMenuItemStockDrafts((current) => ({ ...current, [item.id]: toDisplayText('') }))
   }
 
   return {

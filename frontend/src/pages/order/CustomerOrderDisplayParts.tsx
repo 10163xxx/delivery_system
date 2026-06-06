@@ -6,27 +6,30 @@ import {
   TICKET_KIND,
   TICKET_STATUS,
   type AdminTicket,
+  type DisplayText,
   type OrderLineItem,
   type OrderSummary,
   type OrderTimelineEntry,
+  type PersonName,
 } from '@/objects/core/SharedObjects'
 import type {
   CustomerOrderHelpersProps,
   OrderItemsListProps,
   OrderTimelineProps,
-} from '@/objects/order/page/OrderPageObjects'
+} from '@/pages/order/objects/OrderPageObjects'
 import { OrderChatPanel } from '@/pages/order/OrderChatPanel'
 import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 export function isDeliveryIssueTicket(ticket: AdminTicket, orderId: string) {
   return ticket.orderId === orderId && ticket.kind === TICKET_KIND.deliveryIssue
 }
 
-export function clearRecordError<K extends string>(
+export function clearRecordError<K extends string, V>(
   key: K,
-  setErrors: Dispatch<SetStateAction<Record<K, string>>>,
+  setErrors: Dispatch<SetStateAction<Record<K, V>>>,
 ) {
-  setErrors((current: Record<K, string>) => {
+  setErrors((current) => {
     if (!current[key]) return current
     const next = { ...current }
     delete next[key]
@@ -191,20 +194,20 @@ export function renderOrderChat(order: OrderSummary, props: CustomerOrderHelpers
 
   return (
     <OrderChatPanel
-      currentDisplayName={selectedCustomer?.name ?? ORDER_PAGE_COPY.display.currentCustomerFallback}
+      currentDisplayName={selectedCustomer?.name ?? asDomainText<PersonName>(ORDER_PAGE_COPY.display.currentCustomerFallback)}
       currentRole={ROLE.customer}
-      draft={orderChatDrafts[order.id] ?? ''}
+      draft={orderChatDrafts[order.id] ?? asDomainText<DisplayText>('')}
       errorText={orderChatErrors[order.id]}
       disabled={false}
       disabledReason={
         order.riderId
           ? undefined
-          : ORDER_PAGE_COPY.display.chatDisabledReason
+          : asDomainText<DisplayText>(ORDER_PAGE_COPY.display.chatDisabledReason)
       }
       formatTime={formatTime}
       order={order}
       onChangeDraft={(value) => {
-        setOrderChatDrafts((current: Record<string, string>) => ({
+        setOrderChatDrafts((current) => ({
           ...current,
           [order.id]: value,
         }))

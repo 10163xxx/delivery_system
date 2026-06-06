@@ -13,14 +13,16 @@ import {
   validateMenuItemDraft,
   validateMerchantDraft,
 } from '@/features/delivery/DeliveryServices'
+import { geocodeDeliveryAddress } from '@/features/delivery/DeliveryGeocoding'
 import {
   MENU_ITEM_FORM_FIELD,
   MERCHANT_FORM_FIELD,
   type MenuItemDraft,
   type MenuItemFormField,
-} from '@/objects/page/DeliveryAppObjects'
-import type { StoreId } from '@/objects/core/SharedObjects'
-import type { MerchantDraftContext, RunAction } from '@/objects/merchant/page/MerchantActionObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
+import type { DisplayText, ImageUrl, StoreId } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
+import type { MerchantDraftContext, RunAction } from '@/pages/merchant/objects/MerchantActionObjects'
 
 const MERCHANT_FORM_FIELDS = [
   MERCHANT_FORM_FIELD.merchantName,
@@ -47,7 +49,7 @@ function getUploadErrorMessage(error: unknown, fallback: string) {
 
 function getFirstInvalidField<T extends string>(
   fields: readonly T[],
-  errors: Partial<Record<T, string>>,
+  errors: Partial<Record<T, DisplayText>>,
 ) {
   return fields.find((field) => errors[field])
 }
@@ -98,7 +100,7 @@ export function createMerchantDraftValidators(draft: MerchantDraftContext) {
 
   function validateMenuItem(storeId: StoreId, menuDraft: MenuItemDraft) {
     const nextErrors = validateMenuItemDraft(menuDraft)
-    setMenuItemFormErrors((current: Record<StoreId, Partial<Record<MenuItemFormField, string>>>) => ({
+    setMenuItemFormErrors((current: Record<StoreId, Partial<Record<MenuItemFormField, DisplayText>>>) => ({
       ...current,
       [storeId]: nextErrors,
     }))
@@ -114,7 +116,7 @@ export function createMerchantDraftValidators(draft: MerchantDraftContext) {
 export function createMerchantDraftSubmitActions(
   draft: MerchantDraftContext,
   runAction: RunAction,
-  setError: Dispatch<SetStateAction<string | null>>,
+  setError: Dispatch<SetStateAction<DisplayText | null>>,
   selectors: ReturnType<typeof createMerchantDraftSelectors>,
   validators: ReturnType<typeof createMerchantDraftValidators>,
 ) {
@@ -129,9 +131,17 @@ export function createMerchantDraftSubmitActions(
   } = draft
 
   async function submitMerchantApplication() {
-    const payload = buildMerchantRegistrationPayload(merchantDraft)
     if (validators.validateMerchantApplication()) return
-    if (isMerchantImageUploading) return setError(DELIVERY_CONSOLE_MESSAGES.upload.uploadInProgress)
+    if (isMerchantImageUploading) return setError(asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.upload.uploadInProgress))
+    const location = await geocodeDeliveryAddress(merchantDraft.storeAddress)
+    if (!location) {
+      setMerchantFormErrors((current) => ({
+        ...current,
+        storeAddress: asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.profile.addressLocationRequired),
+      }))
+      return
+    }
+    const payload = buildMerchantRegistrationPayload(merchantDraft, location)
     await runAction(() => submitMerchantApplicationApi(payload))
     setMerchantDraft(createInitialMerchantDraft(currentDisplayName))
     setMerchantFormErrors({})
@@ -142,7 +152,7 @@ export function createMerchantDraftSubmitActions(
     const payload = buildMenuItemPayload(menuDraft)
     if (validators.validateMenuItem(storeId, menuDraft)) return
     if (selectors.isMenuItemImageUploading(storeId)) {
-      return setError(DELIVERY_CONSOLE_MESSAGES.upload.menuImageUploadInProgress)
+      return setError(asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.upload.menuImageUploadInProgress))
     }
     const success = await runAction(() => addMenuItem(storeId, payload))
     if (!success) return
@@ -150,7 +160,7 @@ export function createMerchantDraftSubmitActions(
       ...current,
       [storeId]: createInitialMenuItemDraft(),
     }))
-    setMenuItemFormErrors((current: Record<StoreId, Partial<Record<MenuItemFormField, string>>>) => ({
+    setMenuItemFormErrors((current: Record<StoreId, Partial<Record<MenuItemFormField, DisplayText>>>) => ({
       ...current,
       [storeId]: {},
     }))
@@ -165,7 +175,7 @@ export function createMerchantDraftSubmitActions(
 
 export function createMerchantDraftUploadActions(
   draft: MerchantDraftContext,
-  setError: Dispatch<SetStateAction<string | null>>,
+  setError: Dispatch<SetStateAction<DisplayText | null>>,
 ) {
   const {
     setIsMerchantImageUploading,
@@ -180,10 +190,14 @@ export function createMerchantDraftUploadActions(
     setIsMerchantImageUploading(true)
     try {
       const uploaded = await uploadMerchantStoreImage(file)
-      setMerchantDraft((current) => ({ ...current, imageUrl: uploaded.url, uploadedImageName: file.name }))
+      setMerchantDraft((current) => ({
+        ...current,
+        imageUrl: asDomainText<ImageUrl>(uploaded.url),
+        uploadedImageName: asDomainText<DisplayText>(file.name),
+      }))
       setError(null)
     } catch (uploadError) {
-      setError(getUploadErrorMessage(uploadError, DELIVERY_CONSOLE_MESSAGES.upload.imageUploadFailed))
+      setError(asDomainText<DisplayText>(getUploadErrorMessage(uploadError, DELIVERY_CONSOLE_MESSAGES.upload.imageUploadFailed)))
     } finally {
       setIsMerchantImageUploading(false)
     }
@@ -198,8 +212,8 @@ export function createMerchantDraftUploadActions(
         ...current,
         [storeId]: {
           ...(current[storeId] ?? createInitialMenuItemDraft()),
-          imageUrl: uploaded.url,
-          uploadedImageName: file.name,
+          imageUrl: asDomainText<ImageUrl>(uploaded.url),
+          uploadedImageName: asDomainText<DisplayText>(file.name),
         },
       }))
       setMenuItemFormErrors((current: Record<StoreId, Partial<Record<MenuItemFormField, string>>>) => ({
@@ -208,7 +222,7 @@ export function createMerchantDraftUploadActions(
       }))
       setError(null)
     } catch (uploadError) {
-      setError(getUploadErrorMessage(uploadError, DELIVERY_CONSOLE_MESSAGES.upload.menuImageUploadFailed))
+      setError(asDomainText<DisplayText>(getUploadErrorMessage(uploadError, DELIVERY_CONSOLE_MESSAGES.upload.menuImageUploadFailed)))
     } finally {
       setMenuImageUploading(setMenuItemImageUploading, storeId, false)
     }

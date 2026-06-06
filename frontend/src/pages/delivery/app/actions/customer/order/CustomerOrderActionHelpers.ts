@@ -6,6 +6,7 @@ import {
   formatBusinessHours,
   formatStoreClosedMessage,
   getCustomerAddressCoordinate,
+  getRequiredCategoryItemNames,
   getInitialQuantities,
   getSelectedCartLines,
   getStoreDeliveryQuote,
@@ -17,15 +18,26 @@ import {
   storeHasRequiredMenuCategory,
   validateScheduledDeliveryTime,
 } from '@/features/delivery/DeliveryServices'
-import { buildCustomerOrderStoreRoute } from '@/objects/page/DeliveryAppObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
+import { buildCustomerOrderStoreRoute } from '@/pages/delivery/objects/DeliveryAppObjects'
+import type {
+  DisplayText,
+  IsoDateTime,
+  OrderId,
+  StoreId,
+} from '@/objects/core/SharedObjects'
 import type {
   CustomerOrderParams,
   OrderSubmissionValidationResult,
-} from '@/objects/customer/page/CustomerActionObjects'
+} from '@/pages/customer/objects/CustomerActionObjects'
 
-function returnToRequiredCategory(params: CustomerOrderParams, storeId: string, message: string) {
+function toDisplayText(value: string) {
+  return asDomainText<DisplayText>(value)
+}
+
+function returnToRequiredCategory(params: CustomerOrderParams, storeId: StoreId, message: string) {
   params.setIsCheckoutExpanded(false)
-  params.setError(message)
+  params.setError(toDisplayText(message))
   params.navigate(`${buildCustomerOrderStoreRoute(storeId)}#${REQUIRED_MENU_CATEGORY_HASH}`)
 }
 
@@ -48,12 +60,12 @@ export function validateCustomerOrderSubmission(params: CustomerOrderParams): Or
   if (!selectedStore || !selectedCustomer) return { ok: false }
   const address = deliveryAddress.trim()
   if (!address) {
-    setDeliveryAddressError(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryAddressRequired)
+    setDeliveryAddressError(toDisplayText(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryAddressRequired))
     return { ok: false }
   }
   if (customerRequiresDefaultAddressUpdate) {
-    setDeliveryAddressError(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryAddressPendingProfileUpdate)
-    setError(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryAddressPendingProfileUpdate)
+    setDeliveryAddressError(toDisplayText(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryAddressPendingProfileUpdate))
+    setError(toDisplayText(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryAddressPendingProfileUpdate))
     return { ok: false }
   }
   const deliveryQuote = getStoreDeliveryQuote(
@@ -61,8 +73,8 @@ export function validateCustomerOrderSubmission(params: CustomerOrderParams): Or
     getCustomerAddressCoordinate(selectedCustomer, address),
   )
   if (!deliveryQuote.isDeliverable) {
-    setDeliveryAddressError(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryDistanceOutOfRange)
-    setError(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryDistanceOutOfRange)
+    setDeliveryAddressError(toDisplayText(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryDistanceOutOfRange))
+    setError(toDisplayText(DELIVERY_CONSOLE_MESSAGES.schedule.deliveryDistanceOutOfRange))
     return { ok: false }
   }
   setDeliveryAddressError(null)
@@ -70,16 +82,16 @@ export function validateCustomerOrderSubmission(params: CustomerOrderParams): Or
   const todayDeliveryWindow = getTodayDeliveryWindow()
   const scheduledDeliveryError = validateScheduledDeliveryTime(scheduledDeliveryTime)
   if (scheduledDeliveryTouched && scheduledDeliveryError) {
-    setScheduledDeliveryError(scheduledDeliveryError)
+    setScheduledDeliveryError(toDisplayText(scheduledDeliveryError))
     if (todayDeliveryWindow.isAvailable) {
-      setScheduledDeliveryTime(todayDeliveryWindow.minimumValue)
+      setScheduledDeliveryTime(asDomainText<IsoDateTime>(todayDeliveryWindow.minimumValue))
     }
     return { ok: false }
   }
   setScheduledDeliveryError(null)
 
   if (!selectedStoreIsOpen) {
-    setError(formatStoreClosedMessage(formatBusinessHours(selectedStore.businessHours)))
+    setError(toDisplayText(formatStoreClosedMessage(formatBusinessHours(selectedStore.businessHours))))
     return { ok: false }
   }
 
@@ -94,7 +106,7 @@ export function validateCustomerOrderSubmission(params: CustomerOrderParams): Or
     params.selectedMenuItemConfigurations,
   )
   if (payload.items.length === 0) {
-    setError(DELIVERY_CONSOLE_MESSAGES.order.noMenuItemSelected)
+    setError(toDisplayText(DELIVERY_CONSOLE_MESSAGES.order.noMenuItemSelected))
     return { ok: false }
   }
   if (
@@ -104,22 +116,29 @@ export function validateCustomerOrderSubmission(params: CustomerOrderParams): Or
       params.selectedMenuItemConfigurations,
     ).some((line) => !hasValidMenuItemSelections(line.item, line.configuration))
   ) {
-    setError(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired)
+    setError(toDisplayText(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired))
     return { ok: false }
   }
   if (
     storeHasRequiredMenuCategory(selectedStore) &&
-    !hasSelectedRequiredCategoryItem(selectedStore, params.quantities)
+    !hasSelectedRequiredCategoryItem(
+      selectedStore,
+      params.quantities,
+      params.selectedMenuItemConfigurations,
+    )
   ) {
     returnToRequiredCategory(
       params,
       selectedStore.id,
-      formatRequiredCategorySelectionMessage(REQUIRED_MENU_CATEGORY_NAME),
+      formatRequiredCategorySelectionMessage(
+        REQUIRED_MENU_CATEGORY_NAME,
+        getRequiredCategoryItemNames(selectedStore),
+      ),
     )
     return { ok: false }
   }
   if (payableTotalCents > selectedCustomer.balanceCents) {
-    setError(DELIVERY_CONSOLE_MESSAGES.account.insufficientBalanceForOrder)
+    setError(toDisplayText(DELIVERY_CONSOLE_MESSAGES.account.insufficientBalanceForOrder))
     return { ok: false }
   }
   return { ok: true }
@@ -130,12 +149,14 @@ export function resetCustomerOrderSubmissionState(params: CustomerOrderParams) {
   params.setDeliveryAddressError(null)
   params.setScheduledDeliveryError(null)
   params.setScheduledDeliveryTouched(false)
-  params.setRemark('')
+  params.setRemark(toDisplayText(''))
   params.setQuantities(getInitialQuantities(params.selectedStore))
   params.setSelectedMenuItemConfigurations({})
   params.setMenuItemConfigurationModal(null)
   params.setIsCheckoutExpanded(false)
   params.setSelectedCouponId('')
+  params.setSelectedStoreCategory(toDisplayText(''))
+  params.setSelectedStoreId('')
   params.setError(null)
 }
 
@@ -153,6 +174,6 @@ export function buildCustomerOrderRequestPayload(params: CustomerOrderParams) {
   )
 }
 
-export function buildCustomerOrderChatRequestPayload(orderChatDrafts: CustomerOrderParams['orderChatDrafts'], orderId: string) {
-  return buildOrderChatPayload(orderChatDrafts[orderId] ?? '')
+export function buildCustomerOrderChatRequestPayload(orderChatDrafts: CustomerOrderParams['orderChatDrafts'], orderId: OrderId) {
+  return buildOrderChatPayload(orderChatDrafts[orderId] ?? toDisplayText(''))
 }

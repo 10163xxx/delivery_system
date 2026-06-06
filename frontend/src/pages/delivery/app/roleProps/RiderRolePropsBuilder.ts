@@ -1,4 +1,4 @@
-import type { RiderPropsArgs } from '@/objects/page/AppBuildRolePropsObjects'
+import type { RiderPropsArgs } from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 import {
   getRiderActionProps,
   getRiderSetterProps,

@@ -1,4 +1,4 @@
-import type { AdminPropsArgs } from '@/objects/page/AppBuildRolePropsObjects'
+import type { AdminPropsArgs } from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 import {
   getAdminActionProps,
   getAdminDraftStateProps,

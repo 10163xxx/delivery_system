@@ -1,13 +1,16 @@
-import type { Dispatch, SetStateAction } from 'react'
-import type { MenuItem, OrderSummary, Store } from '@/objects/core/SharedObjects'
+// UI action handlers for store navigation, cart edits, checkout, merchant view switching, and reviews.
+import type {
+  DisplayText,
+  MenuItem,
+  Quantity,
+  Store,
+  StoreId,
+} from '@/objects/core/SharedObjects'
 import {
   buildSelectedMenuItemConfiguration,
   buildCartLineKey,
   createInitialReviewDraft,
   DELIVERY_CONSOLE_MESSAGES,
-  formatOrderRestoreCartSuccessMessage,
-  formatOrderRestoreCheckoutSuccessMessage,
-  formatOrderRestorePartialMessage,
   formatRequiredCategorySelectionMessage,
   formatRemainingQuantityMessage,
   formatStoreClosedMessage,
@@ -15,6 +18,7 @@ import {
   getInitialQuantities,
   getMenuItemCartLineKeys,
   getMenuItemCartQuantity,
+  getRequiredCategoryItemNames,
   getSelectedCartLines,
   getTodayDeliveryWindow,
   hasSelectedRequiredCategoryItem,
@@ -26,93 +30,37 @@ import {
 } from '@/features/delivery/DeliveryServices'
 import { ROUTE_QUERY_KEY } from '@/objects/core/SharedObjects'
 import type {
-  CustomerStoreQueryRoutePath,
-  FeedbackTone,
-  MenuItemConfigurationModalState,
   MerchantApplicationView,
-  OrderRestoreMode,
   ReviewDraft,
-  SelectedMenuItemConfiguration,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   buildCustomerCartStoreRoute,
   buildCustomerOrderStoreRoute,
-  FEEDBACK_PREFIX,
-  FEEDBACK_TONE,
-  ORDER_RESTORE_MODE,
-} from '@/objects/page/DeliveryAppObjects'
-
-type ActionSelectionArgs = {
-  state: { stores: Store[] } | null
-  selectedStore: Store | undefined
-  selectedCustomer: { coupons: { id: string; minimumSpendCents: number }[] } | undefined
-  selectedStoreIsOpen: boolean
-  quantities: Record<string, number>
-  selectedMenuItemConfigurations: Record<string, SelectedMenuItemConfiguration>
-  scheduledDeliveryTime: string
-}
-
-type ActionRoutingArgs = {
-  navigate: (path: CustomerStoreQueryRoutePath | string, options?: { replace?: boolean }) => void
-  setSelectedStoreCategory: Dispatch<SetStateAction<string>>
-  setSelectedStoreId: Dispatch<SetStateAction<string>>
-  setSearchParams: (nextInit: URLSearchParams | Record<string, string>) => void
-  setSelectedMerchantStoreId: Dispatch<SetStateAction<string>>
-  setMerchantApplicationState: Dispatch<SetStateAction<MerchantApplicationView>>
-}
-
-type ActionFeedbackArgs = {
-  setQuantities: Dispatch<SetStateAction<Record<string, number>>>
-  setSelectedMenuItemConfigurations: Dispatch<
-    SetStateAction<Record<string, SelectedMenuItemConfiguration>>
-  >
-  setMenuItemConfigurationModal: Dispatch<SetStateAction<MenuItemConfigurationModalState | null>>
-  setError: Dispatch<SetStateAction<string | null>>
-  setIsCheckoutExpanded: Dispatch<SetStateAction<boolean>>
-  setRemark: Dispatch<SetStateAction<string>>
-  setScheduledDeliveryTime: Dispatch<SetStateAction<string>>
-  setScheduledDeliveryError: Dispatch<SetStateAction<string | null>>
-  setScheduledDeliveryTouched: Dispatch<SetStateAction<boolean>>
-  setSelectedCouponId: Dispatch<SetStateAction<string>>
-}
-
-type ActionReviewArgs = {
-  setReviewDrafts: Dispatch<SetStateAction<Record<string, ReviewDraft>>>
-  setReviewErrors: Dispatch<SetStateAction<Record<string, string>>>
-}
-
-export type ActionArgs = ActionSelectionArgs &
-  ActionRoutingArgs &
-  ActionFeedbackArgs &
-  ActionReviewArgs
-
-const FEEDBACK_MESSAGE = {
-  [FEEDBACK_TONE.error]: (message: string) => `${FEEDBACK_PREFIX[FEEDBACK_TONE.error]}${message}`,
-  [FEEDBACK_TONE.info]: (message: string) => `${FEEDBACK_PREFIX[FEEDBACK_TONE.info]}${message}`,
-  [FEEDBACK_TONE.success]: (message: string) => `${FEEDBACK_PREFIX[FEEDBACK_TONE.success]}${message}`,
-  [FEEDBACK_TONE.warning]: (message: string) => `${FEEDBACK_PREFIX[FEEDBACK_TONE.warning]}${message}`,
-} as const
-
-function buildFeedbackMessage(tone: FeedbackTone, message: string) {
-  return FEEDBACK_MESSAGE[tone](message)
-}
+} from '@/pages/delivery/objects/DeliveryAppObjects'
+import type { ActionArgs } from '@/pages/delivery/app/DeliveryPageActionTypes'
+import { asDomainNumber, asDomainText } from '@/features/delivery/DeliveryShared'
+export type { ActionArgs } from '@/pages/delivery/app/DeliveryPageActionTypes'
+export {
+  addPreviousOrderToCartAction,
+  repeatCustomerOrderAction,
+} from '@/pages/delivery/app/CustomerOrderRestoreActions'
 
 export function getTodayDeliveryWindowAction() {
   return getTodayDeliveryWindow()
 }
 
 export function chooseStoreCategoryAction(args: ActionArgs, category: string) {
-  args.setSelectedStoreCategory(category)
+  args.setSelectedStoreCategory(asDomainText<DisplayText>(category))
   args.setSelectedStoreId('')
   args.setQuantities({})
   args.setSelectedMenuItemConfigurations({})
   args.setMenuItemConfigurationModal(null)
   args.setError(null)
-  args.setSearchParams({})
+  args.setSearchParams({ [ROUTE_QUERY_KEY.category]: category })
 }
 
 export function resetStoreCategoryAction(args: ActionArgs) {
-  args.setSelectedStoreCategory('')
+  args.setSelectedStoreCategory(asDomainText<DisplayText>(''))
   args.setSelectedStoreId('')
   args.setQuantities({})
   args.setSelectedMenuItemConfigurations({})
@@ -121,7 +69,7 @@ export function resetStoreCategoryAction(args: ActionArgs) {
   args.setSearchParams({})
 }
 
-export function enterStoreAction(args: ActionArgs, storeId: string) {
+export function enterStoreAction(args: ActionArgs, storeId: StoreId) {
   const store = args.state?.stores.find((entry: Store) => entry.id === storeId)
   if (store?.category) {
     args.setSelectedStoreCategory(store.category)
@@ -130,16 +78,21 @@ export function enterStoreAction(args: ActionArgs, storeId: string) {
   args.setQuantities(getInitialQuantities(store))
   args.setSelectedMenuItemConfigurations({})
   args.setMenuItemConfigurationModal(null)
-  args.setSearchParams({ [ROUTE_QUERY_KEY.store]: storeId })
+  args.setSearchParams({
+    [ROUTE_QUERY_KEY.store]: storeId,
+    ...(store?.category ? { [ROUTE_QUERY_KEY.category]: store.category } : {}),
+  })
 }
 
 export function leaveStoreAction(args: ActionArgs) {
+  const store = args.selectedStore
+  const category = store?.category
   args.setSelectedStoreId('')
   args.setQuantities({})
   args.setSelectedMenuItemConfigurations({})
   args.setMenuItemConfigurationModal(null)
   args.setError(null)
-  args.setSearchParams({})
+  args.setSearchParams(category ? { [ROUTE_QUERY_KEY.category]: category } : {})
 }
 
 export function changeMerchantApplicationViewAction(
@@ -158,7 +111,7 @@ export function leaveMerchantStoreAction(args: ActionArgs) {
 
 export function enterMerchantStoreAction(args: ActionArgs, storeId: string) {
   args.setError(null)
-  args.setSelectedMerchantStoreId(storeId)
+  args.setSelectedMerchantStoreId(asDomainText<StoreId>(storeId))
 }
 
 export function updateQuantityAction(args: ActionArgs, menuItem: MenuItem, nextValue: number) {
@@ -218,7 +171,7 @@ export function updateQuantityAction(args: ActionArgs, menuItem: MenuItem, nextV
   }
 
   if (hasStockLimit && nextQuantity > remainingQuantity) {
-    args.setError(formatRemainingQuantityMessage(menuItem.name, remainingQuantity))
+    args.setError(asDomainText<DisplayText>(formatRemainingQuantityMessage(menuItem.name, remainingQuantity)))
   } else {
     args.setError(null)
   }
@@ -253,13 +206,17 @@ export function updateCartLineQuantityAction(
       return next
     })
   }
-  args.setError(hasStockLimit && nextValue > remainingQuantity ? formatRemainingQuantityMessage(menuItem.name, remainingQuantity) : null)
+  args.setError(
+    hasStockLimit && nextValue > remainingQuantity
+      ? asDomainText<DisplayText>(formatRemainingQuantityMessage(menuItem.name, remainingQuantity))
+      : null,
+  )
 }
 
 export function openMenuItemConfigurationAction(args: ActionArgs, menuItem: MenuItem) {
   args.setMenuItemConfigurationModal({
     itemId: menuItem.id,
-    quantityAfterConfirm: 1,
+    quantityAfterConfirm: asDomainNumber<Quantity>(1),
     draftSelections: Object.fromEntries(
       menuItem.selectionGroups.map((group) => [
         group.name,
@@ -272,9 +229,10 @@ export function openMenuItemConfigurationAction(args: ActionArgs, menuItem: Menu
 }
 
 export function openCheckoutAction(args: ActionArgs, todayDeliveryWindow = getTodayDeliveryWindow()) {
+  // Checkout is guarded here because the cart UI and repeat-order restore both converge on this flow.
   if (!args.selectedStore || !args.selectedCustomer) return
   if (!args.selectedStoreIsOpen) {
-    args.setError(formatStoreClosedMessage(formatBusinessHours(args.selectedStore.businessHours)))
+    args.setError(asDomainText<DisplayText>(formatStoreClosedMessage(formatBusinessHours(args.selectedStore.businessHours))))
     return
   }
   const selectedLines = getSelectedCartLines(
@@ -283,147 +241,43 @@ export function openCheckoutAction(args: ActionArgs, todayDeliveryWindow = getTo
     args.selectedMenuItemConfigurations,
   )
   if (selectedLines.length === 0) {
-    args.setError(DELIVERY_CONSOLE_MESSAGES.order.noMenuItemSelected)
+    args.setError(asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.order.noMenuItemSelected))
     return
   }
   if (selectedLines.some((line) => !hasValidMenuItemSelections(line.item, line.configuration))) {
-    args.setError(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired)
+    args.setError(asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired))
     return
   }
   if (
     storeHasRequiredMenuCategory(args.selectedStore) &&
-    !hasSelectedRequiredCategoryItem(args.selectedStore, args.quantities)
+    !hasSelectedRequiredCategoryItem(
+      args.selectedStore,
+      args.quantities,
+      args.selectedMenuItemConfigurations,
+    )
   ) {
-    args.setError(formatRequiredCategorySelectionMessage(REQUIRED_MENU_CATEGORY_NAME))
+    args.setError(
+      asDomainText<DisplayText>(formatRequiredCategorySelectionMessage(
+        REQUIRED_MENU_CATEGORY_NAME,
+        getRequiredCategoryItemNames(args.selectedStore),
+      )),
+    )
     args.navigate(`${buildCustomerOrderStoreRoute(args.selectedStore.id)}#${REQUIRED_MENU_CATEGORY_HASH}`)
     return
   }
 
   if (!todayDeliveryWindow.isAvailable) {
-    args.setError(DELIVERY_CONSOLE_MESSAGES.schedule.noSameDayDeliveryWindow)
+    args.setError(asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.schedule.noSameDayDeliveryWindow))
     return
   }
 
   args.setError(null)
   if (validateScheduledDeliveryTime(args.scheduledDeliveryTime) !== null) {
-    args.setScheduledDeliveryTime(todayDeliveryWindow.minimumValue)
+    args.setScheduledDeliveryTime(asDomainText<DisplayText>(todayDeliveryWindow.minimumValue))
     args.setScheduledDeliveryError(null)
     args.setScheduledDeliveryTouched(false)
   }
   args.navigate(buildCustomerCartStoreRoute(args.selectedStore.id))
-}
-
-function restoreCustomerOrderAction(
-  args: ActionArgs,
-  order: OrderSummary,
-  mode: OrderRestoreMode,
-  todayDeliveryWindow = getTodayDeliveryWindow(),
-) {
-  const store = args.state?.stores.find((entry: Store) => entry.id === order.storeId)
-  if (!store) {
-    args.setError(buildFeedbackMessage(FEEDBACK_TONE.error, DELIVERY_CONSOLE_MESSAGES.order.restoreStoreUnavailable))
-    return
-  }
-
-  const nextQuantities: Record<string, number> = {}
-  const nextConfigurations: Record<string, SelectedMenuItemConfiguration> = {}
-  let unavailableItemCount = 0
-  let adjustedItemCount = 0
-
-  order.items.forEach((orderedItem) => {
-    const menuItem = store.menu.find((entry: MenuItem) => entry.id === orderedItem.menuItemId)
-    if (!menuItem) {
-      unavailableItemCount += 1
-      return
-    }
-
-    const stockLimit = menuItem.remainingQuantity
-    const cappedQuantity =
-      stockLimit == null
-        ? orderedItem.quantity
-        : Math.min(orderedItem.quantity, Math.max(stockLimit, 0))
-
-    if (cappedQuantity <= 0) {
-      unavailableItemCount += 1
-      return
-    }
-
-    const orderedSelections = Object.fromEntries(
-      orderedItem.selections.map((selection) => [selection.groupName, selection.selectedOptions]),
-    )
-    const configuration = buildSelectedMenuItemConfiguration(menuItem, orderedSelections)
-
-    if (menuItem.selectionGroups.length > 0 && !hasValidMenuItemSelections(menuItem, configuration)) {
-      adjustedItemCount += 1
-      return
-    }
-
-    const lineKey = buildCartLineKey(menuItem.id, configuration)
-    nextQuantities[lineKey] = (nextQuantities[lineKey] ?? 0) + cappedQuantity
-    if (configuration.selections.length > 0) {
-      nextConfigurations[lineKey] = configuration
-    }
-
-    if (cappedQuantity < orderedItem.quantity) {
-      adjustedItemCount += 1
-    }
-  })
-
-  if (Object.keys(nextQuantities).length === 0) {
-    args.setError(buildFeedbackMessage(FEEDBACK_TONE.error, DELIVERY_CONSOLE_MESSAGES.order.restoreItemsUnavailable))
-    return
-  }
-
-  if (store.category) {
-    args.setSelectedStoreCategory(store.category)
-  }
-  args.setSelectedStoreId(store.id)
-  args.setQuantities(nextQuantities)
-  args.setSelectedMenuItemConfigurations(nextConfigurations)
-  args.setMenuItemConfigurationModal(null)
-  args.setSelectedCouponId('')
-  args.setRemark('')
-  args.setIsCheckoutExpanded(false)
-
-  if (todayDeliveryWindow.isAvailable) {
-    args.setScheduledDeliveryTime(todayDeliveryWindow.minimumValue)
-    args.setScheduledDeliveryError(null)
-    args.setScheduledDeliveryTouched(false)
-  }
-
-  args.setSearchParams({ [ROUTE_QUERY_KEY.store]: store.id })
-  const restoredCount = Object.values(nextQuantities).reduce((sum, quantity) => sum + quantity, 0)
-  const partialMessage =
-    unavailableItemCount > 0 || adjustedItemCount > 0
-      ? buildFeedbackMessage(
-          FEEDBACK_TONE.warning,
-          formatOrderRestorePartialMessage(restoredCount),
-        )
-      : mode === ORDER_RESTORE_MODE.checkout
-        ? buildFeedbackMessage(FEEDBACK_TONE.success, formatOrderRestoreCheckoutSuccessMessage(restoredCount))
-        : buildFeedbackMessage(FEEDBACK_TONE.success, formatOrderRestoreCartSuccessMessage(restoredCount))
-  args.setError(partialMessage)
-  args.navigate(
-    mode === ORDER_RESTORE_MODE.checkout
-      ? buildCustomerCartStoreRoute(store.id)
-      : buildCustomerOrderStoreRoute(store.id),
-  )
-}
-
-export function repeatCustomerOrderAction(
-  args: ActionArgs,
-  order: OrderSummary,
-  todayDeliveryWindow = getTodayDeliveryWindow(),
-) {
-  restoreCustomerOrderAction(args, order, ORDER_RESTORE_MODE.checkout, todayDeliveryWindow)
-}
-
-export function addPreviousOrderToCartAction(
-  args: ActionArgs,
-  order: OrderSummary,
-  todayDeliveryWindow = getTodayDeliveryWindow(),
-) {
-  restoreCustomerOrderAction(args, order, ORDER_RESTORE_MODE.cart, todayDeliveryWindow)
 }
 
 export function confirmMenuItemConfigurationAction(
@@ -435,7 +289,9 @@ export function confirmMenuItemConfigurationAction(
   const nextConfiguration = buildSelectedMenuItemConfiguration(menuItem, selections)
   if (!hasValidMenuItemSelections(menuItem, nextConfiguration)) {
     args.setMenuItemConfigurationModal((current) =>
-      current && current.itemId === menuItem.id ? { ...current, errorText: DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired } : current,
+      current && current.itemId === menuItem.id
+        ? { ...current, errorText: asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.order.menuItemSelectionsRequired) }
+        : current,
     )
     return
   }
@@ -448,7 +304,7 @@ export function confirmMenuItemConfigurationAction(
       : Math.min(quantityAfterConfirm, Math.max(remainingQuantity - currentQuantity, 0))
   if (addQuantity <= 0) {
     args.setMenuItemConfigurationModal(null)
-    args.setError(formatRemainingQuantityMessage(menuItem.name, remainingQuantity ?? 0))
+    args.setError(asDomainText<DisplayText>(formatRemainingQuantityMessage(menuItem.name, remainingQuantity ?? 0)))
     return
   }
   const lineKey = buildCartLineKey(menuItem.id, nextConfiguration)
@@ -463,7 +319,7 @@ export function confirmMenuItemConfigurationAction(
   args.setMenuItemConfigurationModal(null)
   args.setError(
     addQuantity < quantityAfterConfirm
-      ? formatRemainingQuantityMessage(menuItem.name, remainingQuantity ?? addQuantity)
+      ? asDomainText<DisplayText>(formatRemainingQuantityMessage(menuItem.name, remainingQuantity ?? addQuantity))
       : null,
   )
 }
@@ -484,7 +340,7 @@ export function updateReviewDraftAction(
       ...patch,
     },
   }))
-  args.setReviewErrors((current: Record<string, string>) => {
+  args.setReviewErrors((current: Record<string, DisplayText>) => {
     if (!current[orderId]) return current
     const next = { ...current }
     delete next[orderId]

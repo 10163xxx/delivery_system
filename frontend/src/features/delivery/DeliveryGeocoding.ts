@@ -1,45 +1,32 @@
+// Address geocoding with cache and provider fallbacks for customer and store delivery locations.
 import type { AddressText } from '@/objects/core/SharedObjects'
 import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { RawTextValue } from '@/objects/domain/DomainTypes'
+import { DELIVERY_MAP_GEOCODE_TIMEOUT_MS } from '@/features/delivery/DeliveryMapConstants'
 import {
-  DELIVERY_MAP_GEOCODE_RESULT_LIMIT,
-  DELIVERY_MAP_GEOCODE_TIMEOUT_MS,
-  DELIVERY_MAP_GEOCODE_URL,
-} from '@/features/delivery/DeliveryMapSupport'
+  fetchAmapCoordinate,
+  fetchNominatimCoordinate,
+  fetchPhotonCoordinate,
+} from '@/features/delivery/DeliveryGeocodingProviders'
 
-type GeocodeResult = {
-  lat?: string
-  lon?: string
-}
+const geocodeCache = new Map<RawTextValue, DeliveryCoordinate | null>()
 
-const geocodeCache = new Map<string, DeliveryCoordinate | null>()
-
-function normalizeAddress(value: AddressText | string) {
+function normalizeAddress(value: AddressText | RawTextValue) {
   return value.trim()
 }
 
-function buildGeocodeUrl(query: string) {
-  const url = new URL(DELIVERY_MAP_GEOCODE_URL)
-  url.searchParams.set('format', 'jsonv2')
-  url.searchParams.set('limit', String(DELIVERY_MAP_GEOCODE_RESULT_LIMIT))
-  url.searchParams.set('accept-language', 'zh-CN')
-  url.searchParams.set('q', query)
-  return url.toString()
-}
-
-function parseCoordinate(result: GeocodeResult | undefined): DeliveryCoordinate | null {
-  const latitude = Number(result?.lat)
-  const longitude = Number(result?.lon)
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
-  return { latitude, longitude }
+function normalizeCacheKey(query: RawTextValue) {
+  return query.replace(/\s+/g, ' ').toLocaleLowerCase()
 }
 
 export async function geocodeDeliveryAddress(
-  address: AddressText | string | undefined,
+  address: AddressText | RawTextValue | undefined,
   signal?: AbortSignal,
 ) {
   const query = normalizeAddress(address ?? '')
   if (!query) return null
-  if (geocodeCache.has(query)) return geocodeCache.get(query) ?? null
+  const cacheKey = normalizeCacheKey(query)
+  if (geocodeCache.has(cacheKey)) return geocodeCache.get(cacheKey) ?? null
 
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), DELIVERY_MAP_GEOCODE_TIMEOUT_MS)
@@ -47,13 +34,19 @@ export async function geocodeDeliveryAddress(
   signal?.addEventListener('abort', abortHandler, { once: true })
 
   try {
-    const response = await fetch(buildGeocodeUrl(query), { signal: controller.signal })
-    if (!response.ok) return null
-    const results = (await response.json()) as GeocodeResult[]
-    const coordinate = parseCoordinate(results[0])
-    geocodeCache.set(query, coordinate)
-    return coordinate
+    // Prefer Amap for Chinese delivery addresses, then fall back to public global providers.
+    const coordinate =
+      (await fetchAmapCoordinate(query, controller.signal)) ??
+      (await fetchPhotonCoordinate(query, controller.signal)) ??
+      (await fetchNominatimCoordinate(query, controller.signal))
+    if (coordinate) {
+      geocodeCache.set(cacheKey, coordinate)
+      return coordinate
+    }
+    geocodeCache.set(cacheKey, null)
+    return null
   } catch {
+    if (!controller.signal.aborted) geocodeCache.set(cacheKey, null)
     return null
   } finally {
     window.clearTimeout(timeoutId)

@@ -1,4 +1,4 @@
-import type { MerchantStoreSidebarProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import type { MerchantStoreSidebarProps } from '@/pages/merchant/objects/MerchantConsoleObjects'
 import {
   MerchantStoreEligibilityCard,
   MerchantStoreOperationCard,

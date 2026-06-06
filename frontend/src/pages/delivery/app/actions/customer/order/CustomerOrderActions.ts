@@ -1,8 +1,9 @@
 import { createOrder, sendOrderChatMessage } from '@/system/api/SharedApi'
-import { ROUTE_PATH, type OrderId } from '@/objects/core/SharedObjects'
+import { ROUTE_PATH, type DisplayText, type OrderId } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import type {
   CustomerOrderParams,
-} from '@/objects/customer/page/CustomerActionObjects'
+} from '@/pages/customer/objects/CustomerActionObjects'
 import {
   clearDraftError,
   removeKey,
@@ -14,7 +15,7 @@ import {
   resetCustomerOrderSubmissionState,
   validateCustomerOrderSubmission,
 } from '@/pages/delivery/app/actions/customer/order/CustomerOrderActionHelpers'
-import { FEEDBACK_PREFIX, FEEDBACK_TONE } from '@/objects/page/DeliveryAppObjects'
+import { FEEDBACK_PREFIX, FEEDBACK_TONE } from '@/pages/delivery/objects/DeliveryAppObjects'
 
 export function createCustomerOrderActions(params: CustomerOrderParams) {
   function openRechargePage() {
@@ -29,7 +30,7 @@ export function createCustomerOrderActions(params: CustomerOrderParams) {
     const success = await params.runAction(() => createOrder(payload))
     if (!success) return
     resetCustomerOrderSubmissionState(params)
-    params.setError(`${FEEDBACK_PREFIX[FEEDBACK_TONE.success]}订单已成功提交，已返回主界面。`)
+    params.setError(asDomainText<DisplayText>(`${FEEDBACK_PREFIX[FEEDBACK_TONE.success]}订单成功，已返回首页。`))
     params.navigate(ROUTE_PATH.customerOrder, { replace: true })
   }
 

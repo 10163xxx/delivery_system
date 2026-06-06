@@ -1,9 +1,19 @@
-import { StoreReviewList } from '@/pages/customer/store/CustomerSelectedStorePanel'
+import {
+  STORE_REVIEW_LIST_VARIANT,
+  StoreReviewList,
+} from '@/pages/customer/store/CustomerSelectedStorePanel'
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
 import { STORE_STATUS, type Store } from '@/objects/core/SharedObjects'
-import type { CustomerStoreBrowseResultCardProps } from '@/objects/customer/page/CustomerPageObjects'
-import { CUSTOMER_STORE_RESULT_COPY } from '@/features/delivery/DeliveryMessages'
+import type { CustomerStoreBrowseResultCardProps } from '@/pages/customer/objects/CustomerPageObjects'
+import {
+  CUSTOMER_STORE_RESULT_LAYOUT,
+  CUSTOMER_STORE_RESULT_COPY,
+  formatStoreHighlightListAriaLabel,
+  formatStoreImageAlt,
+  DELIVERY_UI,
+} from '@/features/delivery/DeliveryMessages'
+import { ZERO_COUNT } from '@/features/delivery/DeliveryConstants'
 import { getStoreDeliveryQuote } from '@/features/delivery/DeliveryServices'
 import {
   isStoreLocated,
@@ -16,14 +26,14 @@ function getStoreBrowseHint(
   isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen'],
   locationStatus: StoreLocationStatus,
 ) {
-  if (!isStoreLocated(locationStatus)) return '店铺地址未定位，暂不可营业。'
+  if (!isStoreLocated(locationStatus)) return CUSTOMER_STORE_RESULT_COPY.locationUnavailableHint
   if (store.status === STORE_STATUS.revoked) {
     return CUSTOMER_STORE_RESULT_COPY.unavailableStoreHint
   }
   if (!isStoreCurrentlyOpen(store)) {
     return CUSTOMER_STORE_RESULT_COPY.closedStoreHint
   }
-  if (store.menu.length === 0) {
+  if (store.menu.length === ZERO_COUNT) {
     return CUSTOMER_STORE_RESULT_COPY.emptyMenuHint
   }
   return CUSTOMER_STORE_RESULT_COPY.availableStoreHint
@@ -35,10 +45,10 @@ function getStoreBrowseButtonLabel(
   isDeliverable: boolean,
   locationStatus: StoreLocationStatus,
 ) {
-  if (!isStoreLocated(locationStatus)) return '暂不可营业'
+  if (!isStoreLocated(locationStatus)) return CUSTOMER_STORE_RESULT_COPY.locationUnavailableButton
   if (store.status === STORE_STATUS.revoked) return CUSTOMER_STORE_RESULT_COPY.unavailableStoreButton
   if (!isStoreCurrentlyOpen(store)) return CUSTOMER_STORE_RESULT_COPY.closedStoreButton
-  if (store.menu.length === 0) return CUSTOMER_STORE_RESULT_COPY.emptyMenuButton
+  if (store.menu.length === ZERO_COUNT) return CUSTOMER_STORE_RESULT_COPY.emptyMenuButton
   if (!isDeliverable) return CUSTOMER_STORE_RESULT_COPY.outOfRangeStoreButton
   return CUSTOMER_STORE_RESULT_COPY.enterStoreButton
 }
@@ -70,30 +80,30 @@ export function CustomerStoreResultCard({
     !isStoreLocated(locationStatus) ||
     store.status === STORE_STATUS.revoked ||
     !isStoreCurrentlyOpen(store) ||
-    store.menu.length === 0 ||
+    store.menu.length === ZERO_COUNT ||
     !deliveryQuote.isDeliverable
   const highlights: string[] = storeBrowseHighlights[store.id] ?? []
   const isFavoriteStore = favoriteStoreIds.includes(store.id)
 
   return (
-    <article className="store-card compact-store-card">
+    <article className={CUSTOMER_STORE_RESULT_LAYOUT.articleClassName}>
       <DisplayImageSlot
-        alt={CUSTOMER_STORE_RESULT_COPY.storeImageAlt(store.name)}
-        className="store-image compact-store-image"
+        alt={formatStoreImageAlt(store.name)}
+        className={CUSTOMER_STORE_RESULT_LAYOUT.imageClassName}
         label={CUSTOMER_STORE_RESULT_COPY.storeImageLabel}
         src={store.imageUrl}
       />
-      <div className="compact-store-content">
-        <div className="ticket-header">
+      <div className={CUSTOMER_STORE_RESULT_LAYOUT.contentClassName}>
+        <div className={DELIVERY_UI.ticketHeaderClassName}>
           <div>
-            <p className="ticket-kind">{store.category}</p>
+            <p className={DELIVERY_UI.ticketKindClassName}>{store.category}</p>
             <h3>{store.name}</h3>
           </div>
-          <span className={store.status === STORE_STATUS.revoked ? 'badge warning' : 'badge success'}>
+          <span className={store.status === STORE_STATUS.revoked ? CUSTOMER_STORE_RESULT_LAYOUT.warningBadgeClassName : CUSTOMER_STORE_RESULT_LAYOUT.successBadgeClassName}>
             {formatStoreAvailability(store)}
           </span>
         </div>
-        <div className="summary-bar compact-store-summary">
+        <div className={CUSTOMER_STORE_RESULT_LAYOUT.summaryClassName}>
           <div>
             <p>{CUSTOMER_STORE_RESULT_COPY.storeRatingLabel}</p>
             <strong>{formatAggregateRating(store.averageRating, store.ratingCount)}</strong>
@@ -105,7 +115,7 @@ export function CustomerStoreResultCard({
           <div>
             <p>{CUSTOMER_STORE_RESULT_COPY.recentMonthOrderLabel}</p>
             <strong>
-              {`${monthlyOrdersByStore[store.id] ?? 0}${CUSTOMER_STORE_RESULT_COPY.recentMonthOrderSuffix}`}
+              {`${monthlyOrdersByStore[store.id] ?? ZERO_COUNT}${CUSTOMER_STORE_RESULT_COPY.recentMonthOrderSuffix}`}
             </strong>
           </div>
           <div>
@@ -121,56 +131,56 @@ export function CustomerStoreResultCard({
             <strong>{formatPrice(deliveryQuote.deliveryFeeCents)}</strong>
           </div>
         </div>
-        {highlights.length > 0 ? (
+        {highlights.length > ZERO_COUNT ? (
           <div
-            className="store-highlight-list"
-            aria-label={CUSTOMER_STORE_RESULT_COPY.highlightListAriaLabel(store.name)}
+            className={CUSTOMER_STORE_RESULT_LAYOUT.highlightListClassName}
+            aria-label={formatStoreHighlightListAriaLabel(store.name)}
           >
             {highlights.map((highlight: string) => (
-              <span key={highlight} className="store-highlight-chip">
+              <span key={highlight} className={CUSTOMER_STORE_RESULT_LAYOUT.highlightChipClassName}>
                 {highlight}
               </span>
             ))}
           </div>
         ) : null}
-        <div className="compact-store-reviews">
-          <p className="ticket-kind">{CUSTOMER_STORE_RESULT_COPY.reviewSectionLabel}</p>
+        <div className={CUSTOMER_STORE_RESULT_LAYOUT.reviewClassName}>
+          <p className={DELIVERY_UI.ticketKindClassName}>{CUSTOMER_STORE_RESULT_COPY.reviewSectionLabel}</p>
           <StoreReviewList
             emptyText={CUSTOMER_STORE_RESULT_COPY.reviewEmptyText}
             formatTime={formatTime}
             reviews={reviews}
-            variant="compact"
+            variant={STORE_REVIEW_LIST_VARIANT.compact}
           />
         </div>
-        <p className="meta-line compact-store-hint">
+        <p className={CUSTOMER_STORE_RESULT_LAYOUT.hintClassName}>
           {!isStoreLocated(locationStatus)
             ? getStoreBrowseHint(store, isStoreCurrentlyOpen, locationStatus)
             : !deliveryQuote.isDeliverable
             ? CUSTOMER_STORE_RESULT_COPY.outOfRangeStoreHint
             : getStoreBrowseHint(store, isStoreCurrentlyOpen, locationStatus)}
         </p>
-        <div className="action-row">
+        <div className={DELIVERY_UI.actionRowClassName}>
           <button
-            className="primary-button"
+            className={DELIVERY_UI.primaryButtonClassName}
             disabled={disabled}
             onClick={() => enterStore(store.id)}
-            type="button"
+            type={DELIVERY_UI.buttonType}
           >
             {getStoreBrowseButtonLabel(store, isStoreCurrentlyOpen, deliveryQuote.isDeliverable, locationStatus)}
           </button>
           <button
-            className="secondary-button"
+            className={DELIVERY_UI.secondaryButtonClassName}
             onClick={() => toggleFavoriteStore(store.id)}
-            type="button"
+            type={DELIVERY_UI.buttonType}
           >
             {isFavoriteStore
               ? CUSTOMER_STORE_RESULT_COPY.unfavoriteStoreButton
               : CUSTOMER_STORE_RESULT_COPY.favoriteStoreButton}
           </button>
           <button
-            className="secondary-button"
+            className={DELIVERY_UI.secondaryButtonClassName}
             onClick={() => toggleBlockedStore(store.id)}
-            type="button"
+            type={DELIVERY_UI.buttonType}
           >
             {CUSTOMER_STORE_RESULT_COPY.blockStoreButton}
           </button>

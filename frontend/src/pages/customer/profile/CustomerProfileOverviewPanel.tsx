@@ -1,4 +1,4 @@
-import type { CustomerRolePanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CustomerRolePanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { ACCOUNT_STATUS, MEMBERSHIP_TIER, ROUTE_PATH } from '@/objects/core/SharedObjects'
 import { CUSTOMER_PROFILE_COPY, CUSTOMER_PROFILE_RULES } from '@/pages/customer/profile/CustomerProfileCopy'

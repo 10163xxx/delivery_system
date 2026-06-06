@@ -2,10 +2,13 @@ import { useEffect } from 'react'
 import {
   ROLE,
   ROUTE_PATH,
+  ROUTE_PATH_PREFIX,
   ROUTE_QUERY_KEY,
   type Customer,
+  type DisplayText,
   type OrderSummary,
   type Store,
+  type StoreId,
 } from '@/objects/core/SharedObjects'
 import {
   canReviewOrder,
@@ -16,13 +19,13 @@ import type {
   DeliveryPageState,
   DeliveryPageViewEffectsArgs,
   SessionState,
-} from '@/objects/page/DeliveryPageObjects'
+} from '@/pages/delivery/objects/DeliveryPageObjects'
 import {
   buildCustomerOrderStoreRoute,
   CUSTOMER_WORKSPACE_VIEW,
   type CustomerWorkspaceView,
   type MerchantWorkspaceView,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   resetInvalidMerchantStoreSelection,
   syncSelectedStoreFromRoute,
@@ -39,7 +42,7 @@ export function useRoleRouteGuardEffect(
     if (session.user.role === ROLE.customer) {
       if (
         locationPathname !== ROUTE_PATH.customerProfileAddresses &&
-        !locationPathname.startsWith('/customer/')
+        !locationPathname.startsWith(ROUTE_PATH_PREFIX.customer)
       ) {
         navigate(ROUTE_PATH.customerOrder, { replace: true })
       }
@@ -47,15 +50,15 @@ export function useRoleRouteGuardEffect(
     }
 
     if (session.user.role === ROLE.merchant) {
-      if (!locationPathname.startsWith('/merchant/')) {
+      if (!locationPathname.startsWith(ROUTE_PATH_PREFIX.merchant)) {
         navigate(ROUTE_PATH.merchantApplicationSubmit, { replace: true })
       }
       return
     }
 
     if (
-      locationPathname.startsWith('/customer/') ||
-      locationPathname.startsWith('/merchant/')
+      locationPathname.startsWith(ROUTE_PATH_PREFIX.customer) ||
+      locationPathname.startsWith(ROUTE_PATH_PREFIX.merchant)
     ) {
       navigate(ROUTE_PATH.root, { replace: true })
     }
@@ -65,11 +68,11 @@ export function useRoleRouteGuardEffect(
 export function useCustomerStoreRouteSyncEffect(args: {
   state: SessionState['state']
   session: SessionState['session']
-  blockedStoreIds: string[]
+  blockedStoreIds: StoreId[]
   locationPathname: string
   searchParams: URLSearchParams
-  selectedStoreCategory: string
-  selectedStoreId: string
+  selectedStoreCategory: DisplayText
+  selectedStoreId: StoreId | ''
   setQuantities: DeliveryPageState['setQuantities']
   setSelectedStoreCategory: DeliveryPageState['setSelectedStoreCategory']
   setSelectedStoreId: DeliveryPageState['setSelectedStoreId']
@@ -121,7 +124,7 @@ export function useMerchantSelectionGuardEffect(args: {
   session: SessionState['session']
   merchantStores: Store[]
   merchantWorkspaceView: MerchantWorkspaceView
-  selectedMerchantStoreId: string
+  selectedMerchantStoreId: StoreId | ''
   setSelectedMerchantStoreId: DeliveryPageState['setSelectedMerchantStoreId']
 }) {
   const {
@@ -156,7 +159,7 @@ export function useCustomerWorkspaceNavigationGuards(args: {
   searchParams: URLSearchParams
   selectedStore: Store | undefined
   quantities: Record<string, number>
-  selectedMenuItemConfigurations: Record<string, import('@/objects/page/DeliveryAppObjects').SelectedMenuItemConfiguration>
+  selectedMenuItemConfigurations: Record<string, import('@/pages/delivery/objects/DeliveryAppObjects').SelectedMenuItemConfiguration>
   navigate: DeliveryPageViewEffectsArgs['navigate']
 }) {
   const {
@@ -213,7 +216,7 @@ export function useCustomerWorkspaceNavigationGuards(args: {
 export function useCheckoutCouponValidationEffect(args: {
   selectedStore: Store | undefined
   quantities: Record<string, number>
-  selectedMenuItemConfigurations: Record<string, import('@/objects/page/DeliveryAppObjects').SelectedMenuItemConfiguration>
+  selectedMenuItemConfigurations: Record<string, import('@/pages/delivery/objects/DeliveryAppObjects').SelectedMenuItemConfiguration>
   selectedCustomer: Customer | undefined
   selectedCouponId: string
   setSelectedCouponId: DeliveryPageState['setSelectedCouponId']

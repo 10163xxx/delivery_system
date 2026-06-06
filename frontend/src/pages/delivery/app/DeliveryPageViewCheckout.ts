@@ -12,7 +12,7 @@ import {
 import type {
   CheckoutSummaryArgs,
   PaymentFieldStateArgs,
-} from '@/objects/page/DeliveryPageViewCheckoutObjects'
+} from '@/pages/delivery/objects/DeliveryPageViewCheckoutObjects'
 
 export function getCheckoutSummary(args: CheckoutSummaryArgs) {
   const {

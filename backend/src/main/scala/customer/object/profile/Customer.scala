@@ -26,8 +26,8 @@ final case class Customer(
 )
 
 final case class CustomerLocation(
-    latitude: Double,
-    longitude: Double,
+    latitude: Latitude,
+    longitude: Longitude,
 )
 object CustomerLocation:
   given Encoder[CustomerLocation] = deriveEncoder

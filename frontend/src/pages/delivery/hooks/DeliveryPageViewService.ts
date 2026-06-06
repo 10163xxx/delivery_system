@@ -8,8 +8,10 @@ import {
   getPageViewConstantProps,
   getPageViewDataProps,
 } from '@/pages/delivery/app/DeliveryPageViewProps'
-import { ROLE } from '@/objects/core/SharedObjects'
-import type { DeliveryPageViewParams } from '@/objects/page/DeliveryPageObjects'
+import { ROLE, type PersonName } from '@/objects/core/SharedObjects'
+import type { DisplayText } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
+import type { DeliveryPageViewParams } from '@/pages/delivery/objects/DeliveryPageObjects'
 import { getWorkspaceViews } from '@/pages/delivery/app/DeliveryPageViewWorkspace'
 
 function getPageViewServiceSession(sessionService: DeliveryPageViewParams['sessionService']) {
@@ -75,16 +77,17 @@ function getCurrentDisplayName(
   session: ReturnType<typeof getPageViewServiceSession>['session'],
   derived: ReturnType<typeof getDeliveryConsolePageViewDerived>,
 ) {
-  return session?.user.role === ROLE.customer
+  const name = session?.user.role === ROLE.customer
     ? (derived.selectedCustomer?.name ?? session.user.displayName)
     : session?.user.displayName ?? ''
+  return asDomainText<PersonName>(name)
 }
 
 function getDerivedPageView(args: {
   routeOrderId: DeliveryPageViewParams['routeOrderId']
   sessionService: DeliveryPageViewParams['sessionService']
   selections: ReturnType<typeof getPageViewServiceSelections>
-  customerStoreSearch: string
+  customerStoreSearch: DisplayText
   merchantWorkspaceView: ReturnType<typeof getWorkspaceViews>['merchantWorkspaceView']
 }) {
   const {

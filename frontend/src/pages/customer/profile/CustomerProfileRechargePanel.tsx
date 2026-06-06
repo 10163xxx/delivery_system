@@ -1,10 +1,11 @@
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
-import { ROUTE_PATH } from '@/objects/core/SharedObjects'
+import { ROUTE_PATH, type DisplayText } from '@/objects/core/SharedObjects'
 import {
   CUSTOMER_PROFILE_COPY,
   CUSTOMER_PROFILE_RULES,
 } from '@/pages/customer/profile/CustomerProfileCopy'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 function ReturnToProfileButton({ navigate }: Pick<CustomerRoleProps, 'navigate'>) {
   return (
@@ -48,8 +49,8 @@ export function CustomerProfileRechargePanel({ props }: { props: CustomerRolePro
     customRechargeAmount,
     formatPrice,
     navigate,
-    parsedRechargeAmount,
     rechargeAmountError,
+    rechargeAmountPreview,
     selectedCustomer,
     selectedRechargeAmount,
     selectRechargeAmount,
@@ -109,7 +110,7 @@ export function CustomerProfileRechargePanel({ props }: { props: CustomerRolePro
                 placeholder={CUSTOMER_PROFILE_COPY.customAmountPlaceholder}
                 value={customRechargeAmount}
                 onChange={(event) => {
-                  setCustomRechargeAmount(event.target.value)
+                  setCustomRechargeAmount(asDomainText<DisplayText>(event.target.value))
                   setSelectedRechargeAmount(null)
                   setError(null)
                 }}
@@ -128,7 +129,7 @@ export function CustomerProfileRechargePanel({ props }: { props: CustomerRolePro
             <ReturnToProfileButton navigate={navigate} />
             <button
               className="primary-button"
-              disabled={parsedRechargeAmount === null || rechargeAmountError !== null}
+              disabled={rechargeAmountPreview === null || rechargeAmountError !== null}
               onClick={() => void submitRechargeFromPage()}
               type="button"
             >

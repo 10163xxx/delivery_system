@@ -1,7 +1,12 @@
 import type { AdminRoleProps } from '@/pages/delivery/app/roleProps'
 import { AddressDetailsCard } from '@/components/address/AddressDetailsCard'
 import type { AddressDetailsCardData, AddressDetailsRecord } from '@/components/address/AddressDetailsObjects'
-import { statusLabels } from '@/features/delivery/DeliveryConstants'
+import {
+  DEFAULT_MERCHANT_PREP_MINUTES,
+  DELIVERY_ROUTE_RECORD_PREVIEW_COUNT,
+  ZERO_COUNT,
+  statusLabels,
+} from '@/features/delivery/DeliveryConstants'
 import { buildDeliveryRouteEstimate } from '@/features/delivery/DeliveryRouteEstimates'
 import { ORDER_STATUS, TICKET_STATUS } from '@/objects/core/SharedObjects'
 
@@ -15,11 +20,11 @@ function buildAdminRecords(props: AdminRoleProps): AddressDetailsRecord[] {
       order.status === ORDER_STATUS.readyForPickup ||
       order.status === ORDER_STATUS.delivering,
     )
-    .slice(0, 3)
+    .slice(ZERO_COUNT, DELIVERY_ROUTE_RECORD_PREVIEW_COUNT)
     .map((order) => {
       const store = state.stores.find((item) => item.id === order.storeId)
       const estimate = buildDeliveryRouteEstimate({
-        avgPrepMinutes: store?.avgPrepMinutes ?? 20,
+        avgPrepMinutes: store?.avgPrepMinutes ?? DEFAULT_MERCHANT_PREP_MINUTES,
         status: order.status,
         referenceTime: order.scheduledDeliveryAt,
       })
@@ -80,7 +85,7 @@ function buildAdminDetailsData(props: AdminRoleProps): AddressDetailsCardData {
   const firstStore = props.state?.stores.find((store) => store.id === firstOrder?.storeId)
   const estimate = firstOrder
     ? buildDeliveryRouteEstimate({
-        avgPrepMinutes: firstStore?.avgPrepMinutes ?? 20,
+        avgPrepMinutes: firstStore?.avgPrepMinutes ?? DEFAULT_MERCHANT_PREP_MINUTES,
         status: firstOrder.status,
         referenceTime: firstOrder.scheduledDeliveryAt,
       })

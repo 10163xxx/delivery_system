@@ -1,9 +1,22 @@
 import type {
   AddCustomerAddressRequest,
+  AddressLabel,
+  AddressText,
+  CouponId,
   CreateOrderRequest,
+  CurrencyCents,
+  CustomerId,
   DeliveryCoordinate,
+  DisplayText,
+  IsoDateTime,
   MenuItem,
+  MenuItemId,
+  NoteText,
+  PersonName,
+  Quantity,
   RechargeBalanceRequest,
+  RatingValue,
+  ReasonText,
   ReviewOrderRequest,
   SendOrderChatMessageRequest,
   Store,
@@ -27,21 +40,20 @@ import {
   MIN_MENU_ITEM_QUANTITY,
 } from './DeliveryConstants'
 import { buildScheduledDeliveryAt } from './DeliverySchedule'
-import { clampRating, normalizeTextInput, parseCurrencyAmount } from './DeliveryShared'
+import { asDomainNumber, asDomainText, clampRating, normalizeTextInput, parseCurrencyAmount } from './DeliveryShared'
 import type {
   AfterSalesDraft,
   CustomerAddressDraft,
   PartialRefundDraft,
   ReviewDraft,
   SelectedMenuItemConfiguration,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   createInitialAfterSalesDraft,
   createInitialPartialRefundDraft,
   createInitialReviewDraft,
 } from './DeliveryDrafts'
 import {
-  getMenuItemCartQuantity,
   getSelectedCartLines,
 } from './DeliveryCartLines'
 
@@ -64,17 +76,17 @@ export function buildOrderPayload(
     selectedMenuItemConfigurations,
   ).map((line) => ({
     menuItemId: line.item.id,
-    quantity: line.quantity,
+    quantity: asDomainNumber<Quantity>(line.quantity),
     selections: line.configuration?.selections ?? [],
   }))
 
   return {
-    customerId,
+    customerId: asDomainText<CustomerId>(customerId),
     storeId: store.id,
-    deliveryAddress: normalizeTextInput(deliveryAddress, MAX_ADDRESS_LENGTH),
-    scheduledDeliveryAt: buildScheduledDeliveryAt(scheduledDeliveryTime),
-    remark: normalizeTextInput(remark, MAX_ORDER_REMARK_LENGTH) || undefined,
-    couponId: couponId || undefined,
+    deliveryAddress: asDomainText<AddressText>(normalizeTextInput(deliveryAddress, MAX_ADDRESS_LENGTH)),
+    scheduledDeliveryAt: asDomainText<IsoDateTime>(buildScheduledDeliveryAt(scheduledDeliveryTime)),
+    remark: optionalDomainText<NoteText>(normalizeTextInput(remark, MAX_ORDER_REMARK_LENGTH)),
+    couponId: optionalDomainText<CouponId>(couponId),
     items,
   }
 }
@@ -106,12 +118,21 @@ export function storeHasRequiredMenuCategory(store: Store) {
 export function hasSelectedRequiredCategoryItem(
   store: Store,
   quantities: Record<string, number>,
+  selectedMenuItemConfigurations: Record<string, SelectedMenuItemConfiguration> = {},
 ) {
-  return store.menu.some(
-    (item) =>
-      item.category?.trim() === REQUIRED_MENU_CATEGORY_NAME &&
-      getMenuItemCartQuantity(quantities, item.id) > 0,
+  return getSelectedCartLines(
+    store,
+    quantities,
+    selectedMenuItemConfigurations,
+  ).some(
+    (line) => line.item.category?.trim() === REQUIRED_MENU_CATEGORY_NAME,
   )
+}
+
+export function getRequiredCategoryItemNames(store: Store) {
+  return store.menu
+    .filter((item) => item.category?.trim() === REQUIRED_MENU_CATEGORY_NAME)
+    .map((item) => item.name)
 }
 
 export function buildMenuItemConfigurationSummary(item: MenuItem, selections: Record<string, string[]>) {
@@ -136,15 +157,15 @@ export function buildSelectedMenuItemConfiguration(item: MenuItem, selections: R
               group.options.some((entry) => entry.name === option),
             ),
           ),
-        ),
+        ).map((option) => asDomainText<DisplayText>(option)),
       }))
       .filter((selection) => selection.selectedOptions.length > 0),
-    summaryText: buildMenuItemConfigurationSummary(item, selections),
+    summaryText: asDomainText<DisplayText>(buildMenuItemConfigurationSummary(item, selections)),
   }
 }
 
 export function buildCustomerProfilePayload(name: string): UpdateCustomerProfileRequest {
-  return { name: normalizeTextInput(name, MAX_CUSTOMER_NAME_LENGTH) }
+  return { name: asDomainText<PersonName>(normalizeTextInput(name, MAX_CUSTOMER_NAME_LENGTH)) }
 }
 
 export function buildCustomerAddressPayload(
@@ -152,14 +173,14 @@ export function buildCustomerAddressPayload(
   location: DeliveryCoordinate,
 ): AddCustomerAddressRequest {
   return {
-    label: normalizeTextInput(draft.label, MAX_ADDRESS_LABEL_LENGTH),
-    address: normalizeTextInput(draft.address, MAX_ADDRESS_LENGTH),
+    label: asDomainText<AddressLabel>(normalizeTextInput(draft.label, MAX_ADDRESS_LABEL_LENGTH)),
+    address: asDomainText<AddressText>(normalizeTextInput(draft.address, MAX_ADDRESS_LENGTH)),
     location,
   }
 }
 
 export function buildOrderChatPayload(body: string): SendOrderChatMessageRequest {
-  return { body: normalizeTextInput(body, MAX_ORDER_CHAT_LENGTH) }
+  return { body: asDomainText<DisplayText>(normalizeTextInput(body, MAX_ORDER_CHAT_LENGTH)) }
 }
 
 export function buildPartialRefundPayload(
@@ -168,9 +189,9 @@ export function buildPartialRefundPayload(
 ): SubmitPartialRefundRequest {
   const nextDraft = draft ?? createInitialPartialRefundDraft()
   return {
-    menuItemId,
-    quantity: Math.max(MIN_MENU_ITEM_QUANTITY, Math.round(nextDraft.quantity)),
-    reason: normalizeTextInput(nextDraft.reason, MAX_REVIEW_COMMENT_LENGTH),
+    menuItemId: asDomainText<MenuItemId>(menuItemId),
+    quantity: asDomainNumber<Quantity>(Math.max(MIN_MENU_ITEM_QUANTITY, Math.round(nextDraft.quantity))),
+    reason: asDomainText<ReasonText>(normalizeTextInput(nextDraft.reason, MAX_REVIEW_COMMENT_LENGTH)),
   }
 }
 
@@ -186,13 +207,15 @@ export function buildAfterSalesPayload(draft?: AfterSalesDraft): SubmitAfterSale
 
   return {
     requestType: nextDraft.requestType,
-    reason: normalizeTextInput(nextDraft.reason, MAX_REVIEW_COMMENT_LENGTH),
-    expectedCompensationCents,
+    reason: asDomainText<ReasonText>(normalizeTextInput(nextDraft.reason, MAX_REVIEW_COMMENT_LENGTH)),
+    expectedCompensationCents: expectedCompensationCents == null
+      ? undefined
+      : asDomainNumber<CurrencyCents>(expectedCompensationCents),
   }
 }
 
 export function buildRechargePayload(amountYuan: number): RechargeBalanceRequest {
-  return { amountCents: Math.round(amountYuan * CURRENCY_CENTS_SCALE) }
+  return { amountCents: asDomainNumber<CurrencyCents>(Math.round(amountYuan * CURRENCY_CENTS_SCALE)) }
 }
 
 export function parseRechargeAmount(value: string) {
@@ -207,10 +230,14 @@ export function buildReviewPayload(
   const comment = normalizeTextInput(nextDraft.comment, MAX_REVIEW_COMMENT_LENGTH)
   const extraNote = normalizeTextInput(nextDraft.extraNote, MAX_REVIEW_EXTRA_NOTE_LENGTH)
   const submission = {
-    rating: clampRating(nextDraft.rating),
-    comment: comment || undefined,
-    extraNote: extraNote || undefined,
+    rating: asDomainNumber<RatingValue>(clampRating(nextDraft.rating)),
+    comment: optionalDomainText<ReasonText>(comment),
+    extraNote: optionalDomainText<NoteText>(extraNote),
   }
 
   return target === REVIEW_TARGET.store ? { storeReview: submission } : { riderReview: submission }
+}
+
+function optionalDomainText<T extends string>(value: string): T | undefined {
+  return value ? asDomainText<T>(value) : undefined
 }

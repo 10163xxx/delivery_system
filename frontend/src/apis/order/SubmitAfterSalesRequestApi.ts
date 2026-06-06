@@ -3,7 +3,7 @@ import type {
   SubmitAfterSalesRequest,
 } from '@/objects/core/SharedObjects'
 import { submitAfterSalesRequestApiDefinition } from '@/system/api/ApiRoutes'
-import { postNormalizedDeliveryState } from '@/system/api/DeliveryStateApiSupport'
+import { postNormalizedDeliveryState } from '@/system/api/DeliveryStateClient'
 import { buildApiPath1 } from '@/system/api/TypedApiDefinitions'
 
 export function submitAfterSalesRequest(

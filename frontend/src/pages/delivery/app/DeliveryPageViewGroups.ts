@@ -19,7 +19,7 @@ import {
   hasPendingStoreReview,
   isStoreCurrentlyOpen,
 } from '@/features/delivery/DeliveryServices'
-import type { PageActionArgsInput, PageViewDataInput } from '@/objects/page/DeliveryPageViewPropObjects'
+import type { PageActionArgsInput, PageViewDataInput } from '@/pages/delivery/objects/DeliveryPageViewPropObjects'
 
 export function getPageActionSelectionSetters(pageState: PageActionArgsInput['pageState']) {
   return {
@@ -91,7 +91,7 @@ export function getPageViewOrderDataProps(derived: PageViewDataInput['derived'])
   }
 }
 
-export function getPageViewSupportDataProps(derived: PageViewDataInput['derived']) {
+export function getPageViewTicketDataProps(derived: PageViewDataInput['derived']) {
   return {
     pendingApplications: derived.pendingApplications,
     merchantPendingApplications: derived.merchantPendingApplications,
@@ -161,7 +161,7 @@ export function getPageViewMerchantStateDataProps(pageState: PageViewDataInput['
   }
 }
 
-export function getPageViewSupportStateDataProps(pageState: PageViewDataInput['pageState']) {
+export function getPageViewTicketStateDataProps(pageState: PageViewDataInput['pageState']) {
   return {
     orderChatDrafts: pageState.orderChatDrafts,
     orderChatErrors: pageState.orderChatErrors,

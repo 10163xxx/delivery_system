@@ -14,31 +14,36 @@ import {
   validateMerchantProfileDraft,
 } from '@/features/delivery/DeliveryServices'
 import type {
+  DisplayText,
+  RefundRequestId,
+} from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
+import type {
   MerchantActionParams as Params,
   MerchantProfileContext,
-  MerchantSupportContext,
+  MerchantOrderIssueContext,
   MerchantWithdrawContext,
   RunAction,
-} from '@/objects/merchant/page/MerchantActionObjects'
+} from '@/pages/merchant/objects/MerchantActionObjects'
 import { createMerchantDraftActions } from '@/pages/delivery/app/actions/merchant/draft/MerchantDraftActions'
 
-function removeKey<T>(record: Record<string, T>, key: string) {
+function removeKey<K extends string, T>(record: Record<K, T>, key: K) {
   const next = { ...record }
   delete next[key]
   return next
 }
 
-function createMerchantSupportActions(support: MerchantSupportContext, runAction: RunAction) {
-  const { partialRefundResolutionDrafts, setPartialRefundResolutionDrafts } = support
+function createMerchantOrderIssueActions(orderIssue: MerchantOrderIssueContext, runAction: RunAction) {
+  const { partialRefundResolutionDrafts, setPartialRefundResolutionDrafts } = orderIssue
 
-  async function resolvePartialRefundRequest(refundId: string, approved: boolean) {
+  async function resolvePartialRefundRequest(refundId: RefundRequestId, approved: boolean) {
     const payload = buildPartialRefundResolutionPayload(
       approved,
-      partialRefundResolutionDrafts[refundId] ?? '',
+      partialRefundResolutionDrafts[refundId] ?? asDomainText<DisplayText>(''),
     )
     const success = await runAction(() => resolvePartialRefundRequestApi(refundId, payload))
     if (!success) return
-    setPartialRefundResolutionDrafts((current: Record<string, string>) => removeKey(current, refundId))
+    setPartialRefundResolutionDrafts((current: Record<RefundRequestId, DisplayText>) => removeKey(current, refundId))
   }
 
   return { resolvePartialRefundRequest }
@@ -70,14 +75,14 @@ function createMerchantWithdrawActions(withdraw: MerchantWithdrawContext, runAct
     if (!merchantProfile) return
     const amount = parseMerchantWithdrawAmount(merchantWithdrawAmount)
     if (amount === null || amount <= 0) {
-      return setMerchantWithdrawFieldError(DELIVERY_CONSOLE_MESSAGES.account.invalidWithdrawAmount)
+      return setMerchantWithdrawFieldError(asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.account.invalidWithdrawAmount))
     }
     if (amount > MAX_WITHDRAW_AMOUNT_YUAN) {
-      return setMerchantWithdrawFieldError(DELIVERY_CONSOLE_MESSAGES.account.withdrawAmountTooLarge)
+      return setMerchantWithdrawFieldError(asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.account.withdrawAmountTooLarge))
     }
     if (Math.round(amount * CURRENCY_CENTS_SCALE) > merchantProfile.availableToWithdrawCents) {
       return setMerchantWithdrawFieldError(
-        DELIVERY_CONSOLE_MESSAGES.account.withdrawExceedsAvailableBalance,
+        asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.account.withdrawExceedsAvailableBalance),
       )
     }
     setMerchantWithdrawFieldError(null)
@@ -85,18 +90,18 @@ function createMerchantWithdrawActions(withdraw: MerchantWithdrawContext, runAct
       withdrawMerchantIncomeApi(buildMerchantWithdrawPayload(amount)),
     )
     if (!success) return
-    setMerchantWithdrawAmount('')
+    setMerchantWithdrawAmount(asDomainText<DisplayText>(''))
   }
 
   return { withdrawMerchantIncome }
 }
 
 export function createMerchantActions(params: Params) {
-  const { runAction, setError, draft, profile, withdraw, support } = params
+  const { runAction, setError, draft, profile, withdraw, orderIssue } = params
 
   return {
     ...createMerchantDraftActions(draft, runAction, setError),
-    ...createMerchantSupportActions(support, runAction),
+    ...createMerchantOrderIssueActions(orderIssue, runAction),
     ...createMerchantProfileActions(profile, runAction),
     ...createMerchantWithdrawActions(withdraw, runAction),
   }

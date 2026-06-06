@@ -7,13 +7,13 @@ import type {
   CustomerProfileParams,
   CustomerRechargeParams,
   CustomerSearchParams,
-  CustomerSupportParams,
-} from '@/objects/customer/page/CustomerActionObjects'
+  CustomerOrderIssueParams,
+} from '@/pages/customer/objects/CustomerActionObjects'
 import type {
   DeliveryConsolePageState as PageState,
   DeliveryConsolePageViewState as PageViewState,
   DeliveryConsoleSessionState as SessionState,
-} from '@/objects/page/DeliveryConsoleScreenObjects'
+} from '@/pages/delivery/objects/DeliveryConsoleScreenObjects'
 
 export function getScreenSessionActions(sessionState: SessionState) {
   return {
@@ -69,6 +69,7 @@ function getCustomerRechargeContext(
   return {
     selectedCustomer: pageView.selectedCustomer,
     customRechargeAmount: pageState.customRechargeAmount,
+    selectedRechargeAmount: pageState.selectedRechargeAmount,
     runAction: sessionState.runAction,
     navigate,
     setCustomRechargeAmount: pageState.setCustomRechargeAmount,
@@ -94,11 +95,11 @@ function getCustomerProfileContext(
   }
 }
 
-function getCustomerSupportContext(
+function getCustomerOrderIssueContext(
   pageState: PageState,
   sessionState: SessionState,
   navigate: NavigateFunction,
-): CustomerSupportParams {
+): CustomerOrderIssueParams {
   return {
     state: sessionState.state,
     partialRefundDrafts: pageState.partialRefundDrafts,
@@ -149,6 +150,8 @@ function getCustomerOrderContext(
     setMenuItemConfigurationModal: pageState.setMenuItemConfigurationModal,
     setIsCheckoutExpanded: pageState.setIsCheckoutExpanded,
     setSelectedCouponId: pageState.setSelectedCouponId,
+    setSelectedStoreCategory: pageState.setSelectedStoreCategory,
+    setSelectedStoreId: pageState.setSelectedStoreId,
     setError: sessionState.setError,
     setOrderChatErrors: pageState.setOrderChatErrors,
     setOrderChatDrafts: pageState.setOrderChatDrafts,
@@ -172,7 +175,7 @@ function getCustomerActionContexts(args: {
       navigate,
     ),
     profile: getCustomerProfileContext(pageView, pageState, sessionState),
-    support: getCustomerSupportContext(pageState, sessionState, navigate),
+    orderIssue: getCustomerOrderIssueContext(pageState, sessionState, navigate),
     order: getCustomerOrderContext(pageView, pageState, sessionState, navigate),
   }
 }
@@ -194,7 +197,7 @@ function getMerchantWithdrawContext(pageView: PageViewState, pageState: PageStat
   }
 }
 
-function getMerchantSupportContext(pageState: PageState) {
+function getMerchantOrderIssueContext(pageState: PageState) {
   return {
     partialRefundResolutionDrafts: pageState.partialRefundResolutionDrafts,
     setPartialRefundResolutionDrafts: pageState.setPartialRefundResolutionDrafts,
@@ -245,7 +248,7 @@ export function getMerchantActionArgs(args: {
     profile: getMerchantProfileContext(pageView, pageState),
     runAction: sessionState.runAction,
     setError: sessionState.setError,
-    support: getMerchantSupportContext(pageState),
+    orderIssue: getMerchantOrderIssueContext(pageState),
     withdraw: getMerchantWithdrawContext(pageView, pageState),
   }
 }

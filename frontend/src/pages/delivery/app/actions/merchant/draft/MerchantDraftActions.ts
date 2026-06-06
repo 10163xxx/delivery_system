@@ -1,8 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react'
+import type { DisplayText } from '@/objects/core/SharedObjects'
 import type {
   MerchantDraftContext,
   RunAction,
-} from '@/objects/merchant/page/MerchantActionObjects'
+} from '@/pages/merchant/objects/MerchantActionObjects'
 import {
   createMerchantDraftSelectors,
   createMerchantDraftSubmitActions,
@@ -13,7 +14,7 @@ import {
 export function createMerchantDraftActions(
   draft: MerchantDraftContext,
   runAction: RunAction,
-  setError: Dispatch<SetStateAction<string | null>>,
+  setError: Dispatch<SetStateAction<DisplayText | null>>,
 ) {
   const selectors = createMerchantDraftSelectors(draft)
   const validators = createMerchantDraftValidators(draft)

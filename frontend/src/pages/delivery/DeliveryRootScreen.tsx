@@ -1,8 +1,8 @@
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import AuthScreen from '@/pages/auth/AuthScreen'
 import { DeliveryAppStage } from '@/pages/delivery/DeliveryAppStage'
-import type { AuthSession } from '@/objects/core/SharedObjects'
-import { HEADER_ACTION } from '@/objects/page/DeliveryAppObjects'
+import type { AuthSession, OrderId } from '@/objects/core/SharedObjects'
+import { HEADER_ACTION } from '@/pages/delivery/objects/DeliveryAppObjects'
 import { useDeliveryConsolePageState } from '@/pages/delivery/hooks/DeliveryPageStateService'
 import { useDeliveryConsolePageViewService } from '@/pages/delivery/hooks/DeliveryPageViewService'
 import { useDeliveryConsoleSessionService } from '@/pages/delivery/hooks/DeliverySessionService'
@@ -17,11 +17,13 @@ import {
   getMerchantRoleProps,
   getRiderRoleProps,
 } from '@/pages/delivery/DeliveryScreenAssembly'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 export function DeliveryRootScreen() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { orderId: routeOrderId } = useParams()
+  const { orderId } = useParams()
+  const routeOrderId = orderId ? asDomainText<OrderId>(orderId) : undefined
   const [searchParams, setSearchParams] = useSearchParams()
   const sessionService = useDeliveryConsoleSessionService()
   const pageState = useDeliveryConsolePageState()

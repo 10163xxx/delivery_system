@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import type { AdminRoleProps, CustomerRoleProps, MerchantRoleProps, RiderRoleProps } from '@/pages/delivery/app/roleProps'
 import type { AuthSession, DeliveryAppState, Role } from '@/objects/core/SharedObjects'
 
@@ -31,12 +30,6 @@ export type DisplayImageSlotProps = {
   label: string
   src?: string
   className?: string
-}
-
-export type ModalShellProps = {
-  children: ReactNode
-  isOpen?: boolean
-  onClose: () => void
 }
 
 type DeliveryConsoleStageSessionProps = {

@@ -1,5 +1,7 @@
-import type { MenuItem } from '@/objects/core/SharedObjects'
-import type { ReviewDraft, MerchantApplicationView } from '@/objects/page/DeliveryAppObjects'
+// Converts page state, derived data, and action handlers into role-view props.
+import type { MenuItem, StoreId } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
+import type { ReviewDraft, MerchantApplicationView } from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   changeMerchantApplicationViewAction,
   chooseStoreCategoryAction,
@@ -33,15 +35,15 @@ import {
   getPageViewReviewConstants,
   getPageViewRuntimeDataProps,
   getPageViewStoreConstants,
-  getPageViewSupportDataProps,
-  getPageViewSupportStateDataProps,
+  getPageViewTicketDataProps,
+  getPageViewTicketStateDataProps,
   getPageViewWorkspaceDataProps,
 } from '@/pages/delivery/app/DeliveryPageViewGroups'
 import type {
   PageActionArgsInput,
   PageViewActionInput,
   PageViewDataInput,
-} from '@/objects/page/DeliveryPageViewPropObjects'
+} from '@/pages/delivery/objects/DeliveryPageViewPropObjects'
 
 export function buildPageActionArgs(input: PageActionArgsInput) {
   return {
@@ -66,13 +68,13 @@ export function getPageViewDataProps(input: PageViewDataInput) {
     ...getPageViewDerivedDataProps(input),
     ...getPageViewWorkspaceDataProps(input.workspaceViews),
     ...getPageViewOrderDataProps(input.derived),
-    ...getPageViewSupportDataProps(input.derived),
+    ...getPageViewTicketDataProps(input.derived),
     ...getPageViewNoticeDataProps(input.derived, input.seenCustomerProfileNoticeIds),
     ...getPageViewAnalyticsDataProps(input.derived),
     ...getPageViewRuntimeDataProps(input),
     ...getPageViewCustomerStateDataProps(input.pageState),
     ...getPageViewMerchantStateDataProps(input.pageState),
-    ...getPageViewSupportStateDataProps(input.pageState),
+    ...getPageViewTicketStateDataProps(input.pageState),
   }
 }
 
@@ -111,7 +113,7 @@ function getPageViewRoutingActionProps(
     setMerchantApplicationViewState: setMerchantApplicationState,
     chooseStoreCategory: (category: string) => chooseStoreCategoryAction(actionArgs, category),
     resetStoreCategory: () => resetStoreCategoryAction(actionArgs),
-    enterStore: (storeId: string) => enterStoreAction(actionArgs, storeId),
+    enterStore: (storeId: string) => enterStoreAction(actionArgs, asDomainText<StoreId>(storeId)),
     leaveStore: () => leaveStoreAction(actionArgs),
     changeMerchantApplicationView: (view: MerchantApplicationView) =>
       changeMerchantApplicationViewAction(actionArgs, view),

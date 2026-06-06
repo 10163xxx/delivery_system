@@ -2,14 +2,14 @@ import { createCustomerOrderActions } from '@/pages/delivery/app/actions/custome
 import { createCustomerProfileActions } from '@/pages/delivery/app/actions/customer/profile/CustomerProfileActions'
 import { createCustomerRechargeActions } from '@/pages/delivery/app/actions/customer/profile/CustomerRechargeActions'
 import { createCustomerSearchActions } from '@/pages/delivery/app/actions/customer/search/CustomerSearchActions'
-import { createCustomerSupportActions } from '@/pages/delivery/app/actions/customer/support/CustomerSupportActions'
-import type { CustomerActionContexts } from '@/objects/customer/page/CustomerActionObjects'
+import { createCustomerOrderIssueActions } from '@/pages/delivery/app/actions/customer/orderIssue/CustomerOrderIssueActions'
+import type { CustomerActionContexts } from '@/pages/customer/objects/CustomerActionObjects'
 
 export function createCustomerActions(contexts: CustomerActionContexts) {
   return {
     ...createCustomerSearchActions(contexts.search),
     ...createCustomerOrderActions(contexts.order),
-    ...createCustomerSupportActions(contexts.support),
+    ...createCustomerOrderIssueActions(contexts.orderIssue),
     ...createCustomerProfileActions(contexts.profile),
     ...createCustomerRechargeActions(contexts.recharge),
   }

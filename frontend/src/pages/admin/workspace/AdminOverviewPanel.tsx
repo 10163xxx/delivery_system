@@ -151,9 +151,9 @@ export function AdminOverviewPanel(props: AdminRoleProps) {
       <section className="hero-panel admin-overview">
         <div className="admin-overview__hero">
           <p className="eyebrow">运营总览</p>
-          <h1>把忙碌的调度台，变成更柔和清晰的工作面。</h1>
+          <h1>平台运行概况</h1>
           <p className="hero-copy">
-            这里把订单节奏、门店状态、审核与工单集中成一屏轻量视图，管理员能更快发现拥堵点，也能让后续处理更从容。
+            订单节奏、门店状态和待办压力集中展示，便于快速判断当前平台运行情况。
           </p>
           <div className="admin-overview__pills">
             <span className="badge success">平台收入 {formatPrice(state.admins[0]?.platformIncomeCents ?? 0)}</span>
@@ -177,7 +177,7 @@ export function AdminOverviewPanel(props: AdminRoleProps) {
 
       <AdminDeliveryRoutePanel {...props} />
 
-      <Panel title="平台服务温度" description="除了处理数据，也兼顾各角色的体感，让每次操作更轻松。">
+      <Panel title="角色服务概况" description="按顾客、商家、骑手三个角色查看当前服务侧重点。">
         <div className="admin-overview__care-grid">
           <article className="admin-overview__care-card">
             <h3>顾客端</h3>

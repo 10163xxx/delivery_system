@@ -1,6 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { RiderProfileWorkspaceProps } from '@/objects/rider/page/RiderPageObjects'
+import type { CurrencyCents } from '@/objects/core/SharedObjects'
+import type { RiderProfileWorkspaceProps } from '@/pages/rider/objects/RiderPageObjects'
 import { CURRENCY_CENTS_SCALE, DELIVERY_CONSOLE_MESSAGES, MAX_WITHDRAW_AMOUNT_YUAN } from '@/features/delivery/DeliveryServices'
+import { asDomainNumber } from '@/features/delivery/DeliveryShared'
 
 function parseWithdrawAmount(value: string) {
   const normalized = value.trim()
@@ -43,7 +45,7 @@ export function RiderProfileWithdrawSection({
     setWithdrawError(null)
 
     const success = await runAction(() =>
-      withdrawRiderIncome(selectedRider.id, { amountCents: Math.round(amount * CURRENCY_CENTS_SCALE) }),
+      withdrawRiderIncome(selectedRider.id, { amountCents: asDomainNumber<CurrencyCents>(Math.round(amount * CURRENCY_CENTS_SCALE)) }),
     )
     if (!success) return
     setWithdrawAmount('')

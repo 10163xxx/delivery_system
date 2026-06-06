@@ -1,5 +1,6 @@
+// Customer store browse orchestrator: search, category browsing, location filtering, and selected-store view.
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
-import type { CustomerStoreTab } from '@/objects/customer/page/CustomerPageObjects'
+import type { CustomerStoreTab } from '@/pages/customer/objects/CustomerPageObjects'
 import {
   RecentFrequentStoresPanel,
   SearchHistoryPanel,
@@ -10,13 +11,18 @@ import {
 } from '@/pages/customer/store/CustomerStoreCatalogSections'
 import { CustomerStatusBar } from '@/pages/customer/store/CustomerHomeStatusBar'
 import { SelectedStoreBanner } from '@/pages/customer/store/CustomerSelectedStorePanel'
-import type { Dispatch, SetStateAction } from 'react'
-import { CUSTOMER_STORE_VISIBILITY } from '@/objects/page/DeliveryAppObjects'
+import { useState, type Dispatch, type SetStateAction } from 'react'
+import { CUSTOMER_STORE_VISIBILITY } from '@/pages/delivery/objects/DeliveryAppObjects'
 import { getStoreDeliveryQuote } from '@/features/delivery/DeliveryServices'
 import {
   isStoreLocated,
   useStoreLocationStatusMap,
 } from '@/features/delivery/DeliveryStoreLocation'
+import {
+  CUSTOMER_STORE_SORT_MODE,
+  ZERO_COUNT,
+  type CustomerStoreSortMode,
+} from '@/features/delivery/DeliveryConstants'
 
 export function CustomerStoreBrowse(
   props: CustomerRoleProps & {
@@ -36,17 +42,21 @@ export function CustomerStoreBrowse(
     visibleStores,
   } =
     props
+  const [storeSortMode, setStoreSortMode] = useState<CustomerStoreSortMode>(
+    CUSTOMER_STORE_SORT_MODE.distance,
+  )
   const referenceLocation = selectedCustomer?.location
   const storeLocationStatusMap = useStoreLocationStatusMap(props.stores)
   const isStoreLocationReady = (store: typeof visibleStores[number]) =>
     isStoreLocated(storeLocationStatusMap[store.id])
-  const hasStoreSearch = customerStoreSearch.trim().length > 0
+  const hasStoreSearch = customerStoreSearch.trim().length > ZERO_COUNT
   const showOrderableOnly = customerStoreVisibility === CUSTOMER_STORE_VISIBILITY.orderableOnly
+  // Orderable-only filtering requires both a known location and a currently deliverable store.
   const filteredVisibleStores = showOrderableOnly
     ? visibleStores.filter((store) =>
         isStoreLocationReady(store) &&
         isStoreCurrentlyOpen(store) &&
-        store.menu.length > 0 &&
+        store.menu.length > ZERO_COUNT &&
         getStoreDeliveryQuote(store, referenceLocation).isDeliverable,
       )
     : visibleStores
@@ -54,7 +64,7 @@ export function CustomerStoreBrowse(
     ? categoryStores.filter((store) =>
         isStoreLocationReady(store) &&
         isStoreCurrentlyOpen(store) &&
-        store.menu.length > 0 &&
+        store.menu.length > ZERO_COUNT &&
         getStoreDeliveryQuote(store, referenceLocation).isDeliverable,
       )
     : categoryStores
@@ -75,7 +85,11 @@ export function CustomerStoreBrowse(
 
   return (
     <>
-      <StoreSearchBar props={props} />
+      <StoreSearchBar
+        props={props}
+        storeSortMode={storeSortMode}
+        setStoreSortMode={setStoreSortMode}
+      />
       <SearchHistoryPanel props={props} />
       <CustomerStatusBar props={props} />
       {!selectedStoreCategory && !hasStoreSearch ? (
@@ -84,12 +98,13 @@ export function CustomerStoreBrowse(
         />
       ) : null}
 
-      {!selectedStoreCategory && !hasStoreSearch && props.storeCategories.length > 0 ? (
+      {!selectedStoreCategory && !hasStoreSearch && props.storeCategories.length > ZERO_COUNT ? (
         <StoreCategoryGrid props={{ ...props, visibleStores: filteredVisibleStores }} />
-      ) : storesToBrowse.length > 0 ? (
+      ) : storesToBrowse.length > ZERO_COUNT ? (
         <StoreResultsGrid
           props={props}
           storeLocationStatusMap={storeLocationStatusMap}
+          storeSortMode={storeSortMode}
           storesToBrowse={storesToBrowse}
         />
       ) : (

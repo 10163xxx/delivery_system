@@ -1,0 +1,48 @@
+.merchant-order-summary-list {
+  display: grid;
+  gap: 10px;
+}
+
+.merchant-order-summary-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(56, 64, 50, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 252, 248, 0.92);
+}
+
+.merchant-order-summary-card h3 {
+  margin: 2px 0;
+  font-size: 1rem;
+}
+
+.merchant-order-summary-card.has-new-order {
+  border-color: rgba(180, 35, 24, 0.42);
+  background: #fff8ed;
+}
+
+.merchant-order-summary-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.merchant-order-pagination {
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .merchant-order-summary-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .merchant-order-summary-card__meta {
+    justify-content: flex-start;
+  }
+}

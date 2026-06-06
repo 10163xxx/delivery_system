@@ -1,4 +1,4 @@
-import type { CustomerPropsArgs } from '@/objects/page/AppBuildRolePropsObjects'
+import type { CustomerPropsArgs } from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 import { getCustomerStateProps, getCustomerViewProps } from './CustomerRolePropGroups'
 
 export function buildCustomerProps({

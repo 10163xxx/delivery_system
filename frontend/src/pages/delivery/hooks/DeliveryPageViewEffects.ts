@@ -1,4 +1,4 @@
-import type { DeliveryPageViewEffectsArgs } from '@/objects/page/DeliveryPageObjects'
+import type { DeliveryPageViewEffectsArgs } from '@/pages/delivery/objects/DeliveryPageObjects'
 import {
   useDeliveryConsoleGuardEffects,
   useDeliveryConsoleSyncEffects,

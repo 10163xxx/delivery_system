@@ -22,6 +22,7 @@ def applyRatingToStore(
     oneStarCount: EntityCount,
     revenueCents: CurrencyCents,
 ): Store =
+  val hasOrderRatings = ratings.nonEmpty
   store.copy(
     operations = store.operations.copy(
       status =
@@ -30,9 +31,9 @@ def applyRatingToStore(
         else storeOpen,
     ),
     metrics = store.metrics.copy(
-      averageRating = roundAverage(ratings),
-      ratingCount = ratings.size,
-      oneStarRatingCount = oneStarCount,
+      averageRating = if hasOrderRatings then roundAverage(ratings) else store.averageRating,
+      ratingCount = if hasOrderRatings then ratings.size else store.ratingCount,
+      oneStarRatingCount = if hasOrderRatings then oneStarCount else store.oneStarRatingCount,
       revenueCents = revenueCents,
     ),
   )

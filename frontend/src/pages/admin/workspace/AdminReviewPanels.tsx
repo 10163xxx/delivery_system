@@ -1,29 +1,32 @@
 import type { AdminRoleProps } from '@/pages/delivery/app/roleProps'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
-import type { AppealResolutionDraft } from '@/objects/page/DeliveryAppObjects'
+import type { AppealResolutionDraft } from '@/pages/delivery/objects/DeliveryAppObjects'
 import type {
+  ApprovalFlag,
   DisplayText,
   EligibilityReview,
   EligibilityReviewId,
   MerchantApplication,
   MerchantApplicationId,
+  ResolutionText,
   ReviewAppeal,
   ReviewAppealId,
 } from '@/objects/core/SharedObjects'
+import { asDomainBoolean, asDomainText } from '@/features/delivery/DeliveryShared'
 
-const APPLICATION_REVIEW_DEFAULTS = {
-  approve: '资料已核验',
-  reject: '资料不完整，请补充后重提',
+const APPLICATION_REVIEW_DEFAULTS: Record<'approve' | 'reject', DisplayText> = {
+  approve: asDomainText<DisplayText>('资料已核验'),
+  reject: asDomainText<DisplayText>('资料不完整，请补充后重提'),
 } as const
 
-const APPEAL_RESOLUTION_DEFAULTS = {
-  approve: '申诉成立，已撤销评价',
-  reject: '证据不足，维持原评价',
+const APPEAL_RESOLUTION_DEFAULTS: Record<'approve' | 'reject', ResolutionText> = {
+  approve: asDomainText<ResolutionText>('申诉成立，已撤销评价'),
+  reject: asDomainText<ResolutionText>('证据不足，维持原评价'),
 } as const
 
-const ELIGIBILITY_RESOLUTION_DEFAULTS = {
-  approve: '整改完成，恢复资格',
-  reject: '复核未通过，维持当前限制',
+const ELIGIBILITY_RESOLUTION_DEFAULTS: Record<'approve' | 'reject', ResolutionText> = {
+  approve: asDomainText<ResolutionText>('整改完成，恢复资格'),
+  reject: asDomainText<ResolutionText>('复核未通过，维持当前限制'),
 } as const
 
 function MerchantApplicationReviewPanel({ props }: { props: AdminRoleProps }) {
@@ -67,7 +70,7 @@ function MerchantApplicationReviewPanel({ props }: { props: AdminRoleProps }) {
                   onChange={(event) =>
                     setApplicationReviewDrafts((current: Record<MerchantApplicationId, DisplayText>) => ({
                       ...current,
-                      [application.id]: event.target.value,
+                      [application.id]: asDomainText<DisplayText>(event.target.value),
                     }))
                   }
                 />
@@ -154,7 +157,7 @@ function AppealReviewPanel({ props }: { props: AdminRoleProps }) {
                       ...current,
                       [appeal.id]: {
                         ...(current[appeal.id] ?? buildAppealResolutionPayload()),
-                        resolutionNote: event.target.value,
+                        resolutionNote: asDomainText<ResolutionText>(event.target.value),
                       },
                     }))
                   }
@@ -167,7 +170,7 @@ function AppealReviewPanel({ props }: { props: AdminRoleProps }) {
                         appeal.id,
                         buildAppealResolutionPayload({
                           ...(appealResolutionDrafts[appeal.id] ?? buildAppealResolutionPayload()),
-                          approved: true,
+                          approved: asDomainBoolean<ApprovalFlag>(true),
                         }),
                       ),
                     )
@@ -183,7 +186,7 @@ function AppealReviewPanel({ props }: { props: AdminRoleProps }) {
                       resolveReviewAppeal(
                         appeal.id,
                         buildAppealResolutionPayload({
-                          approved: false,
+                          approved: asDomainBoolean<ApprovalFlag>(false),
                           resolutionNote:
                             appealResolutionDrafts[appeal.id]?.resolutionNote ??
                             APPEAL_RESOLUTION_DEFAULTS.reject,
@@ -243,7 +246,7 @@ function EligibilityReviewPanel({ props }: { props: AdminRoleProps }) {
                       ...current,
                       [review.id]: {
                         ...(current[review.id] ?? buildAppealResolutionPayload()),
-                        resolutionNote: event.target.value,
+                        resolutionNote: asDomainText<ResolutionText>(event.target.value),
                       },
                     }))
                   }
@@ -253,7 +256,7 @@ function EligibilityReviewPanel({ props }: { props: AdminRoleProps }) {
                   onClick={() =>
                     void runAction(() =>
                       resolveEligibilityReview(review.id, {
-                        approved: true,
+                        approved: asDomainBoolean<ApprovalFlag>(true),
                         resolutionNote:
                           eligibilityResolutionDrafts[review.id]?.resolutionNote ??
                           ELIGIBILITY_RESOLUTION_DEFAULTS.approve,
@@ -269,7 +272,7 @@ function EligibilityReviewPanel({ props }: { props: AdminRoleProps }) {
                   onClick={() =>
                     void runAction(() =>
                       resolveEligibilityReview(review.id, {
-                        approved: false,
+                        approved: asDomainBoolean<ApprovalFlag>(false),
                         resolutionNote:
                           eligibilityResolutionDrafts[review.id]?.resolutionNote ??
                           ELIGIBILITY_RESOLUTION_DEFAULTS.reject,

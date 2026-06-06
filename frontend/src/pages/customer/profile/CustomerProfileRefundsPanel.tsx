@@ -1,5 +1,5 @@
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
-import type { CustomerRolePanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CustomerRolePanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import {
   APPLICATION_STATUS,

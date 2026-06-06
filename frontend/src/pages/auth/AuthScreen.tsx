@@ -2,13 +2,15 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type {
   LoginRequest,
+  Password,
   RegisterRequest,
+  Username,
 } from '@/objects/core/SharedObjects'
 import {
   AUTH_SCREEN_MODE,
   type AuthScreenMode,
   type AuthScreenProps,
-} from '@/objects/auth/page/AuthPageObjects'
+} from '@/pages/auth/objects/AuthPageObjects'
 import {
   clearSessionToken,
   login,
@@ -16,6 +18,7 @@ import {
   saveSessionToken,
 } from '@/system/api/SharedApi'
 import { REGISTERABLE_ROLES, ROLE } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 const registerRoles: (typeof REGISTERABLE_ROLES)[number][] = [...REGISTERABLE_ROLES]
 const loginRoles: LoginRequest['role'][] = [ROLE.customer, ROLE.merchant, ROLE.rider, ROLE.admin]
@@ -37,13 +40,13 @@ const AUTH_SCREEN_MESSAGES = {
 export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
   const [mode, setMode] = useState<AuthScreenMode>(AUTH_SCREEN_MODE.login)
   const [loginDraft, setLoginDraft] = useState<LoginRequest>({
-    username: '',
-    password: '',
+    username: asDomainText<Username>(''),
+    password: asDomainText<Password>(''),
     role: ROLE.customer,
   })
   const [registerDraft, setRegisterDraft] = useState<RegisterRequest>({
-    username: '',
-    password: '',
+    username: asDomainText<Username>(''),
+    password: asDomainText<Password>(''),
     role: ROLE.customer,
   })
   const [busy, setBusy] = useState(false)
@@ -156,7 +159,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                   onChange={(event) =>
                     setLoginDraft((current) => ({
                       ...current,
-                      username: event.target.value,
+                      username: asDomainText<Username>(event.target.value),
                     }))
                   }
                 />
@@ -169,7 +172,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                   onChange={(event) =>
                     setLoginDraft((current) => ({
                       ...current,
-                      password: event.target.value,
+                      password: asDomainText<Password>(event.target.value),
                     }))
                   }
                 />
@@ -187,7 +190,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                   onChange={(event) =>
                     setRegisterDraft((current) => ({
                       ...current,
-                      username: event.target.value,
+                      username: asDomainText<Username>(event.target.value),
                     }))
                   }
                 />
@@ -200,7 +203,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                   onChange={(event) =>
                     setRegisterDraft((current) => ({
                       ...current,
-                      password: event.target.value,
+                      password: asDomainText<Password>(event.target.value),
                     }))
                   }
                 />

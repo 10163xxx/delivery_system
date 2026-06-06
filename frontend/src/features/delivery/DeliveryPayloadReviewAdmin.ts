@@ -1,5 +1,10 @@
 import type {
+  ApprovalFlag,
+  EntityId,
+  NoteText,
+  ReasonText,
   ResolveTicketRequest,
+  ResolutionText,
   ReviewMerchantApplicationRequest,
 } from '@/objects/core/SharedObjects'
 import {
@@ -13,10 +18,10 @@ import {
   MAX_TICKET_NOTE_LENGTH,
   MAX_TICKET_RESOLUTION_LENGTH,
 } from './DeliveryConstants'
-import { normalizeTextInput } from './DeliveryShared'
+import { asDomainBoolean, asDomainText, normalizeTextInput } from './DeliveryShared'
 import type {
   AppealResolutionDraft,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 
 const REVIEW_ADMIN_DEFAULTS = {
   appealReason: '评价描述与实际履约情况不符',
@@ -32,8 +37,10 @@ export function buildReviewApplicationPayload(
 ): ReviewMerchantApplicationRequest {
   return {
     reviewNote:
-      normalizeTextInput(reviewNote, MAX_REVIEW_APPLICATION_NOTE_LENGTH) ||
-      REVIEW_ADMIN_DEFAULTS.reviewApplicationNote,
+      asDomainText<ResolutionText>(
+        normalizeTextInput(reviewNote, MAX_REVIEW_APPLICATION_NOTE_LENGTH) ||
+          REVIEW_ADMIN_DEFAULTS.reviewApplicationNote,
+      ),
   }
 }
 
@@ -50,8 +57,8 @@ export function buildResolutionPayload(
   )
 
   return {
-    resolution: resolution || REVIEW_ADMIN_DEFAULTS.resolution,
-    note: note || REVIEW_ADMIN_DEFAULTS.resolutionNote,
+    resolution: asDomainText<ResolutionText>(resolution || REVIEW_ADMIN_DEFAULTS.resolution),
+    note: asDomainText<NoteText>(note || REVIEW_ADMIN_DEFAULTS.resolutionNote),
   }
 }
 
@@ -62,8 +69,10 @@ export function buildReviewAppealPayload(
   return {
     appellantRole,
     reason:
-      normalizeTextInput(reason, MAX_APPEAL_REASON_LENGTH) ||
-      REVIEW_ADMIN_DEFAULTS.appealReason,
+      asDomainText<ReasonText>(
+        normalizeTextInput(reason, MAX_APPEAL_REASON_LENGTH) ||
+          REVIEW_ADMIN_DEFAULTS.appealReason,
+      ),
   }
 }
 
@@ -71,12 +80,14 @@ export function buildAppealResolutionPayload(
   draft?: AppealResolutionDraft,
 ): AppealResolutionDraft {
   return {
-    approved: draft?.approved ?? true,
+    approved: draft?.approved ?? asDomainBoolean<ApprovalFlag>(true),
     resolutionNote:
-      normalizeTextInput(
-        draft?.resolutionNote ?? REVIEW_ADMIN_DEFAULTS.appealResolutionNote,
-        MAX_TICKET_NOTE_LENGTH,
-      ) || REVIEW_ADMIN_DEFAULTS.appealResolutionNote,
+      asDomainText<ResolutionText>(
+        normalizeTextInput(
+          draft?.resolutionNote ?? REVIEW_ADMIN_DEFAULTS.appealResolutionNote,
+          MAX_TICKET_NOTE_LENGTH,
+        ) || REVIEW_ADMIN_DEFAULTS.appealResolutionNote,
+      ),
   }
 }
 
@@ -87,9 +98,11 @@ export function buildEligibilityReviewPayload(
 ) {
   return {
     target,
-    targetId,
+    targetId: asDomainText<EntityId>(targetId),
     reason:
-      normalizeTextInput(reason, MAX_REJECT_ORDER_REASON_LENGTH) ||
-      REVIEW_ADMIN_DEFAULTS.eligibilityReason,
+      asDomainText<ReasonText>(
+        normalizeTextInput(reason, MAX_REJECT_ORDER_REASON_LENGTH) ||
+          REVIEW_ADMIN_DEFAULTS.eligibilityReason,
+      ),
   }
 }

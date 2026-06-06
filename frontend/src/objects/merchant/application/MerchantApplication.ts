@@ -1,5 +1,6 @@
 import type {
   AddressText,
+  DeliveryCoordinate,
   DisplayText,
   ImageUrl,
   IsoDateTime,
@@ -18,6 +19,7 @@ export type MerchantApplicationIdentity = {
   storeName: DisplayText
   category: DisplayText
   storeAddress: AddressText
+  location?: DeliveryCoordinate
 }
 
 export type MerchantApplicationSubmission = {

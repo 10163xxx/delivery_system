@@ -14,7 +14,7 @@ import type {
   StoreReviewReplyDraftMap,
   StoreOperationDraftMap,
   StoreOperationErrorMap,
-} from '@/objects/merchant/page/MerchantConsoleObjects'
+} from '@/pages/merchant/objects/MerchantConsoleObjects'
 import {
   createMerchantConsoleActions,
   createMerchantConsoleSelectors,

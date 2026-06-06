@@ -8,62 +8,16 @@ import domain.auth.*
 import domain.customer.*
 import domain.merchant.*
 import domain.order.*
+import domain.review.*
 import domain.rider.*
 import domain.shared.*
 import database.{withTransactionConnection, withTransactionConnectionBlocking}
 import table.{initializeDeliveryStateTable, loadPersistedDeliveryState, savePersistedDeliveryState, savePersistedDeliveryStateBlocking}
 
-import java.time.{Instant, ZoneId}
+import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
-val OneStarRevocationThreshold = DeliveryBusinessDefaults.OneStarRevocationThreshold
-val CustomerBanThreshold = DeliveryBusinessDefaults.CustomerBanThreshold
-val MemberMonthlySpendThresholdCents = DeliveryBusinessDefaults.MemberMonthlySpendThresholdCents
-val StandardAutoDispatchMinutes = DeliveryBusinessDefaults.StandardAutoDispatchMinutes
-val MemberAutoDispatchMinutes = DeliveryBusinessDefaults.MemberAutoDispatchMinutes
-val MonthlyWindowDays = DeliveryBusinessDefaults.MonthlyWindowDays
-val ReviewWindowDays = DeliveryBusinessDefaults.ReviewWindowDays
-val MinimumScheduledLeadMinutes = DeliveryBusinessDefaults.MinimumScheduledLeadMinutes
-val DeliveryFeeCents = DeliveryBusinessDefaults.DeliveryFeeCents
-val RiderEarningPerOrderCents = DeliveryBusinessDefaults.RiderEarningPerOrderCents
-val MerchantRevenueShareNumerator = DeliveryBusinessDefaults.MerchantRevenueShareNumerator
-val MerchantRevenueShareDenominator = DeliveryBusinessDefaults.MerchantRevenueShareDenominator
-val StoreOpenStatus = DeliveryBusinessDefaults.StoreOpenStatus
-val StoreBusyStatus = DeliveryBusinessDefaults.StoreBusyStatus
-val StoreRevokedStatus = DeliveryBusinessDefaults.StoreRevokedStatus
-val RiderAvailableStatus = DeliveryBusinessDefaults.RiderAvailableStatus
-val RiderOnDeliveryStatus = DeliveryBusinessDefaults.RiderOnDeliveryStatus
-val RiderUnavailableStatus = DeliveryBusinessDefaults.RiderUnavailableStatus
-val RiderSuspendedStatus = DeliveryBusinessDefaults.RiderSuspendedStatus
-val OrderIdPrefix = DeliveryBusinessDefaults.OrderIdPrefix
-val MerchantAcceptedTimelineNote = DeliveryBusinessDefaults.MerchantAcceptedTimelineNote
-val MerchantPreparedTimelineNote = DeliveryBusinessDefaults.MerchantPreparedTimelineNote
-val RiderPickedUpTimelineNote = DeliveryBusinessDefaults.RiderPickedUpTimelineNote
-val RiderDeliveredTimelineNote = DeliveryBusinessDefaults.RiderDeliveredTimelineNote
-val CouponSpendStepCents = DeliveryBusinessDefaults.CouponSpendStepCents
-val CouponValidityDays = DeliveryBusinessDefaults.CouponValidityDays
-val MemberTierCouponValidityDays = DeliveryBusinessDefaults.MemberTierCouponValidityDays
-val WelcomeCouponCount = DeliveryBusinessDefaults.WelcomeCouponCount
-val WelcomeCouponTemplate = DeliveryBusinessDefaults.WelcomeCouponTemplate
-val MemberTierCouponTemplate = DeliveryBusinessDefaults.MemberTierCouponTemplate
-val MerchantIdPrefix = DeliveryBusinessDefaults.MerchantIdPrefix
-val RiderIdPrefix = DeliveryBusinessDefaults.RiderIdPrefix
-val DeliveryScheduleZone = ZoneId.systemDefault()
-val StoreCategories = List(
-  new DisplayText("中式快餐"),
-  new DisplayText("西式快餐"),
-  new DisplayText("盖饭简餐"),
-  new DisplayText("披萨西餐"),
-  new DisplayText("面馆粉档"),
-  new DisplayText("麻辣香锅"),
-  new DisplayText("饺子馄饨"),
-  new DisplayText("轻食沙拉"),
-  new DisplayText("咖啡甜点"),
-  new DisplayText("奶茶果饮"),
-  new DisplayText("夜宵小吃"),
-)
-val SpendRewardCouponTemplates = DeliveryBusinessDefaults.SpendRewardCouponTemplates
 private val pendingAddress = DeliveryDefaultCustomerAddress
 private val defaultAddressLabel = new AddressLabel("默认")
 private val riderVehiclePending = new VehicleLabel("待完善")
@@ -76,6 +30,7 @@ private val customerPhonePrefix = "139"
 
 val writeLock = new AnyRef
 val stateRef = new AtomicReference[DeliveryAppState](emptyDeliveryAppState())
+// The in-memory state is the live app snapshot; each mutating action persists through DeliveryStateTable.
 
 def initializeDeliveryStatePersistence: IO[Unit] =
   withTransactionConnection { connection =>
@@ -243,8 +198,14 @@ private def projectCustomerState(
     linkedProfileId: Option[EntityId],
 ): DeliveryAppState =
     val visibleCustomers = state.customers.filter(customer => linkedProfileId.exists(_.raw == customer.id.raw))
-    val visibleOrders = state.orders.filter(order => linkedProfileId.exists(_.raw == order.customerId.raw))
-    val visibleOrderIds = visibleOrders.map(_.id.raw).toSet
+    val ownOrders = state.orders.filter(order => linkedProfileId.exists(_.raw == order.customerId.raw))
+    val publicStoreReviewOrders = state.orders.filter(order =>
+      order.status == OrderStatus.Completed &&
+        order.reviewStatus == ReviewStatus.Active &&
+        order.storeRating.nonEmpty
+    )
+    val visibleOrders = (ownOrders ++ publicStoreReviewOrders).distinctBy(_.id.raw)
+    val ownOrderIds = ownOrders.map(_.id.raw).toSet
 
     state.copy(
       customers = visibleCustomers,
@@ -256,7 +217,7 @@ private def projectCustomerState(
       eligibilityReviews = List.empty,
       deliveryState = state.deliveryState.copy(
         orders = visibleOrders,
-        tickets = state.tickets.filter(ticket => visibleOrderIds.contains(ticket.orderId.raw)),
+        tickets = state.tickets.filter(ticket => ownOrderIds.contains(ticket.orderId.raw)),
       ),
     )
 

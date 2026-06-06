@@ -1,4 +1,18 @@
 import { AFTER_SALES_REQUEST_TYPE, AFTER_SALES_RESOLUTION_MODE, PAYOUT_ACCOUNT_TYPE, type Store } from '@/objects/core/SharedObjects'
+import type {
+  ApprovalFlag,
+  AccountHolderName,
+  AccountNumber,
+  AddressText,
+  BankName,
+  DescriptionText,
+  DisplayText,
+  ImageUrl,
+  NoteText,
+  PersonName,
+  PhoneNumber,
+  ReasonText,
+} from '@/objects/core/SharedObjects'
 import {
   DEFAULT_MERCHANT_PREP_MINUTES,
   DEFAULT_PARTIAL_REFUND_QUANTITY,
@@ -15,7 +29,8 @@ import type {
   MerchantProfileDraft,
   PartialRefundDraft,
   ReviewDraft,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
+import { asDomainBoolean, asDomainText } from './DeliveryShared'
 
 export function getInitialQuantities(store?: Store): Record<string, number> {
   return Object.fromEntries(store?.menu.map((item) => [item.id, 0]) ?? [])
@@ -30,7 +45,11 @@ export function createInitialMerchantDraft(merchantName = ''): MerchantDraft {
 }
 
 export function createInitialReviewDraft(): ReviewDraft {
-  return { rating: DEFAULT_REVIEW_RATING, comment: '', extraNote: '' }
+  return {
+    rating: DEFAULT_REVIEW_RATING,
+    comment: asDomainText<ReasonText>(''),
+    extraNote: asDomainText<NoteText>(''),
+  }
 }
 
 export function createInitialMenuItemDraft(): MenuItemDraft {
@@ -42,42 +61,45 @@ export function createInitialMenuItemDraft(): MenuItemDraft {
 }
 
 export function createInitialPartialRefundDraft(): PartialRefundDraft {
-  return { quantity: DEFAULT_PARTIAL_REFUND_QUANTITY, reason: '' }
+  return {
+    quantity: DEFAULT_PARTIAL_REFUND_QUANTITY,
+    reason: asDomainText<ReasonText>(''),
+  }
 }
 
 export function createInitialAfterSalesDraft(): AfterSalesDraft {
   return {
     requestType: AFTER_SALES_REQUEST_TYPE.compensationRequest,
-    reason: '',
-    expectedCompensationYuan: '',
+    reason: asDomainText<ReasonText>(''),
+    expectedCompensationYuan: asDomainText<DisplayText>(''),
   }
 }
 
 export function createInitialAfterSalesResolutionDraft(): AfterSalesResolutionDraft {
   return {
-    approved: true,
+    approved: asDomainBoolean<ApprovalFlag>(true),
     resolutionNote: AFTER_SALES_APPROVED_NOTE,
     resolutionMode: AFTER_SALES_RESOLUTION_MODE.balance,
-    actualCompensationYuan: '',
+    actualCompensationYuan: asDomainText<DisplayText>(''),
   }
 }
 
 export function createInitialMerchantProfileDraft(): MerchantProfileDraft {
   return {
-    contactPhone: '',
+    contactPhone: asDomainText<PhoneNumber>(''),
     payoutAccountType: PAYOUT_ACCOUNT_TYPE.alipay,
-    bankName: '',
-    accountNumber: '',
-    accountHolder: '',
+    bankName: asDomainText<BankName>(''),
+    accountNumber: asDomainText<AccountNumber>(''),
+    accountHolder: asDomainText<AccountHolderName>(''),
   }
 }
 
 function createInitialMerchantIdentityDraft(merchantName = '') {
   return {
-    merchantName,
-    storeName: '',
-    category: '',
-    storeAddress: '',
+    merchantName: asDomainText<PersonName>(merchantName),
+    storeName: asDomainText<DisplayText>(''),
+    category: asDomainText<import('@/objects/core/SharedObjects').EmptySelection>(''),
+    storeAddress: asDomainText<AddressText>(''),
   }
 }
 
@@ -91,31 +113,31 @@ function createInitialMerchantScheduleDraft() {
 
 function createInitialMerchantAssetDraft() {
   return {
-    imageUrl: '',
-    uploadedImageName: '',
-    note: '',
+    imageUrl: asDomainText<ImageUrl>(''),
+    uploadedImageName: asDomainText<DisplayText>(''),
+    note: asDomainText<NoteText>(''),
   }
 }
 
 function createInitialMenuItemContentDraft() {
   return {
-    name: '',
-    category: '',
-    description: '',
+    name: asDomainText<DisplayText>(''),
+    category: asDomainText<DisplayText>(''),
+    description: asDomainText<DescriptionText>(''),
   }
 }
 
 function createInitialMenuItemPricingDraft() {
   return {
-    priceYuan: '',
-    remainingQuantity: '',
+    priceYuan: asDomainText<DisplayText>(''),
+    remainingQuantity: asDomainText<DisplayText>(''),
   }
 }
 
 function createInitialMenuItemAssetDraft() {
   return {
-    imageUrl: '',
-    uploadedImageName: '',
-    selectionGroupsText: '',
+    imageUrl: asDomainText<ImageUrl>(''),
+    uploadedImageName: asDomainText<DisplayText>(''),
+    selectionGroupsText: asDomainText<DisplayText>(''),
   }
 }

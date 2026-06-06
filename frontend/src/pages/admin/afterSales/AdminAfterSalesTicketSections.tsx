@@ -1,12 +1,19 @@
 import type { AdminRoleProps } from '@/pages/delivery/app/roleProps'
-import type { AdminTicket, TicketId } from '@/objects/core/SharedObjects'
+import type {
+  AdminTicket,
+  ApprovalFlag,
+  DisplayText,
+  ResolutionText,
+  TicketId,
+} from '@/objects/core/SharedObjects'
 import {
   AFTER_SALES_REQUEST_TYPE,
   AFTER_SALES_RESOLUTION_MODE,
   TICKET_STATUS,
 } from '@/objects/core/SharedObjects'
-import type { AfterSalesResolutionDraft } from '@/objects/page/DeliveryAppObjects'
+import type { AfterSalesResolutionDraft } from '@/pages/delivery/objects/DeliveryAppObjects'
 import { formatPrice } from '@/features/delivery/DeliveryServices'
+import { asDomainBoolean, asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   AFTER_SALES_DEFAULTS,
   createInitialAfterSalesDraft,
@@ -90,7 +97,7 @@ export function AdminAfterSalesOpenActions({
           onChange={(event) =>
             props.setAfterSalesResolutionDrafts((current: Record<TicketId, AfterSalesResolutionDraft>) =>
               updateAfterSalesResolutionDraft(current, ticket.id, {
-                actualCompensationYuan: event.target.value,
+                actualCompensationYuan: asDomainText<DisplayText>(event.target.value),
               }),
             )
           }
@@ -100,8 +107,8 @@ export function AdminAfterSalesOpenActions({
         value={draft?.resolutionNote ?? AFTER_SALES_DEFAULTS.approvedNote}
         onChange={(event) =>
           props.setAfterSalesResolutionDrafts((current: Record<TicketId, AfterSalesResolutionDraft>) =>
-            updateAfterSalesResolutionDraft(current, ticket.id, {
-              resolutionNote: event.target.value,
+              updateAfterSalesResolutionDraft(current, ticket.id, {
+              resolutionNote: asDomainText<ResolutionText>(event.target.value),
             }),
           )
         }
@@ -128,8 +135,10 @@ export function AdminAfterSalesOpenActions({
               ticket.id,
               props.buildAfterSalesResolutionPayload(false, {
                 ...(props.afterSalesResolutionDrafts[ticket.id] ?? createInitialAfterSalesDraft()),
-                approved: false,
-                resolutionNote: props.afterSalesResolutionDrafts[ticket.id]?.resolutionNote ?? AFTER_SALES_DEFAULTS.rejectedNote,
+                approved: asDomainBoolean<ApprovalFlag>(false),
+                resolutionNote:
+                  props.afterSalesResolutionDrafts[ticket.id]?.resolutionNote ??
+                  asDomainText<ResolutionText>(AFTER_SALES_DEFAULTS.rejectedNote),
               }),
             ),
           )

@@ -8,22 +8,29 @@ import {
   readSeenCustomerProfileNoticeIds as readSeenCustomerProfileNoticeIdsFromStorage,
   saveCustomerStoreSearchHistory,
 } from '@/system/api/SharedApi'
-import { MERCHANT_WORKSPACE_VIEW } from '@/objects/page/DeliveryAppObjects'
+import { MERCHANT_WORKSPACE_VIEW } from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   PAYOUT_ACCOUNT_TYPE,
   ROLE,
   ROUTE_QUERY_KEY,
+  type AccountHolderName,
+  type AccountNumber,
+  type BankName,
   type Customer,
+  type DisplayText,
   type PersonName,
+  type PhoneNumber,
+  type RiderId,
   type Store,
   type StoreId,
 } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import type {
   ResetInvalidMerchantStoreSelectionArgs,
   SyncMerchantProfileDraftArgs,
   SyncPageStateArgs,
   SyncStoreRouteArgs,
-} from '@/objects/page/DeliveryPageViewEffectSupportObjects'
+} from '@/pages/delivery/objects/DeliveryPageViewEffectObjects'
 
 export function readSeenCustomerProfileNoticeIds(userId: string) {
   return readSeenCustomerProfileNoticeIdsFromStorage(userId)
@@ -54,7 +61,8 @@ export function syncSessionBoundPageState(args: SyncPageStateArgs) {
   } = args
 
   if (session.user.role === ROLE.customer && session.user.linkedProfileId) {
-    const customer = state.customers.find((entry: Customer) => entry.id === session.user.linkedProfileId)
+    const linkedCustomerId = session.user.linkedProfileId as unknown as Customer['id']
+    const customer = state.customers.find((entry: Customer) => entry.id === linkedCustomerId)
     if (customer) {
       setSelectedCustomerId(customer.id)
       setDeliveryAddress(customer.defaultAddress)
@@ -75,7 +83,7 @@ export function syncSessionBoundPageState(args: SyncPageStateArgs) {
         ? current
         : {
             ...current,
-            merchantName: session.user.displayName as PersonName,
+            merchantName: asDomainText<PersonName>(session.user.displayName),
           },
     )
   }
@@ -89,7 +97,7 @@ export function syncSessionBoundPageState(args: SyncPageStateArgs) {
   }
 
   if (session.user.role === ROLE.rider && session.user.linkedProfileId) {
-    setSelectedRiderId(session.user.linkedProfileId as SyncPageStateArgs['selectedRiderId'])
+      setSelectedRiderId(session.user.linkedProfileId as unknown as RiderId)
   } else if (!selectedRiderId && state.riders.length > 0) {
     const rider = state.riders[0]
     if (rider) {
@@ -110,6 +118,7 @@ export function syncSelectedStoreFromRoute(args: SyncStoreRouteArgs) {
     state,
   } = args
   const storeIdFromUrl = (searchParams.get(ROUTE_QUERY_KEY.store) ?? '') as StoreId | ''
+  const categoryFromUrl = asDomainText<DisplayText>(searchParams.get(ROUTE_QUERY_KEY.category) ?? '')
   const store = state.stores.find(
     (entry: Store) => entry.id === storeIdFromUrl && !blockedStoreIds.includes(entry.id),
   )
@@ -118,12 +127,14 @@ export function syncSelectedStoreFromRoute(args: SyncStoreRouteArgs) {
   if (nextStoreId === selectedStoreId) {
     if (store?.category && store.category !== selectedStoreCategory) {
       setSelectedStoreCategory(store.category)
+    } else if (!store && categoryFromUrl !== selectedStoreCategory) {
+      setSelectedStoreCategory(categoryFromUrl)
     }
     return
   }
 
   setSelectedStoreId(nextStoreId)
-  setSelectedStoreCategory(store?.category ?? '')
+  setSelectedStoreCategory(store?.category ?? categoryFromUrl)
   setQuantities(getInitialQuantities(store))
 }
 
@@ -138,11 +149,11 @@ export function syncMerchantProfileDraft(args: SyncMerchantProfileDraftArgs) {
 
   lastMerchantProfileDraftSyncIdRef.current = merchantProfile.id
   setMerchantProfileDraft({
-    contactPhone: merchantProfile.contactPhone,
+    contactPhone: asDomainText<PhoneNumber>(merchantProfile.contactPhone),
     payoutAccountType: merchantProfile.payoutAccount?.accountType ?? PAYOUT_ACCOUNT_TYPE.alipay,
-    bankName: merchantProfile.payoutAccount?.bankName ?? '',
-    accountNumber: merchantProfile.payoutAccount?.accountNumber ?? '',
-    accountHolder: merchantProfile.payoutAccount?.accountHolder ?? '',
+    bankName: asDomainText<BankName>(merchantProfile.payoutAccount?.bankName ?? ''),
+    accountNumber: asDomainText<AccountNumber>(merchantProfile.payoutAccount?.accountNumber ?? ''),
+    accountHolder: asDomainText<AccountHolderName>(merchantProfile.payoutAccount?.accountHolder ?? ''),
   })
   setMerchantProfileFormErrors({})
 }

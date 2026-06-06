@@ -37,6 +37,7 @@ private def buildMerchantApplication(
       storeName = request.storeName,
       category = request.category,
       storeAddress = request.storeAddress,
+      location = request.location,
       businessHours = request.businessHours,
       avgPrepMinutes = request.avgPrepMinutes,
       imageUrl = request.imageUrl,
@@ -281,6 +282,11 @@ def updateStoreOperationalInfo(
           storeAddress <- sanitizeRequiredText(request.storeAddress, DeliveryValidationDefaults.AddressMaxLength, ValidationMessages.Merchant.StoreAddressRequired)
           businessHours <- validateBusinessHours(request.businessHours)
           avgPrepMinutes <- validatePrepMinutes(request.avgPrepMinutes)
+          nextLocation =
+            request.location.orElse {
+              if store.storeAddress == storeAddress then store.location
+              else None
+            }
         yield
           withDerivedData(
             replaceStore(
@@ -289,11 +295,11 @@ def updateStoreOperationalInfo(
               storeEntry =>
                 storeEntry.copy(
                   operations = storeEntry.operations.copy(
-                  storeAddress = storeAddress,
-                  location = None,
-                  businessHours = businessHours,
-                  avgPrepMinutes = avgPrepMinutes,
-                )
+                    storeAddress = storeAddress,
+                    location = nextLocation,
+                    businessHours = businessHours,
+                    avgPrepMinutes = avgPrepMinutes,
+                  )
                 ),
             )
           )

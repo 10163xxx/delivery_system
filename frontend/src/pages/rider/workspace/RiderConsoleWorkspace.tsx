@@ -1,14 +1,17 @@
 import type { RiderRoleProps } from '@/pages/delivery/app/roleProps'
-import { RIDER_CONSOLE_COPY } from '@/objects/rider/page/RiderWorkspaceObjects'
+import { RIDER_CONSOLE_COPY } from '@/pages/rider/objects/RiderWorkspaceObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { RiderDeliveryRoutePanel } from '@/pages/rider/workspace/RiderDeliveryRoutePanel'
 import {
   ELIGIBILITY_REVIEW_TARGET,
   RIDER_AVAILABILITY,
   ROLE,
+  type DisplayText,
   type Rider,
+  type RiderId,
 } from '@/objects/core/SharedObjects'
 import { RiderOrdersPanel } from '@/pages/rider/workspace/RiderOrdersPanel'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 function RiderSelector({
   role,
@@ -17,7 +20,7 @@ function RiderSelector({
   visibleRiders,
 }: {
   role: RiderRoleProps['role']
-  selectedRiderId: string
+  selectedRiderId: RiderRoleProps['selectedRiderId']
   setSelectedRiderId: RiderRoleProps['setSelectedRiderId']
   visibleRiders: Rider[]
 }) {
@@ -27,7 +30,7 @@ function RiderSelector({
       <select
         value={selectedRiderId}
         disabled={role === ROLE.rider}
-        onChange={(event) => setSelectedRiderId(event.target.value)}
+        onChange={(event) => setSelectedRiderId(asDomainText<RiderId>(event.target.value))}
       >
         {visibleRiders.map((rider) => (
           <option key={rider.id} value={rider.id}>
@@ -102,11 +105,11 @@ function RiderEligibilityReviewBar({
     <div className="ticket-actions">
       <input
         placeholder={RIDER_CONSOLE_COPY.consolePanel.eligibilityPlaceholder}
-        value={eligibilityReviewDrafts[selectedRider.id] ?? ''}
+        value={eligibilityReviewDrafts[selectedRider.id] ?? asDomainText<DisplayText>('')}
         onChange={(event) =>
-          setEligibilityReviewDrafts((current: Record<string, string>) => ({
+          setEligibilityReviewDrafts((current) => ({
             ...current,
-            [selectedRider.id]: event.target.value,
+            [selectedRider.id]: asDomainText<DisplayText>(event.target.value),
           }))
         }
       />
@@ -118,7 +121,7 @@ function RiderEligibilityReviewBar({
               buildEligibilityReviewPayload(
                 ELIGIBILITY_REVIEW_TARGET.rider,
                 selectedRider.id,
-                eligibilityReviewDrafts[selectedRider.id] ?? '',
+                eligibilityReviewDrafts[selectedRider.id] ?? asDomainText<DisplayText>(''),
               ),
             ),
           )

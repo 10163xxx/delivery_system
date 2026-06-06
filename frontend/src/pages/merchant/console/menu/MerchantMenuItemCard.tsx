@@ -1,6 +1,8 @@
 import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
-import type { MerchantMenuSectionItemCardProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import type { MerchantMenuSectionItemCardProps } from '@/pages/merchant/objects/MerchantConsoleObjects'
 import { getMenuItemDisplayPriceText } from '@/features/delivery/DeliveryServices'
+import type { EntityCount } from '@/objects/core/SharedObjects'
+import { asDomainNumber } from '@/features/delivery/DeliveryShared'
 import {
   MerchantMenuSectionItemActions,
   MerchantMenuSectionItemInfo,
@@ -11,7 +13,7 @@ export function MerchantMenuItemCard({
   props,
   store,
 }: MerchantMenuSectionItemCardProps) {
-  const monthlySales = props.monthlySalesByMenuItem[item.id] ?? 0
+  const monthlySales = props.monthlySalesByMenuItem[item.id] ?? asDomainNumber<EntityCount>(0)
 
   return (
     <article className="menu-card">

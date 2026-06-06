@@ -11,10 +11,11 @@ import {
   type RiderId,
   type StoreId,
 } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import type {
   DeliveryPageState,
   SessionState,
-} from '@/objects/page/DeliveryPageObjects'
+} from '@/pages/delivery/objects/DeliveryPageObjects'
 import {
   appendCustomerStoreSearchHistory,
   readCustomerBlockedStoreIds,
@@ -25,12 +26,12 @@ import {
 } from '@/pages/delivery/app/DeliveryEffectStorage'
 import {
   isCustomerProfileWorkspaceView,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import type {
   CustomerWorkspaceView,
   MerchantApplicationView,
   MerchantWorkspaceView,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 
 export function useCustomerProfileNoticeStorageEffects(
   session: SessionState['session'],
@@ -161,8 +162,8 @@ export function useCustomerStorePreferenceStorageEffects(args: {
       return
     }
 
-    setFavoriteStoreIds(readCustomerFavoriteStoreIds(selectedCustomer.id))
-    setBlockedStoreIds(readCustomerBlockedStoreIds(selectedCustomer.id))
+    setFavoriteStoreIds(readCustomerFavoriteStoreIds(selectedCustomer.id).map((id) => asDomainText<StoreId>(id)))
+    setBlockedStoreIds(readCustomerBlockedStoreIds(selectedCustomer.id).map((id) => asDomainText<StoreId>(id)))
   }, [selectedCustomer, setBlockedStoreIds, setFavoriteStoreIds])
 }
 

@@ -2,12 +2,12 @@ import type {
   CustomerWorkspaceView,
   MerchantApplicationView,
   MerchantWorkspaceView,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   CUSTOMER_WORKSPACE_VIEW,
   MERCHANT_APPLICATION_VIEW,
   MERCHANT_WORKSPACE_VIEW,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import { ROUTE_PATH, ROUTE_QUERY_KEY } from '@/objects/core/SharedObjects'
 
 export function getCustomerWorkspaceView(locationPathname: string): CustomerWorkspaceView {

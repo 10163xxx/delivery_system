@@ -1,6 +1,8 @@
 package shared.api.core
 
 import domain.shared.given
+
+// Backend process entrypoint: initialize persistence, wrap the API app, and bind the HTTP server.
 import cats.effect.{IO, IOApp}
 import com.comcast.ip4s.{Host, Port}
 import domain.shared.ServerDefaults

@@ -1,0 +1,146 @@
+/* Customer home address, route preview, and frequent-store strip. */
+.customer-home-status {
+  align-items: stretch;
+}
+
+.customer-home-address {
+  display: grid;
+  grid-template-columns: minmax(112px, 0.22fr) minmax(640px, 1.78fr);
+  gap: 12px;
+  align-items: start;
+  flex: 1 1 100%;
+  min-width: 100%;
+}
+
+.customer-home-address-copy {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.customer-home-map-shell {
+  position: relative;
+  min-height: 430px;
+}
+
+.customer-home-address-map {
+  width: 100%;
+  height: 280px;
+  border: 1px solid rgba(180, 121, 29, 0.18);
+  border-radius: 12px;
+  background: #f2efe9;
+}
+
+.customer-home-map-overlay {
+  position: absolute;
+  inset: 12px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 252, 244, 0.92);
+  border: 1px solid rgba(180, 121, 29, 0.18);
+  box-shadow: 0 16px 28px rgba(125, 83, 22, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+.customer-home-map-overlay__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.customer-home-map-overlay__header h3 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #4f3720;
+}
+
+.customer-home-map-overlay__rows {
+  display: grid;
+  gap: 6px;
+}
+
+.customer-home-map-overlay__rows p {
+  margin: 0;
+  color: rgba(80, 61, 40, 0.88);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.customer-home-route-panel {
+  display: grid;
+  gap: 12px;
+  flex: 1 1 100%;
+  min-width: 100%;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 250, 240, 0.9);
+  border: 1px solid rgba(180, 121, 29, 0.16);
+}
+
+.customer-home-route-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recent-frequent-section {
+  margin-top: 14px;
+}
+
+.recent-frequent-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 76px;
+  padding: 12px 14px;
+  border: 1px solid rgba(180, 121, 29, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 250, 240, 0.94);
+  box-shadow: 0 10px 26px rgba(125, 83, 22, 0.06);
+}
+
+.recent-frequent-heading {
+  min-width: 150px;
+}
+
+.recent-frequent-heading .ticket-kind {
+  margin-bottom: 2px;
+}
+
+.recent-frequent-heading h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #4f3720;
+}
+
+.recent-frequent-meta {
+  flex: 1 1 240px;
+  margin: 0;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-frequent-actions {
+  flex: 0 1 auto;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.recent-frequent-button {
+  width: auto;
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+}

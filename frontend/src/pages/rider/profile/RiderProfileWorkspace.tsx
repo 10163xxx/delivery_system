@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { type RiderProfileDraft, type RiderProfileErrors } from '@/objects/rider/page/RiderWorkspaceObjects'
-import type { RiderProfileWorkspaceProps } from '@/objects/rider/page/RiderPageObjects'
+import { type RiderProfileDraft, type RiderProfileErrors } from '@/pages/rider/objects/RiderWorkspaceObjects'
+import type { RiderProfileWorkspaceProps } from '@/pages/rider/objects/RiderPageObjects'
 import { RiderProfileAccountSection, createInitialRiderProfileDraft } from '@/pages/rider/profile/RiderProfileAccountSection'
 import { RiderProfileWithdrawSection } from '@/pages/rider/profile/RiderProfileWithdrawSection'
 

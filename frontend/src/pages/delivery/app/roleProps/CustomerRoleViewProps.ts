@@ -1,4 +1,4 @@
-import type { CustomerPropsArgs, PageView } from '@/objects/page/AppBuildRolePropsObjects'
+import type { CustomerPropsArgs, PageView } from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 import { getSharedFormattingProps } from './SharedFormattingProps'
 
 function getCustomerOrderCollectionViewProps(pageView: PageView) {

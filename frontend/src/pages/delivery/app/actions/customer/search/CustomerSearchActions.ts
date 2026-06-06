@@ -4,7 +4,7 @@ import {
   saveCustomerFavoriteStoreIds,
 } from '@/system/api/SharedApi'
 import { persistCustomerStoreSearchHistory } from '@/pages/delivery/app/actions/customer/common/CustomerActionHelpers'
-import type { CustomerSearchParams } from '@/objects/customer/page/CustomerActionObjects'
+import type { CustomerSearchParams } from '@/pages/customer/objects/CustomerActionObjects'
 import type { DisplayText, StoreId } from '@/objects/core/SharedObjects'
 
 export function createCustomerSearchActions(params: CustomerSearchParams) {

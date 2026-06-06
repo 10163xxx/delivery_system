@@ -1,10 +1,25 @@
 import type {
   AddMenuItemRequest,
+  AccountHolderName,
+  AccountNumber,
+  AddressText,
+  BankName,
+  CurrencyCents,
+  DescriptionText,
+  DisplayText,
   MenuItemSelectionGroup,
   MenuItemSelectionOption,
   MerchantRegistrationRequest,
+  DeliveryCoordinate,
+  EntityCount,
+  ImageUrl,
+  Minutes,
+  NoteText,
+  PhoneNumber,
+  Quantity,
   ResolveAfterSalesRequest,
   ResolvePartialRefundRequest,
+  ResolutionText,
   UpdateMerchantProfileRequest,
   WithdrawMerchantIncomeRequest,
 } from '@/objects/core/SharedObjects'
@@ -39,18 +54,19 @@ import {
   PARTIAL_REFUND_REJECTED_NOTE,
 } from './DeliveryConstants'
 import { DELIVERY_CONSOLE_MESSAGES } from './DeliveryMessages'
-import { normalizeTextInput, parseCurrencyAmount } from './DeliveryShared'
+import { asDomainBoolean, asDomainNumber, asDomainText, normalizeTextInput, parseCurrencyAmount } from './DeliveryShared'
 import type {
   AfterSalesResolutionDraft,
   MenuItemDraft,
   MerchantDraft,
   ParsedMenuItemSelectionGroups,
   MerchantProfileDraft,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import { createInitialAfterSalesResolutionDraft } from './DeliveryDrafts'
 
 export function buildMerchantRegistrationPayload(
   draft: MerchantDraft,
+  location?: DeliveryCoordinate,
 ): MerchantRegistrationRequest {
   const merchantName = normalizeTextInput(draft.merchantName, MAX_MERCHANT_NAME_LENGTH)
   const storeName = normalizeTextInput(draft.storeName, MAX_STORE_NAME_LENGTH)
@@ -60,17 +76,20 @@ export function buildMerchantRegistrationPayload(
   const note = normalizeTextInput(draft.note, MAX_TICKET_NOTE_LENGTH)
 
   return {
-    merchantName,
-    storeName,
+    merchantName: asDomainText<MerchantRegistrationRequest['merchantName']>(merchantName),
+    storeName: asDomainText<DisplayText>(storeName),
     category: category as MerchantRegistrationRequest['category'],
-    storeAddress,
+    storeAddress: asDomainText<AddressText>(storeAddress),
+    location,
     businessHours: { openTime: draft.openTime, closeTime: draft.closeTime },
-    avgPrepMinutes: Math.max(
-      MIN_PREP_MINUTES,
-      Math.min(MAX_PREP_MINUTES, Math.round(draft.avgPrepMinutes)),
+    avgPrepMinutes: asDomainNumber<Minutes>(
+      Math.max(
+        MIN_PREP_MINUTES,
+        Math.min(MAX_PREP_MINUTES, Math.round(draft.avgPrepMinutes)),
+      ),
     ),
-    imageUrl: imageUrl || undefined,
-    note: note || undefined,
+    imageUrl: optionalDomainText<ImageUrl>(imageUrl),
+    note: optionalDomainText<NoteText>(note),
   }
 }
 
@@ -88,17 +107,17 @@ export function buildMenuItemPayload(draft: MenuItemDraft): AddMenuItemRequest {
   const selectionGroups = parseMenuItemSelectionGroups(draft.selectionGroupsText).groups
 
   return {
-    name,
-    category: category || undefined,
-    description,
-    priceCents: Number.isFinite(price) ? Math.round(price * CURRENCY_CENTS_SCALE) : 0,
-    imageUrl: imageUrl || undefined,
+    name: asDomainText<DisplayText>(name),
+    category: optionalDomainText<DisplayText>(category),
+    description: asDomainText<DescriptionText>(description),
+    priceCents: asDomainNumber<CurrencyCents>(Number.isFinite(price) ? Math.round(price * CURRENCY_CENTS_SCALE) : 0),
+    imageUrl: optionalDomainText<ImageUrl>(imageUrl),
     remainingQuantity:
       remainingQuantity === '' ||
       (Number.isInteger(parsedRemainingQuantity) && parsedRemainingQuantity > MAX_MENU_ITEM_STOCK)
         ? undefined
         : Number.isInteger(parsedRemainingQuantity)
-          ? parsedRemainingQuantity
+          ? asDomainNumber<Quantity>(parsedRemainingQuantity)
           : undefined,
     selectionGroups,
   }
@@ -134,8 +153,8 @@ function parseSelectionOption(rawOption: string): MenuItemSelectionOption | null
   const additionalPriceYuan = match[2] == null ? 0 : Number(match[2])
   if (!Number.isFinite(additionalPriceYuan) || additionalPriceYuan < 0) return null
   return {
-    name,
-    additionalPriceCents: Math.round(additionalPriceYuan * CURRENCY_CENTS_SCALE),
+    name: asDomainText<DisplayText>(name),
+    additionalPriceCents: asDomainNumber<CurrencyCents>(Math.round(additionalPriceYuan * CURRENCY_CENTS_SCALE)),
   }
 }
 
@@ -149,20 +168,20 @@ export function parseMenuItemSelectionGroups(
 
   if (lines.length === 0) return { groups: [], errorText: null }
   if (lines.length > MAX_MENU_ITEM_SELECTION_GROUP_COUNT) {
-    return { groups: [], errorText: DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid }
+    return invalidSelectionGroups()
   }
 
   const groups: MenuItemSelectionGroup[] = []
-  const usedNames = new Set<string>()
+  const usedNames = new Set<DisplayText>()
 
   for (const line of lines) {
     const [leftPart, rightPart, ...rest] = line.split(':')
     if (!leftPart || !rightPart || rest.length > 0) {
-      return { groups: [], errorText: DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid }
+      return invalidSelectionGroups()
     }
     const nameRuleMatch = leftPart.trim().match(/^([^[\]]+?)(\[\d+-\d+\])?$/)
     if (!nameRuleMatch) {
-      return { groups: [], errorText: DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid }
+      return invalidSelectionGroups()
     }
     const name = normalizeSelectionLinePart(nameRuleMatch[1] ?? '', MAX_MENU_ITEM_SELECTION_GROUP_NAME_LENGTH)
     const range = parseSelectionCountRange(nameRuleMatch[2] ?? '')
@@ -174,7 +193,7 @@ export function parseMenuItemSelectionGroups(
 
     if (
       !name ||
-      usedNames.has(name) ||
+      usedNames.has(asDomainText<DisplayText>(name)) ||
       !range.ok ||
       options.length === 0 ||
       options.length > MAX_MENU_ITEM_SELECTION_OPTION_COUNT ||
@@ -183,14 +202,14 @@ export function parseMenuItemSelectionGroups(
       range.maxSelections > options.length ||
       range.minSelections > options.length
     ) {
-      return { groups: [], errorText: DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid }
+      return invalidSelectionGroups()
     }
 
-    usedNames.add(name)
+    usedNames.add(asDomainText<DisplayText>(name))
     groups.push({
-      name,
-      minSelections: range.minSelections,
-      maxSelections: range.maxSelections,
+      name: asDomainText<DisplayText>(name),
+      minSelections: asDomainNumber<EntityCount>(range.minSelections),
+      maxSelections: asDomainNumber<EntityCount>(range.maxSelections),
       options,
     })
   }
@@ -198,14 +217,21 @@ export function parseMenuItemSelectionGroups(
   return { groups, errorText: null }
 }
 
+function invalidSelectionGroups(): ParsedMenuItemSelectionGroups {
+  return {
+    groups: [],
+    errorText: asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.merchant.menuItemSelectionGroupsInvalid),
+  }
+}
+
 export function buildPartialRefundResolutionPayload(
   approved: boolean,
   resolutionNote: string,
 ): ResolvePartialRefundRequest {
   return {
-    approved,
+    approved: asDomainBoolean(approved),
     resolutionNote:
-      normalizeTextInput(resolutionNote, MAX_TICKET_NOTE_LENGTH) ||
+      optionalDomainText<ResolutionText>(normalizeTextInput(resolutionNote, MAX_TICKET_NOTE_LENGTH)) ||
       (approved ? PARTIAL_REFUND_APPROVED_NOTE : PARTIAL_REFUND_REJECTED_NOTE),
   }
 }
@@ -222,14 +248,16 @@ export function buildAfterSalesResolutionPayload(
       : undefined
 
   return {
-    approved,
+    approved: asDomainBoolean(approved),
     resolutionNote:
-      normalizeTextInput(nextDraft.resolutionNote, MAX_TICKET_NOTE_LENGTH) ||
+      optionalDomainText<ResolutionText>(normalizeTextInput(nextDraft.resolutionNote, MAX_TICKET_NOTE_LENGTH)) ||
       (approved ? AFTER_SALES_APPROVED_NOTE : AFTER_SALES_REJECTED_NOTE),
     resolutionMode: approved
       ? nextDraft.resolutionMode
       : AFTER_SALES_RESOLUTION_MODE.manual,
-    actualCompensationCents,
+    actualCompensationCents: actualCompensationCents == null
+      ? undefined
+      : asDomainNumber<CurrencyCents>(actualCompensationCents),
   }
 }
 
@@ -237,15 +265,15 @@ export function buildMerchantProfilePayload(
   draft: MerchantProfileDraft,
 ): UpdateMerchantProfileRequest {
   return {
-    contactPhone: normalizeTextInput(draft.contactPhone, MAX_CONTACT_PHONE_LENGTH),
+    contactPhone: asDomainText<PhoneNumber>(normalizeTextInput(draft.contactPhone, MAX_CONTACT_PHONE_LENGTH)),
     payoutAccount: {
       accountType: draft.payoutAccountType,
       bankName:
         draft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank
-          ? normalizeTextInput(draft.bankName, MAX_BANK_NAME_LENGTH) || undefined
+          ? optionalDomainText<BankName>(normalizeTextInput(draft.bankName, MAX_BANK_NAME_LENGTH))
           : undefined,
-      accountNumber: normalizeTextInput(draft.accountNumber, MAX_ACCOUNT_NUMBER_LENGTH),
-      accountHolder: normalizeTextInput(draft.accountHolder, MAX_ACCOUNT_HOLDER_LENGTH),
+      accountNumber: asDomainText<AccountNumber>(normalizeTextInput(draft.accountNumber, MAX_ACCOUNT_NUMBER_LENGTH)),
+      accountHolder: asDomainText<AccountHolderName>(normalizeTextInput(draft.accountHolder, MAX_ACCOUNT_HOLDER_LENGTH)),
     },
   }
 }
@@ -253,9 +281,13 @@ export function buildMerchantProfilePayload(
 export function buildMerchantWithdrawPayload(
   amountYuan: number,
 ): WithdrawMerchantIncomeRequest {
-  return { amountCents: Math.round(amountYuan * CURRENCY_CENTS_SCALE) }
+  return { amountCents: asDomainNumber<CurrencyCents>(Math.round(amountYuan * CURRENCY_CENTS_SCALE)) }
 }
 
 export function parseMerchantWithdrawAmount(value: string) {
   return parseCurrencyAmount(value)
+}
+
+function optionalDomainText<T extends string>(value: string): T | undefined {
+  return value ? asDomainText<T>(value) : undefined
 }

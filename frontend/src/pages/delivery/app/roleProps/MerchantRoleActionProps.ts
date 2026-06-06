@@ -17,7 +17,7 @@ import {
 import type {
   MerchantActionArgs,
   MerchantPropsArgs,
-} from '@/objects/page/AppBuildRolePropsObjects'
+} from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 
 export function getMerchantUtilityFieldProps() {
   return {

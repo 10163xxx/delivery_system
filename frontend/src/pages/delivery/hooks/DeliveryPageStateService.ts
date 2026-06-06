@@ -1,21 +1,28 @@
 import { useRef } from 'react'
 import { createInitialMerchantDraft, createInitialMerchantProfileDraft } from '@/features/delivery/DeliveryServices'
+import type {
+  AddressLabel,
+  AddressText,
+  DisplayText,
+  PersonName,
+} from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   CUSTOMER_STORE_VISIBILITY,
   CUSTOMER_ADDRESS_FIELD,
   MERCHANT_APPLICATION_VIEW,
   MERCHANT_WORKSPACE_VIEW,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   useCustomerPageState,
   useMerchantPageState,
-  useReviewAndSupportState,
+  useReviewAndTicketState,
   useSelectionState,
 } from './DeliveryPageStateSlices'
 
 function resetSelectionState(selectionState: ReturnType<typeof useSelectionState>) {
   selectionState.setSelectedCustomerId('')
-  selectionState.setSelectedStoreCategory('')
+  selectionState.setSelectedStoreCategory(asDomainText<DisplayText>(''))
   selectionState.setSelectedStoreId('')
   selectionState.setSelectedMerchantStoreId('')
   selectionState.setSelectedRiderId('')
@@ -24,24 +31,24 @@ function resetSelectionState(selectionState: ReturnType<typeof useSelectionState
 }
 
 function resetCustomerPageState(customerState: ReturnType<typeof useCustomerPageState>) {
-  customerState.setCustomerStoreSearchDraft('')
-  customerState.setCustomerStoreSearch('')
+  customerState.setCustomerStoreSearchDraft(asDomainText<DisplayText>(''))
+  customerState.setCustomerStoreSearch(asDomainText<DisplayText>(''))
   customerState.setCustomerStoreVisibility(CUSTOMER_STORE_VISIBILITY.orderableOnly)
-  customerState.setDeliveryAddress('')
+  customerState.setDeliveryAddress(asDomainText<AddressText>(''))
   customerState.setDeliveryAddressError(null)
-  customerState.setScheduledDeliveryTime('')
+  customerState.setScheduledDeliveryTime(asDomainText<DisplayText>(''))
   customerState.setScheduledDeliveryError(null)
   customerState.setScheduledDeliveryTouched(false)
-  customerState.setRemark('')
+  customerState.setRemark(asDomainText<DisplayText>(''))
   customerState.setIsCheckoutExpanded(false)
   customerState.setSelectedCouponId('')
-  customerState.setCustomerNameDraft('')
+  customerState.setCustomerNameDraft(asDomainText<PersonName>(''))
   customerState.setAddressDraft({
-    [CUSTOMER_ADDRESS_FIELD.label]: '',
-    [CUSTOMER_ADDRESS_FIELD.address]: '',
+    [CUSTOMER_ADDRESS_FIELD.label]: asDomainText<AddressLabel>(''),
+    [CUSTOMER_ADDRESS_FIELD.address]: asDomainText<AddressText>(''),
   })
   customerState.setAddressFormErrors({})
-  customerState.setCustomRechargeAmount('')
+  customerState.setCustomRechargeAmount(asDomainText<DisplayText>(''))
   customerState.setSelectedRechargeAmount(null)
   customerState.setRechargeFieldError(null)
   customerState.setQuantities({})
@@ -51,7 +58,7 @@ function resetCustomerPageState(customerState: ReturnType<typeof useCustomerPage
 function resetMerchantPageState(merchantState: ReturnType<typeof useMerchantPageState>) {
   merchantState.setMerchantProfileDraft(createInitialMerchantProfileDraft())
   merchantState.setMerchantProfileFormErrors({})
-  merchantState.setMerchantWithdrawAmount('')
+  merchantState.setMerchantWithdrawAmount(asDomainText<DisplayText>(''))
   merchantState.setMerchantWithdrawFieldError(null)
   merchantState.setMerchantDraft(createInitialMerchantDraft())
   merchantState.setMerchantFormErrors({})
@@ -64,24 +71,24 @@ function resetMerchantPageState(merchantState: ReturnType<typeof useMerchantPage
   merchantState.setEligibilityReviewDrafts({})
 }
 
-function resetReviewAndSupportState(
-  reviewAndSupportState: ReturnType<typeof useReviewAndSupportState>,
+function resetReviewAndTicketState(
+  reviewAndTicketState: ReturnType<typeof useReviewAndTicketState>,
 ) {
-  reviewAndSupportState.setOrderChatDrafts({})
-  reviewAndSupportState.setOrderChatErrors({})
-  reviewAndSupportState.setReviewDrafts({})
-  reviewAndSupportState.setReviewErrors({})
-  reviewAndSupportState.setPartialRefundDrafts({})
-  reviewAndSupportState.setPartialRefundErrors({})
-  reviewAndSupportState.setAfterSalesDrafts({})
-  reviewAndSupportState.setAfterSalesErrors({})
-  reviewAndSupportState.setPartialRefundResolutionDrafts({})
-  reviewAndSupportState.setApplicationReviewDrafts({})
-  reviewAndSupportState.setAfterSalesResolutionDrafts({})
-  reviewAndSupportState.setResolutionDrafts({})
-  reviewAndSupportState.setRiderAppealDrafts({})
-  reviewAndSupportState.setAppealResolutionDrafts({})
-  reviewAndSupportState.setEligibilityResolutionDrafts({})
+  reviewAndTicketState.setOrderChatDrafts({})
+  reviewAndTicketState.setOrderChatErrors({})
+  reviewAndTicketState.setReviewDrafts({})
+  reviewAndTicketState.setReviewErrors({})
+  reviewAndTicketState.setPartialRefundDrafts({})
+  reviewAndTicketState.setPartialRefundErrors({})
+  reviewAndTicketState.setAfterSalesDrafts({})
+  reviewAndTicketState.setAfterSalesErrors({})
+  reviewAndTicketState.setPartialRefundResolutionDrafts({})
+  reviewAndTicketState.setApplicationReviewDrafts({})
+  reviewAndTicketState.setAfterSalesResolutionDrafts({})
+  reviewAndTicketState.setResolutionDrafts({})
+  reviewAndTicketState.setRiderAppealDrafts({})
+  reviewAndTicketState.setAppealResolutionDrafts({})
+  reviewAndTicketState.setEligibilityResolutionDrafts({})
 }
 
 function resetSyncRefs(args: {
@@ -96,7 +103,7 @@ export function useDeliveryConsolePageState() {
   const selectionState = useSelectionState()
   const customerState = useCustomerPageState()
   const merchantState = useMerchantPageState()
-  const reviewAndSupportState = useReviewAndSupportState()
+  const reviewAndTicketState = useReviewAndTicketState()
   const lastCustomerDraftSyncIdRef = useRef<string | null>(null)
   const lastMerchantProfileDraftSyncIdRef = useRef<string | null>(null)
 
@@ -104,7 +111,7 @@ export function useDeliveryConsolePageState() {
     resetSelectionState(selectionState)
     resetCustomerPageState(customerState)
     resetMerchantPageState(merchantState)
-    resetReviewAndSupportState(reviewAndSupportState)
+    resetReviewAndTicketState(reviewAndTicketState)
     resetSyncRefs({
       lastCustomerDraftSyncIdRef,
       lastMerchantProfileDraftSyncIdRef,
@@ -115,7 +122,7 @@ export function useDeliveryConsolePageState() {
     ...selectionState,
     ...customerState,
     ...merchantState,
-    ...reviewAndSupportState,
+    ...reviewAndTicketState,
     lastCustomerDraftSyncIdRef,
     lastMerchantProfileDraftSyncIdRef,
     resetPageState,

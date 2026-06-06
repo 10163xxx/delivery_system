@@ -1,3 +1,4 @@
+// Typed HTTP helpers shared by all frontend API modules.
 import { readSessionToken } from '@/system/api/BrowserStorage'
 import { API_CLIENT_DEFAULTS, API_HEADER } from '@/system/api/ApiConstants'
 import type { Decoder } from '@/system/api/ResponseDecoders'
@@ -32,6 +33,7 @@ export function defineUploadPostEndpoint<Response>(path: string): UploadPostEndp
 }
 
 async function performRequest(input: string, init: RequestInit, timeoutMessage: string) {
+  // Session tokens are attached here so individual API modules only describe endpoints and payloads.
   const sessionToken = readSessionToken()
   const controller = new AbortController()
   const timeoutId = window.setTimeout(

@@ -1,5 +1,6 @@
-import type { MenuItem, Store } from '@/objects/core/SharedObjects'
-import type { SelectedMenuItemConfiguration } from '@/objects/page/DeliveryAppObjects'
+import type { MenuItem, MenuItemId, Store } from '@/objects/core/SharedObjects'
+import type { SelectedMenuItemConfiguration } from '@/pages/delivery/objects/DeliveryAppObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 export const CART_LINE_KEY_SEPARATOR = '::configuration::'
 
@@ -11,7 +12,7 @@ export type SelectedCartLine = {
 }
 
 export function buildCartLineKey(
-  itemId: string,
+  itemId: MenuItemId,
   configuration?: SelectedMenuItemConfiguration,
 ) {
   if (!configuration || configuration.selections.length === 0) return itemId
@@ -20,20 +21,20 @@ export function buildCartLineKey(
 }
 
 export function getCartLineItemId(lineKey: string) {
-  return lineKey.split(CART_LINE_KEY_SEPARATOR)[0] ?? lineKey
+  return asDomainText<MenuItemId>(lineKey.split(CART_LINE_KEY_SEPARATOR)[0] ?? lineKey)
 }
 
-export function isCartLineForMenuItem(lineKey: string, itemId: string) {
+export function isCartLineForMenuItem(lineKey: string, itemId: MenuItemId) {
   return lineKey === itemId || lineKey.startsWith(`${itemId}${CART_LINE_KEY_SEPARATOR}`)
 }
 
-export function getMenuItemCartLineKeys(quantities: Record<string, number>, itemId: string) {
+export function getMenuItemCartLineKeys(quantities: Record<string, number>, itemId: MenuItemId) {
   return Object.keys(quantities).filter(
     (lineKey) => isCartLineForMenuItem(lineKey, itemId) && (quantities[lineKey] ?? 0) > 0,
   )
 }
 
-export function getMenuItemCartQuantity(quantities: Record<string, number>, itemId: string) {
+export function getMenuItemCartQuantity(quantities: Record<string, number>, itemId: MenuItemId) {
   return getMenuItemCartLineKeys(quantities, itemId).reduce(
     (sum, lineKey) => sum + (quantities[lineKey] ?? 0),
     0,

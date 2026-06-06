@@ -4,7 +4,7 @@ import type {
   MenuItemSelectionOption,
   Store,
 } from '@/objects/core/SharedObjects'
-import type { SelectedMenuItemConfiguration } from '@/objects/page/DeliveryAppObjects'
+import type { SelectedMenuItemConfiguration } from '@/pages/delivery/objects/DeliveryAppObjects'
 import { formatStartingPrice } from './DeliveryFormatters'
 import { getSelectedCartLines } from './DeliveryCartLines'
 

@@ -1,4 +1,4 @@
-import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CheckoutPanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import {
   CUSTOMER_CHECKOUT_COPY,
   getCheckoutPrimaryActionLabel,
@@ -16,7 +16,7 @@ export function CustomerCheckoutSummaryBar(props: CheckoutPanelProps) {
     openCheckout,
     payableTotalCents,
     selectedCustomer,
-    selectedStoreCanOrder,
+    selectedStore,
   } = props
 
   return (
@@ -45,7 +45,7 @@ export function CustomerCheckoutSummaryBar(props: CheckoutPanelProps) {
       </div>
       <button
         className="primary-button"
-        disabled={!selectedStoreCanOrder || deliveryAddressIsLocated !== true || deliveryAddressIsLocating}
+        disabled={!selectedStore}
         onClick={() => openCheckout()}
         type="button"
       >

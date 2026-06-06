@@ -24,10 +24,26 @@ export type UserRole = Role
 
 declare const domainBrand: unique symbol
 
-type DomainValue<Base, Tag> = Base & { readonly [domainBrand]?: Tag }
-type TextDomainValue<Tag> = DomainValue<string, Tag>
-type NumericDomainValue<Tag> = DomainValue<number, Tag>
-type BooleanDomainValue<Tag> = DomainValue<boolean, Tag>
+export type RawTextValue = ReturnType<StringConstructor>
+export type RawNumericValue = ReturnType<NumberConstructor>
+export type RawBooleanValue = ReturnType<BooleanConstructor>
+
+type DomainValue<Base, Tag> = Base & { readonly [domainBrand]: Tag }
+type TextDomainValue<Tag> = DomainValue<RawTextValue, Tag>
+type NumericDomainValue<Tag> = DomainValue<RawNumericValue, Tag>
+type BooleanDomainValue<Tag> = DomainValue<RawBooleanValue, Tag>
+
+export function asTextDomainValue<T extends TextDomainValue<unknown>>(value: RawTextValue): T {
+  return value as T
+}
+
+export function asNumericDomainValue<T extends NumericDomainValue<unknown>>(value: RawNumericValue): T {
+  return value as T
+}
+
+export function asBooleanDomainValue<T extends BooleanDomainValue<unknown>>(value: RawBooleanValue): T {
+  return value as T
+}
 
 type EntityIdTag = { readonly entityIdBrand: never }
 type CustomerIdTag = { readonly customerIdBrand: never }
@@ -84,6 +100,8 @@ type EntityCountTag = { readonly entityCountBrand: never }
 type MinutesTag = { readonly minutesBrand: never }
 type PercentageValueTag = { readonly percentageValueBrand: never }
 type AverageRatingTag = { readonly averageRatingBrand: never }
+type LatitudeTag = { readonly latitudeBrand: never }
+type LongitudeTag = { readonly longitudeBrand: never }
 type ApprovalFlagTag = { readonly approvalFlagBrand: never }
 type EmptySelectionTag = { readonly emptySelectionBrand: never }
 
@@ -144,6 +162,8 @@ export type EntityCount = NumericDomainValue<EntityCountTag>
 export type Minutes = NumericDomainValue<MinutesTag>
 export type PercentageValue = NumericDomainValue<PercentageValueTag>
 export type AverageRating = NumericDomainValue<AverageRatingTag>
+export type Latitude = NumericDomainValue<LatitudeTag>
+export type Longitude = NumericDomainValue<LongitudeTag>
 
 export type ApprovalFlag = BooleanDomainValue<ApprovalFlagTag>
 export type EmptySelection = TextDomainValue<EmptySelectionTag>

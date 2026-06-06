@@ -1,4 +1,4 @@
-import type { PageView } from '@/objects/page/AppBuildRolePropsObjects'
+import type { PageView } from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 
 export function getSharedFormattingProps(pageView: PageView) {
   return {

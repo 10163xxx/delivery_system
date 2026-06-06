@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import L, { type LatLngExpression } from 'leaflet'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 import type { DeliveryWeatherTone } from '@/features/delivery/DeliveryRouteEstimates'
-import {
-  geocodeDeliveryAddress,
-} from '@/features/delivery/DeliveryGeocoding'
+import { geocodeDeliveryAddress } from '@/features/delivery/DeliveryGeocoding'
 import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import {
+  buildEtaLabel,
+  buildPointLabel,
+  buildRoutePoints,
+  getCoordinateQuery,
+  sameCoordinate,
+  toLatLng,
+} from '@/components/address/AddressTileMapGeometry'
 import {
   DELIVERY_MAP_ATTRIBUTION,
   DELIVERY_MAP_COMPACT_ZOOM,
@@ -19,8 +25,9 @@ import {
   DELIVERY_MAP_ROUTE_OPACITY,
   DELIVERY_MAP_ROUTE_WEIGHT,
   DELIVERY_MAP_TILE_URL,
-} from '@/features/delivery/DeliveryMapSupport'
+} from '@/features/delivery/DeliveryMapConstants'
 
+// This component renders coordinates and delegates all provider selection to geocoding.
 export type AddressTileMapProps = {
   primaryLabel: string
   primaryAddress: string
@@ -36,81 +43,6 @@ export type AddressTileMapProps = {
   showRouteCurve?: boolean
   showSecondaryMarker?: boolean
   weatherTone?: DeliveryWeatherTone
-}
-
-function getCoordinateQuery(address?: string, query?: string) {
-  return (address?.trim() || query?.trim() || '')
-}
-
-function toLatLng(coordinate: DeliveryCoordinate): LatLngExpression {
-  return [coordinate.latitude, coordinate.longitude]
-}
-
-function sameCoordinate(left: DeliveryCoordinate | null, right: DeliveryCoordinate | null) {
-  return left?.latitude === right?.latitude && left?.longitude === right?.longitude
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-}
-
-function buildPointLabel(label: string, tone: 'primary' | 'secondary') {
-  const className = tone === 'primary' ? 'address-tile-map__leaflet-pin is-primary' : 'address-tile-map__leaflet-pin is-secondary'
-  return L.divIcon({
-    className,
-    html: `<span class="address-tile-map__pin-dot"></span><span class="address-tile-map__pin-label">${escapeHtml(label)}</span>`,
-    iconSize: [150, 34],
-    iconAnchor: [8, 8],
-  })
-}
-
-function buildEtaLabel(label: string, stageLabel?: string) {
-  const stageMarkup = stageLabel
-    ? `<span class="address-tile-map__eta-stage">${escapeHtml(stageLabel)}</span>`
-    : ''
-  return L.divIcon({
-    className: 'address-tile-map__leaflet-eta',
-    html: `<span class="address-tile-map__eta-card">${stageMarkup}<span class="address-tile-map__eta-time">${escapeHtml(label)}</span></span>`,
-    iconSize: [180, 56],
-    iconAnchor: [90, 28],
-  })
-}
-
-function buildRoutePoints(
-  primaryCoordinate: DeliveryCoordinate,
-  secondaryCoordinate: DeliveryCoordinate,
-) {
-  const latitudeDelta = secondaryCoordinate.latitude - primaryCoordinate.latitude
-  const longitudeDelta = secondaryCoordinate.longitude - primaryCoordinate.longitude
-  const midpoint = {
-    latitude: (primaryCoordinate.latitude + secondaryCoordinate.latitude) / 2,
-    longitude: (primaryCoordinate.longitude + secondaryCoordinate.longitude) / 2,
-  }
-  const curveOffset = 0.18
-  const controlPoint = {
-    latitude: midpoint.latitude - longitudeDelta * curveOffset,
-    longitude: midpoint.longitude + latitudeDelta * curveOffset,
-  }
-
-  return Array.from({ length: 25 }, (_, index) => {
-    const t = index / 24
-    const leftWeight = (1 - t) ** 2
-    const centerWeight = 2 * (1 - t) * t
-    const rightWeight = t ** 2
-    return [
-      leftWeight * primaryCoordinate.latitude +
-        centerWeight * controlPoint.latitude +
-        rightWeight * secondaryCoordinate.latitude,
-      leftWeight * primaryCoordinate.longitude +
-        centerWeight * controlPoint.longitude +
-        rightWeight * secondaryCoordinate.longitude,
-    ] as LatLngExpression
-  })
 }
 
 export function AddressTileMap({
@@ -147,25 +79,18 @@ export function AddressTileMap({
 
   useEffect(() => {
     const controller = new AbortController()
-    if (primaryCoordinateProp || secondaryCoordinateProp) {
-      setPrimaryCoordinate((current) =>
-        sameCoordinate(current, primaryCoordinateProp ?? null) ? current : primaryCoordinateProp ?? null,
-      )
-      setSecondaryCoordinate((current) =>
-        sameCoordinate(current, secondaryCoordinateProp ?? null) ? current : secondaryCoordinateProp ?? null,
-      )
-      setIsLocating(false)
-      return () => {
-        controller.abort()
-      }
-    }
     setIsLocating(true)
 
     Promise.all([
-      geocodeDeliveryAddress(primaryQueryValue, controller.signal),
-      showSecondaryMarker && secondaryQueryValue
-        ? geocodeDeliveryAddress(secondaryQueryValue, controller.signal)
-        : Promise.resolve(null),
+      // Persisted backend coordinates win; geocoding only fills gaps for display.
+      primaryCoordinateProp
+        ? Promise.resolve(primaryCoordinateProp)
+        : geocodeDeliveryAddress(primaryQueryValue, controller.signal),
+      secondaryCoordinateProp
+        ? Promise.resolve(secondaryCoordinateProp)
+        : showSecondaryMarker && secondaryQueryValue
+          ? geocodeDeliveryAddress(secondaryQueryValue, controller.signal)
+          : Promise.resolve(null),
     ])
       .then(([nextPrimaryCoordinate, nextSecondaryCoordinate]) => {
         if (controller.signal.aborted) return

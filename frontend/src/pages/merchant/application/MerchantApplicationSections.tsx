@@ -1,13 +1,23 @@
 import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
 import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
-import type { MerchantApplication } from '@/objects/core/SharedObjects'
+import type {
+  AddressText,
+  DisplayText,
+  ImageUrl,
+  Minutes,
+  NoteText,
+  PersonName,
+  TimeOfDay,
+  MerchantApplication,
+} from '@/objects/core/SharedObjects'
 import { APPLICATION_STATUS, ROLE } from '@/objects/core/SharedObjects'
+import { asDomainNumber, asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   buildMerchantApplicationSubmitRoute,
   MERCHANT_APPLICATION_VIEW,
   MERCHANT_FORM_FIELD,
   type MerchantRoutePath,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 
 type MerchantApplicationView = MerchantRoleProps['merchantApplicationView']
 
@@ -140,12 +150,12 @@ export function MerchantApplicationForm(props: Pick<
       <div className="form-grid">
         <label>
           <span>商家姓名</span>
-          <input aria-invalid={Boolean(merchantFormErrors.merchantName)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.merchantName))} disabled={role === ROLE.merchant} id={getMerchantFieldId(MERCHANT_FORM_FIELD.merchantName)} value={merchantDraft.merchantName} onChange={(event) => { setMerchantDraft((current) => ({ ...current, merchantName: event.target.value })); setMerchantFormErrors((current) => ({ ...current, merchantName: undefined })) }} />
+          <input aria-invalid={Boolean(merchantFormErrors.merchantName)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.merchantName))} disabled={role === ROLE.merchant} id={getMerchantFieldId(MERCHANT_FORM_FIELD.merchantName)} value={merchantDraft.merchantName} onChange={(event) => { setMerchantDraft((current) => ({ ...current, merchantName: asDomainText<PersonName>(event.target.value) })); setMerchantFormErrors((current) => ({ ...current, merchantName: undefined })) }} />
           {merchantFormErrors.merchantName ? <small className="field-error-text">{merchantFormErrors.merchantName}</small> : null}
         </label>
         <label>
           <span>店铺名称</span>
-          <input aria-invalid={Boolean(merchantFormErrors.storeName)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.storeName))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.storeName)} value={merchantDraft.storeName} onChange={(event) => { setMerchantDraft((current) => ({ ...current, storeName: event.target.value })); setMerchantFormErrors((current) => ({ ...current, storeName: undefined })) }} />
+          <input aria-invalid={Boolean(merchantFormErrors.storeName)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.storeName))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.storeName)} value={merchantDraft.storeName} onChange={(event) => { setMerchantDraft((current) => ({ ...current, storeName: asDomainText<DisplayText>(event.target.value) })); setMerchantFormErrors((current) => ({ ...current, storeName: undefined })) }} />
           {merchantFormErrors.storeName ? <small className="field-error-text">{merchantFormErrors.storeName}</small> : null}
         </label>
         <label>
@@ -158,21 +168,21 @@ export function MerchantApplicationForm(props: Pick<
         </label>
         <label className="full">
           <span>店铺地址</span>
-          <input aria-invalid={Boolean(merchantFormErrors.storeAddress)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.storeAddress))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.storeAddress)} value={merchantDraft.storeAddress} onChange={(event) => { setMerchantDraft((current) => ({ ...current, storeAddress: event.target.value })); setMerchantFormErrors((current) => ({ ...current, storeAddress: undefined })) }} />
+          <input aria-invalid={Boolean(merchantFormErrors.storeAddress)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.storeAddress))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.storeAddress)} value={merchantDraft.storeAddress} onChange={(event) => { setMerchantDraft((current) => ({ ...current, storeAddress: asDomainText<AddressText>(event.target.value) })); setMerchantFormErrors((current) => ({ ...current, storeAddress: undefined })) }} />
           {merchantFormErrors.storeAddress ? <small className="field-error-text">{merchantFormErrors.storeAddress}</small> : <small className="field-hint">填写真实门牌地址，后续地图与路线能力将基于这里定位。</small>}
         </label>
         <label>
           <span>预计出餐时间</span>
-          <input min={1} max={120} type="number" value={merchantDraft.avgPrepMinutes} onChange={(event) => setMerchantDraft((current) => ({ ...current, avgPrepMinutes: Number(event.target.value) }))} />
+          <input min={1} max={120} type="number" value={merchantDraft.avgPrepMinutes} onChange={(event) => setMerchantDraft((current) => ({ ...current, avgPrepMinutes: asDomainNumber<Minutes>(Number(event.target.value)) }))} />
         </label>
         <label>
           <span>开业时间</span>
-          <input aria-invalid={Boolean(merchantFormErrors.openTime)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.openTime))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.openTime)} type="time" value={merchantDraft.openTime} onChange={(event) => { setMerchantDraft((current) => ({ ...current, openTime: event.target.value })); setMerchantFormErrors((current) => ({ ...current, openTime: undefined, closeTime: undefined })) }} />
+          <input aria-invalid={Boolean(merchantFormErrors.openTime)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.openTime))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.openTime)} type="time" value={merchantDraft.openTime} onChange={(event) => { setMerchantDraft((current) => ({ ...current, openTime: asDomainText<TimeOfDay>(event.target.value) })); setMerchantFormErrors((current) => ({ ...current, openTime: undefined, closeTime: undefined })) }} />
           {merchantFormErrors.openTime ? <small className="field-error-text">{merchantFormErrors.openTime}</small> : null}
         </label>
         <label>
           <span>打烊时间</span>
-          <input aria-invalid={Boolean(merchantFormErrors.closeTime)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.closeTime))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.closeTime)} type="time" value={merchantDraft.closeTime} onChange={(event) => { setMerchantDraft((current) => ({ ...current, closeTime: event.target.value })); setMerchantFormErrors((current) => ({ ...current, openTime: undefined, closeTime: undefined })) }} />
+          <input aria-invalid={Boolean(merchantFormErrors.closeTime)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.closeTime))} id={getMerchantFieldId(MERCHANT_FORM_FIELD.closeTime)} type="time" value={merchantDraft.closeTime} onChange={(event) => { setMerchantDraft((current) => ({ ...current, closeTime: asDomainText<TimeOfDay>(event.target.value) })); setMerchantFormErrors((current) => ({ ...current, openTime: undefined, closeTime: undefined })) }} />
           {merchantFormErrors.closeTime ? <small className="field-error-text">{merchantFormErrors.closeTime}</small> : null}
         </label>
         <div className="full upload-field">
@@ -187,7 +197,7 @@ export function MerchantApplicationForm(props: Pick<
         </div>
         <label className="full">
           <span>店铺展示图 URL</span>
-          <input aria-invalid={Boolean(merchantFormErrors.imageUrl)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.imageUrl))} placeholder="可直接粘贴线上图片链接，或使用上方上传后自动回填" value={merchantDraft.imageUrl} onChange={(event) => { setMerchantDraft((current) => ({ ...current, imageUrl: event.target.value, uploadedImageName: event.target.value === current.imageUrl ? current.uploadedImageName : '' })); setMerchantFormErrors((current) => ({ ...current, imageUrl: undefined })) }} />
+          <input aria-invalid={Boolean(merchantFormErrors.imageUrl)} className={getMerchantFieldClassName(Boolean(merchantFormErrors.imageUrl))} placeholder="可直接粘贴线上图片链接，或使用上方上传后自动回填" value={merchantDraft.imageUrl} onChange={(event) => { setMerchantDraft((current) => ({ ...current, imageUrl: asDomainText<ImageUrl>(event.target.value), uploadedImageName: event.target.value === current.imageUrl ? current.uploadedImageName : asDomainText<DisplayText>('') })); setMerchantFormErrors((current) => ({ ...current, imageUrl: undefined })) }} />
           <small className="field-hint">店铺展示图为必填项；可上传本地图片，或填写可访问的图片 URL。</small>
         </label>
         <div className="full">
@@ -195,7 +205,7 @@ export function MerchantApplicationForm(props: Pick<
         </div>
         <label className="full">
           <span>补充说明</span>
-          <input value={merchantDraft.note} onChange={(event) => setMerchantDraft((current) => ({ ...current, note: event.target.value }))} />
+          <input value={merchantDraft.note} onChange={(event) => setMerchantDraft((current) => ({ ...current, note: asDomainText<NoteText>(event.target.value) }))} />
         </label>
       </div>
       <div className="summary-bar">

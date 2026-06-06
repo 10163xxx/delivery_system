@@ -13,7 +13,7 @@ import type {
   DeliveryConsolePageState as PageState,
   DeliveryConsolePageViewState as PageViewState,
   DeliveryConsoleSessionState as SessionState,
-} from '@/objects/page/DeliveryConsoleScreenObjects'
+} from '@/pages/delivery/objects/DeliveryConsoleScreenObjects'
 
 export function buildScreenSessionState(sessionState: SessionState) {
   return {

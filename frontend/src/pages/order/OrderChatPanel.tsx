@@ -1,6 +1,8 @@
 import type { Role } from '@/objects/core/SharedObjects'
-import type { OrderChatPanelProps } from '@/objects/order/page/OrderPageObjects'
+import type { OrderChatPanelProps } from '@/pages/order/objects/OrderPageObjects'
 import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
+import type { DisplayText } from '@/objects/core/SharedObjects'
 
 const roleLabelMap: Record<Role, string> = {
   customer: ORDER_PAGE_COPY.chat.roleCustomer,
@@ -70,7 +72,7 @@ export function OrderChatPanel({
           disabled={disabled}
           placeholder={ORDER_PAGE_COPY.chat.inputPlaceholder}
           value={draft}
-          onChange={(event) => onChangeDraft(event.target.value)}
+          onChange={(event) => onChangeDraft(asDomainText<DisplayText>(event.target.value))}
         />
         <button
           className="primary-button"

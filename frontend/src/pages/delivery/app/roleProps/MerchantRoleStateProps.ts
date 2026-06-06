@@ -1,7 +1,7 @@
 import type {
   PageState,
   SessionService,
-} from '@/objects/page/AppBuildRolePropsObjects'
+} from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 
 export function getMerchantDraftStateProps(pageState: PageState) {
   return {
@@ -15,7 +15,7 @@ export function getMerchantDraftStateProps(pageState: PageState) {
   }
 }
 
-export function getMerchantSupportStateProps(
+export function getMerchantOrderIssueStateProps(
   pageState: PageState,
   sessionService: SessionService,
 ) {
@@ -44,7 +44,7 @@ export function getMerchantDraftSetters(pageState: PageState) {
   }
 }
 
-export function getMerchantSupportSetters(pageState: PageState) {
+export function getMerchantOrderIssueSetters(pageState: PageState) {
   return {
     setEligibilityReviewDrafts: pageState.setEligibilityReviewDrafts,
     setMenuItemFormErrors: pageState.setMenuItemFormErrors,

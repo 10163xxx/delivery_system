@@ -1,5 +1,6 @@
 import type {
   AddressText,
+  DeliveryCoordinate,
   DisplayText,
   ImageUrl,
   Minutes,
@@ -13,6 +14,7 @@ export type MerchantRegistrationRequest = {
   storeName: DisplayText
   category: DisplayText
   storeAddress: AddressText
+  location?: DeliveryCoordinate
   businessHours: BusinessHours
   avgPrepMinutes: Minutes
   imageUrl?: ImageUrl

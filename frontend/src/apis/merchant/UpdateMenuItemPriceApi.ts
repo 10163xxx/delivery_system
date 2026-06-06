@@ -4,7 +4,7 @@ import type {
   UpdateMenuItemPriceRequest,
 } from '@/objects/core/SharedObjects'
 import { updateMenuItemPriceApiDefinition } from '@/system/api/ApiRoutes'
-import { postNormalizedDeliveryState } from '@/system/api/DeliveryStateApiSupport'
+import { postNormalizedDeliveryState } from '@/system/api/DeliveryStateClient'
 import { buildApiPath2 } from '@/system/api/TypedApiDefinitions'
 
 export function updateMenuItemPrice(

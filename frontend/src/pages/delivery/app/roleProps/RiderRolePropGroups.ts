@@ -9,7 +9,7 @@ import {
   updateRiderProfile,
   withdrawRiderIncome,
 } from '@/system/api/SharedApi'
-import type { PageState, PageView, RiderPropsArgs, SessionService } from '@/objects/page/AppBuildRolePropsObjects'
+import type { PageState, PageView, RiderPropsArgs, SessionService } from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 
 export function getRiderUtilityProps() {
   return {

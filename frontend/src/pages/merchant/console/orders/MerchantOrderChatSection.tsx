@@ -5,6 +5,7 @@ import type {
 import { OrderChatPanel } from '@/pages/order/OrderChatPanel'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/merchant/console/shell/MerchantConsoleCopy'
 import { ROLE, type DisplayText, type OrderId, type OrderSummary, type Store } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 export function MerchantOrderChat({
   order,
@@ -26,10 +27,10 @@ export function MerchantOrderChat({
     <OrderChatPanel
       currentDisplayName={store.merchantName}
       currentRole={ROLE.merchant}
-      draft={orderChatDrafts[order.id] ?? ''}
+      draft={orderChatDrafts[order.id] ?? asDomainText<DisplayText>('')}
       errorText={orderChatErrors[order.id]}
       disabled={false}
-      disabledReason={order.riderId ? undefined : MERCHANT_CONSOLE_COPY.chat.orderChatDisabledReason}
+      disabledReason={order.riderId ? undefined : asDomainText<DisplayText>(MERCHANT_CONSOLE_COPY.chat.orderChatDisabledReason)}
       formatTime={formatTime}
       order={order}
       onChangeDraft={(value) => {

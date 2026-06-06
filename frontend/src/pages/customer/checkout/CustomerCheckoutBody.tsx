@@ -1,4 +1,4 @@
-import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CheckoutPanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import { getCustomerAddressCoordinate } from '@/features/delivery/DeliveryServices'
 import { CustomerCheckoutMenuGrid } from '@/pages/customer/checkout/CustomerCheckoutMenuGrid'
 import { CustomerCheckoutSection } from '@/pages/customer/checkout/CustomerCheckoutSection'

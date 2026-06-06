@@ -1,0 +1,34 @@
+/* Responsive address detail and map sizing rules. */
+@media (min-width: 860px) {
+  .address-details__header {
+    grid-template-columns: minmax(0, 1.3fr) minmax(15rem, 0.9fr);
+    align-items: start;
+  }
+
+  .address-details__field-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 759px) {
+  .address-details {
+    padding: 1rem;
+    border-radius: 22px;
+  }
+
+  .address-details__record-head {
+    flex-direction: column;
+  }
+
+  .address-route-preview__header {
+    flex-direction: column;
+  }
+
+  .address-route-preview .address-tile-map {
+    min-height: 300px;
+  }
+
+  .address-route-preview.is-compact .address-tile-map {
+    min-height: 240px;
+  }
+}

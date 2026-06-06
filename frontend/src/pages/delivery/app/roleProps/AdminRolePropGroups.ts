@@ -13,7 +13,7 @@ import {
   resolveReviewAppeal,
   resolveTicket,
 } from '@/system/api/SharedApi'
-import type { PageState, PageView, SessionService } from '@/objects/page/AppBuildRolePropsObjects'
+import type { PageState, PageView, SessionService } from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 
 export function getAdminViewProps(pageView: PageView) {
   return {

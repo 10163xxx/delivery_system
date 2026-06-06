@@ -6,8 +6,8 @@ export {
 export {
   getMerchantDraftSetters,
   getMerchantDraftStateProps,
-  getMerchantSupportSetters,
-  getMerchantSupportStateProps,
+  getMerchantOrderIssueSetters,
+  getMerchantOrderIssueStateProps,
 } from './MerchantRoleStateProps'
 export {
   getMerchantActionProps,

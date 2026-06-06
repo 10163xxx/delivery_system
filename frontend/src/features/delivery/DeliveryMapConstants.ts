@@ -1,0 +1,17 @@
+export const DELIVERY_DISTANCE_LIMIT_KM = 10
+export const DELIVERY_FALLBACK_DISTANCE_KM = 2.8
+export const DELIVERY_EARTH_RADIUS_KM = 6371
+export const DELIVERY_MAP_DEFAULT_ZOOM = 14
+export const DELIVERY_MAP_COMPACT_ZOOM = 15
+export const DELIVERY_MAP_MAX_ZOOM = 19
+export const DELIVERY_MAP_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+export const DELIVERY_MAP_ATTRIBUTION = '&copy; OpenStreetMap contributors'
+export const DELIVERY_MAP_ROUTE_COLOR_CLEAR = '#d97706'
+export const DELIVERY_MAP_ROUTE_COLOR_RAINY = '#4c6ea1'
+export const DELIVERY_MAP_ROUTE_DASH_ARRAY = '8, 8'
+export const DELIVERY_MAP_ROUTE_WEIGHT = 4
+export const DELIVERY_MAP_ROUTE_OPACITY = 0.92
+export const DELIVERY_MAP_GEOCODE_URL = 'https://nominatim.openstreetmap.org/search'
+export const DELIVERY_MAP_GEOCODE_RESULT_LIMIT = 1
+export const DELIVERY_MAP_GEOCODE_PROVIDER_RESULT_LIMIT = 5
+export const DELIVERY_MAP_GEOCODE_TIMEOUT_MS = 5000

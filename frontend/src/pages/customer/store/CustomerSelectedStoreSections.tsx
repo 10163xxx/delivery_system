@@ -1,38 +1,45 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
-import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/objects/customer/page/CustomerPageObjects'
+import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/pages/customer/objects/CustomerPageObjects'
 import { getSelectedCartLines } from '@/features/delivery/DeliveryServices'
 import {
+  ALL_REVIEW_RATING_FILTER,
+  CUSTOMER_REVIEW_FILTER_DAYS,
+  INCLUSIVE_RANGE_BOUNDARY_OFFSET,
+  type CustomerReviewFilterDay,
   MAX_RATING,
   MILLISECONDS_PER_DAY,
   MIN_RATING,
+  parseCustomerReviewFilterDay,
+  parseReviewRatingFilter,
+  type ReviewRatingFilter,
+  ZERO_COUNT,
 } from '@/features/delivery/DeliveryConstants'
 import { StoreReviewList } from '@/pages/customer/store/CustomerSelectedStorePanel'
 import {
+  DELIVERY_UI,
   SELECTED_STORE_COPY,
   SELECTED_STORE_SECTIONS_COPY,
   SELECTED_STORE_SECTIONS_LAYOUT,
+  formatReviewStarOptionLabel,
+  formatSelectedStoreTabListAriaLabel,
 } from '@/features/delivery/DeliveryMessages'
 
-const STORE_REVIEW_DAY_FILTER = {
-  all: 0,
-  recentWeek: 7,
-  recentMonth: 30,
-  recentQuarter: 90,
-} as const
+const STORE_REVIEW_RATING_OPTION_COUNT =
+  MAX_RATING - MIN_RATING + INCLUSIVE_RANGE_BOUNDARY_OFFSET
 
 const STORE_REVIEW_DAY_FILTER_OPTIONS = [
-  { value: STORE_REVIEW_DAY_FILTER.all, label: SELECTED_STORE_SECTIONS_COPY.reviewDayFilterAllLabel },
-  { value: STORE_REVIEW_DAY_FILTER.recentWeek, label: SELECTED_STORE_SECTIONS_COPY.reviewDayFilterRecentWeekLabel },
-  { value: STORE_REVIEW_DAY_FILTER.recentMonth, label: SELECTED_STORE_SECTIONS_COPY.reviewDayFilterRecentMonthLabel },
-  { value: STORE_REVIEW_DAY_FILTER.recentQuarter, label: SELECTED_STORE_SECTIONS_COPY.reviewDayFilterRecentQuarterLabel },
+  { value: CUSTOMER_REVIEW_FILTER_DAYS.all, label: SELECTED_STORE_SECTIONS_COPY.reviewDayFilterAllLabel },
+  { value: CUSTOMER_REVIEW_FILTER_DAYS.recentWeek, label: SELECTED_STORE_SECTIONS_COPY.reviewDayFilterRecentWeekLabel },
+  { value: CUSTOMER_REVIEW_FILTER_DAYS.recentMonth, label: SELECTED_STORE_SECTIONS_COPY.reviewDayFilterRecentMonthLabel },
+  { value: CUSTOMER_REVIEW_FILTER_DAYS.recentQuarter, label: SELECTED_STORE_SECTIONS_COPY.reviewDayFilterRecentQuarterLabel },
 ] as const
 
 const STORE_REVIEW_STAR_FILTER_OPTIONS = [
-  { value: 0, label: SELECTED_STORE_SECTIONS_COPY.reviewAllStarLabel },
-  ...Array.from({ length: MAX_RATING - MIN_RATING + 1 }, (_, index) => {
+  { value: ALL_REVIEW_RATING_FILTER, label: SELECTED_STORE_SECTIONS_COPY.reviewAllStarLabel },
+  ...Array.from({ length: STORE_REVIEW_RATING_OPTION_COUNT }, (_, index) => {
     const rating = MAX_RATING - index
-    return { value: rating, label: SELECTED_STORE_SECTIONS_COPY.reviewStarOptionLabel(rating) }
+    return { value: rating, label: formatReviewStarOptionLabel(rating) }
   }),
 ] as const
 
@@ -54,12 +61,12 @@ export function SelectedStoreToolbar({ props }: { props: CustomerRoleProps }) {
   const isFavoriteStore = favoriteStoreIds.includes(selectedStore.id)
 
   return (
-    <div className="store-toolbar">
+    <div className={SELECTED_STORE_SECTIONS_LAYOUT.storeToolbarClassName}>
       <div>
-        <p className="ticket-kind">{SELECTED_STORE_SECTIONS_COPY.currentStoreLabel}</p>
+        <p className={DELIVERY_UI.ticketKindClassName}>{SELECTED_STORE_SECTIONS_COPY.currentStoreLabel}</p>
         <strong>{selectedStore.name}</strong>
-        <p className="meta-line">{selectedStore.category} · {formatStoreAvailability(selectedStore)}</p>
-        <p className="meta-line">
+        <p className={DELIVERY_UI.metaLineClassName}>{selectedStore.category} · {formatStoreAvailability(selectedStore)}</p>
+        <p className={DELIVERY_UI.metaLineClassName}>
           {SELECTED_STORE_SECTIONS_COPY.businessHoursPrefix}
           {formatBusinessHours(selectedStore.businessHours)}
         </p>
@@ -70,45 +77,45 @@ export function SelectedStoreToolbar({ props }: { props: CustomerRoleProps }) {
       </div>
       <div>
         <p>{SELECTED_STORE_SECTIONS_COPY.selectedItemsLabel}</p>
-        <strong>{getSelectedCartLines(selectedStore, quantities, selectedMenuItemConfigurations).reduce((sum, line) => sum + line.quantity, 0)}</strong>
+        <strong>{getSelectedCartLines(selectedStore, quantities, selectedMenuItemConfigurations).reduce((sum, line) => sum + line.quantity, ZERO_COUNT)}</strong>
       </div>
       <button
-        className="secondary-button store-back-button"
+        className={SELECTED_STORE_SECTIONS_LAYOUT.toolbarBackButtonClassName}
         onClick={() => leaveStore()}
         style={{
           minWidth: SELECTED_STORE_SECTIONS_LAYOUT.toolbarButtonMinWidth,
           minHeight: SELECTED_STORE_SECTIONS_LAYOUT.toolbarButtonMinHeight,
           fontSize: SELECTED_STORE_SECTIONS_LAYOUT.toolbarButtonFontSize,
         }}
-        type="button"
+        type={DELIVERY_UI.buttonType}
       >
         {SELECTED_STORE_SECTIONS_COPY.backToCurrentCategoryButton}
       </button>
       <button
-        className="primary-button store-reset-button"
+        className={SELECTED_STORE_SECTIONS_LAYOUT.toolbarResetButtonClassName}
         onClick={() => resetStoreCategory()}
         style={{
           minWidth: SELECTED_STORE_SECTIONS_LAYOUT.toolbarButtonMinWidth,
           minHeight: SELECTED_STORE_SECTIONS_LAYOUT.toolbarButtonMinHeight,
           fontSize: SELECTED_STORE_SECTIONS_LAYOUT.toolbarButtonFontSize,
         }}
-        type="button"
+        type={DELIVERY_UI.buttonType}
       >
         {SELECTED_STORE_SECTIONS_COPY.resetCategoryButton}
       </button>
       <button
-        className="secondary-button"
+        className={DELIVERY_UI.secondaryButtonClassName}
         onClick={() => toggleFavoriteStore(selectedStore.id)}
-        type="button"
+        type={DELIVERY_UI.buttonType}
       >
         {isFavoriteStore
           ? SELECTED_STORE_COPY.unfavoriteStoreButton
           : SELECTED_STORE_COPY.favoriteStoreButton}
       </button>
       <button
-        className="secondary-button"
+        className={DELIVERY_UI.secondaryButtonClassName}
         onClick={() => toggleBlockedStore(selectedStore.id)}
-        type="button"
+        type={DELIVERY_UI.buttonType}
       >
         {SELECTED_STORE_COPY.blockStoreButton}
       </button>
@@ -125,27 +132,36 @@ export function SelectedStoreTabs({
   selectedStoreTab: CustomerStoreTab
   setSelectedStoreTab: Dispatch<SetStateAction<CustomerStoreTab>>
 }) {
+  const menuTabStateClass =
+    selectedStoreTab === CUSTOMER_STORE_TAB.menu
+      ? SELECTED_STORE_SECTIONS_LAYOUT.activeTabClassName
+      : SELECTED_STORE_SECTIONS_LAYOUT.tabClassName
+  const reviewsTabStateClass =
+    selectedStoreTab === CUSTOMER_STORE_TAB.reviews
+      ? SELECTED_STORE_SECTIONS_LAYOUT.activeTabClassName
+      : SELECTED_STORE_SECTIONS_LAYOUT.tabClassName
+
   return (
     <div
-      className="store-detail-tabs"
-      role="tablist"
-      aria-label={SELECTED_STORE_SECTIONS_COPY.tabListAriaLabel(selectedStoreName)}
+      className={SELECTED_STORE_SECTIONS_LAYOUT.tabsClassName}
+      role={DELIVERY_UI.roleTabList}
+      aria-label={formatSelectedStoreTabListAriaLabel(selectedStoreName)}
     >
       <button
         aria-selected={selectedStoreTab === CUSTOMER_STORE_TAB.menu}
-        className={`store-detail-tab ${selectedStoreTab === CUSTOMER_STORE_TAB.menu ? 'is-active' : ''}`}
+        className={menuTabStateClass}
         onClick={() => setSelectedStoreTab(CUSTOMER_STORE_TAB.menu)}
-        role="tab"
-        type="button"
+        role={DELIVERY_UI.roleTab}
+        type={DELIVERY_UI.buttonType}
       >
         {SELECTED_STORE_SECTIONS_COPY.menuTabButton}
       </button>
       <button
         aria-selected={selectedStoreTab === CUSTOMER_STORE_TAB.reviews}
-        className={`store-detail-tab ${selectedStoreTab === CUSTOMER_STORE_TAB.reviews ? 'is-active' : ''}`}
+        className={reviewsTabStateClass}
         onClick={() => setSelectedStoreTab(CUSTOMER_STORE_TAB.reviews)}
-        role="tab"
-        type="button"
+        role={DELIVERY_UI.roleTab}
+        type={DELIVERY_UI.buttonType}
       >
         {SELECTED_STORE_SECTIONS_COPY.reviewTabButton}
       </button>
@@ -157,19 +173,19 @@ export function SelectedStoreReviewSection({ props }: { props: CustomerRoleProps
   const { selectedStore, formatTime, storeCustomerReviews } = props
   if (!selectedStore) return null
   const reviews = storeCustomerReviews[selectedStore.id] ?? []
-  const [selectedRating, setSelectedRating] = useState<number>(0)
-  const [selectedRecentDays, setSelectedRecentDays] = useState<number>(STORE_REVIEW_DAY_FILTER.all)
+  const [selectedRating, setSelectedRating] = useState<ReviewRatingFilter>(ALL_REVIEW_RATING_FILTER)
+  const [selectedRecentDays, setSelectedRecentDays] = useState<CustomerReviewFilterDay>(CUSTOMER_REVIEW_FILTER_DAYS.all)
 
   useEffect(() => {
-    setSelectedRating(0)
-    setSelectedRecentDays(STORE_REVIEW_DAY_FILTER.all)
+    setSelectedRating(ALL_REVIEW_RATING_FILTER)
+    setSelectedRecentDays(CUSTOMER_REVIEW_FILTER_DAYS.all)
   }, [selectedStore.id])
 
   const now = Date.now()
   const filteredReviews = reviews.filter((review) => {
-    const matchesRating = selectedRating === 0 || review.rating === selectedRating
+    const matchesRating = selectedRating === ALL_REVIEW_RATING_FILTER || review.rating === selectedRating
     const matchesRecentDays =
-      selectedRecentDays === STORE_REVIEW_DAY_FILTER.all ||
+      selectedRecentDays === CUSTOMER_REVIEW_FILTER_DAYS.all ||
       now - new Date(review.completedAt).getTime() <=
         selectedRecentDays * MILLISECONDS_PER_DAY
 
@@ -177,24 +193,24 @@ export function SelectedStoreReviewSection({ props }: { props: CustomerRoleProps
   })
 
   return (
-    <section className="store-review-panel">
-      <div className="panel-header">
+    <section className={SELECTED_STORE_SECTIONS_LAYOUT.reviewPanelClassName}>
+      <div className={DELIVERY_UI.panelHeaderClassName}>
         <div>
-          <p className="ticket-kind">{SELECTED_STORE_SECTIONS_COPY.reviewPanelTicketKind}</p>
+          <p className={DELIVERY_UI.ticketKindClassName}>{SELECTED_STORE_SECTIONS_COPY.reviewPanelTicketKind}</p>
           <h3>{selectedStore.name}</h3>
-          <p className="meta-line">{SELECTED_STORE_SECTIONS_COPY.reviewPanelDescription}</p>
+          <p className={DELIVERY_UI.metaLineClassName}>{SELECTED_STORE_SECTIONS_COPY.reviewPanelDescription}</p>
         </div>
-        <span className="badge">
+        <span className={SELECTED_STORE_SECTIONS_LAYOUT.badgeClassName}>
           {reviews.length}
           {SELECTED_STORE_SECTIONS_COPY.reviewCountSuffix}
         </span>
       </div>
-      <div className="summary-bar">
+      <div className={DELIVERY_UI.summaryBarClassName}>
         <label>
           <span>{SELECTED_STORE_SECTIONS_COPY.reviewRatingFilterLabel}</span>
           <select
             value={selectedRating}
-            onChange={(event) => setSelectedRating(Number(event.target.value))}
+            onChange={(event) => setSelectedRating(parseReviewRatingFilter(event.target.value))}
           >
             {STORE_REVIEW_STAR_FILTER_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -207,7 +223,7 @@ export function SelectedStoreReviewSection({ props }: { props: CustomerRoleProps
           <span>{SELECTED_STORE_SECTIONS_COPY.reviewTimeFilterLabel}</span>
           <select
             value={selectedRecentDays}
-            onChange={(event) => setSelectedRecentDays(Number(event.target.value))}
+            onChange={(event) => setSelectedRecentDays(parseCustomerReviewFilterDay(event.target.value))}
           >
             {STORE_REVIEW_DAY_FILTER_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

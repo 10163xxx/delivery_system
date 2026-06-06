@@ -1,5 +1,5 @@
 import { createInitialAfterSalesDraft } from '@/features/delivery/DeliveryServices'
-import type { CustomerOrderDetailSectionProps } from '@/objects/order/page/OrderPageObjects'
+import type { CustomerOrderDetailSectionProps } from '@/pages/order/objects/OrderPageObjects'
 import {
   AfterSalesActionPanel,
   renderCustomerOrderFooter,

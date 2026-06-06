@@ -8,7 +8,7 @@ import {
   CustomerProfileBlockedStoresPanel,
   CustomerProfileFavoritesPanel,
 } from '@/pages/customer/profile/CustomerProfileStorePreferencePanels'
-import { CUSTOMER_WORKSPACE_VIEW } from '@/objects/page/DeliveryAppObjects'
+import { CUSTOMER_WORKSPACE_VIEW } from '@/pages/delivery/objects/DeliveryAppObjects'
 
 export function CustomerProfilePanelContent(props: CustomerRoleProps) {
   if (props.customerWorkspaceView === CUSTOMER_WORKSPACE_VIEW.recharge) return <CustomerProfileRechargePanel props={props} />

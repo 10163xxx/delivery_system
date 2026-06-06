@@ -1,7 +1,7 @@
 import type {
   MerchantPropsArgs,
   PageView,
-} from '@/objects/page/AppBuildRolePropsObjects'
+} from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 import { getSharedFormattingProps } from '@/pages/delivery/app/roleProps/SharedFormattingProps'
 
 export function getMerchantViewIdentityProps(

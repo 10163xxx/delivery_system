@@ -3,24 +3,34 @@ import type { CustomerRoleProps } from '@/pages/delivery/app/roleProps'
 import type {
   CustomerOrderSection,
   CustomerOrderSectionData,
-} from '@/objects/customer/page/CustomerPageObjects'
-import { CUSTOMER_ORDER_SECTION as CUSTOMER_ORDER_SECTIONS } from '@/objects/customer/page/CustomerPageObjects'
+} from '@/pages/customer/objects/CustomerPageObjects'
+import { CUSTOMER_ORDER_SECTION as CUSTOMER_ORDER_SECTIONS } from '@/pages/customer/objects/CustomerPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { OrderList } from '@/pages/order/OrderList'
 import { CustomerOrderDetailSection } from '@/pages/order/CustomerOrderHelpers'
-import { ORDER_STATUS, STORE_STATUS, type OrderSummary, type Store } from '@/objects/core/SharedObjects'
+import { STORE_STATUS, type OrderId, type OrderSummary, type Store } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   buildCustomerOrderDetailRoute,
   CUSTOMER_WORKSPACE_VIEW,
-} from '@/objects/page/DeliveryAppObjects'
-import { CUSTOMER_ORDER_WORKSPACE_COPY } from '@/features/delivery/DeliveryMessages'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
+import {
+  CUSTOMER_ORDER_WORKSPACE_COPY,
+  CUSTOMER_ORDER_WORKSPACE_LAYOUT,
+  DELIVERY_UI,
+  formatNoPendingReviewBanner,
+  formatNoReviewOrdersMessage,
+  formatOrderWorkspacePanelDescription,
+  formatPendingReviewBanner,
+} from '@/features/delivery/DeliveryMessages'
+import {
+  ACTIVE_CUSTOMER_ORDER_STATUSES,
+  ZERO_COUNT,
+} from '@/features/delivery/DeliveryConstants'
 
-const ACTIVE_ORDER_STATUSES: OrderSummary['status'][] = [
-  ORDER_STATUS.pendingMerchantAcceptance,
-  ORDER_STATUS.preparing,
-  ORDER_STATUS.readyForPickup,
-  ORDER_STATUS.delivering,
-]
+type RepeatOrderAvailability =
+  | { readonly canRepeat: true }
+  | { readonly canRepeat: false; readonly reason: string }
 
 function getCustomerOrderSectionData(args: {
   customerOrderSection: CustomerOrderSection
@@ -51,7 +61,7 @@ function getCustomerOrderSectionData(args: {
       title: CUSTOMER_ORDER_WORKSPACE_COPY.reviewSectionTitle,
       count: pendingCustomerReviewOrders.length,
       orders: pendingCustomerReviewOrders,
-      emptyText: CUSTOMER_ORDER_WORKSPACE_COPY.noReviewOrders(REVIEW_WINDOW_DAYS),
+      emptyText: formatNoReviewOrdersMessage(REVIEW_WINDOW_DAYS),
     }
   }
 
@@ -68,14 +78,16 @@ function getCustomerOrderSectionData(args: {
 }
 
 function getActiveCustomerOrders(customerOrders: OrderSummary[]) {
-  return customerOrders.filter((order: OrderSummary) => ACTIVE_ORDER_STATUSES.includes(order.status))
+  return customerOrders.filter((order: OrderSummary) =>
+    ACTIVE_CUSTOMER_ORDER_STATUSES.some((status) => status === order.status),
+  )
 }
 
 function getRepeatOrderAvailability(
   order: OrderSummary,
   stores: Store[],
   isStoreCurrentlyOpen: CustomerRoleProps['isStoreCurrentlyOpen'],
-) {
+): RepeatOrderAvailability {
   const store = stores.find((entry) => entry.id === order.storeId)
 
   if (!store) {
@@ -92,7 +104,7 @@ function getRepeatOrderAvailability(
     }
   }
 
-  if (store.menu.length === 0) {
+  if (store.menu.length === ZERO_COUNT) {
     return {
       canRepeat: false,
       reason: CUSTOMER_ORDER_WORKSPACE_COPY.repeatUnavailableNoMenu,
@@ -106,7 +118,7 @@ function getRepeatOrderAvailability(
     }
   }
 
-  return { canRepeat: true, reason: '' }
+  return { canRepeat: true }
 }
 
 function OrderWorkspaceBanner({
@@ -114,13 +126,13 @@ function OrderWorkspaceBanner({
   REVIEW_WINDOW_DAYS,
 }: Pick<CustomerRoleProps, 'pendingCustomerReviewOrders' | 'REVIEW_WINDOW_DAYS'>) {
   return (
-    <div className={pendingCustomerReviewOrders.length > 0 ? 'banner info' : 'banner'}>
-      {pendingCustomerReviewOrders.length > 0
-        ? CUSTOMER_ORDER_WORKSPACE_COPY.pendingReviewBanner(
+    <div className={pendingCustomerReviewOrders.length > ZERO_COUNT ? DELIVERY_UI.bannerInfoClassName : DELIVERY_UI.bannerClassName}>
+      {pendingCustomerReviewOrders.length > ZERO_COUNT
+        ? formatPendingReviewBanner(
             pendingCustomerReviewOrders.length,
             REVIEW_WINDOW_DAYS,
           )
-        : CUSTOMER_ORDER_WORKSPACE_COPY.noPendingReviewBanner(REVIEW_WINDOW_DAYS)}
+        : formatNoPendingReviewBanner(REVIEW_WINDOW_DAYS)}
     </div>
   )
 }
@@ -133,18 +145,18 @@ function OrderSectionSwitcher({
   setCustomerOrderSection: React.Dispatch<React.SetStateAction<CustomerOrderSection>>
 }) {
   return (
-    <div className="order-section-switcher">
-      <button className={customerOrderSection === CUSTOMER_ORDER_SECTIONS.all ? 'primary-button' : 'secondary-button'} onClick={() => setCustomerOrderSection((current) => (current === CUSTOMER_ORDER_SECTIONS.all ? CUSTOMER_ORDER_SECTIONS.none : CUSTOMER_ORDER_SECTIONS.all))} type="button">
+    <div className={CUSTOMER_ORDER_WORKSPACE_LAYOUT.orderSectionSwitcherClassName}>
+      <button className={customerOrderSection === CUSTOMER_ORDER_SECTIONS.all ? DELIVERY_UI.primaryButtonClassName : DELIVERY_UI.secondaryButtonClassName} onClick={() => setCustomerOrderSection((current) => (current === CUSTOMER_ORDER_SECTIONS.all ? CUSTOMER_ORDER_SECTIONS.none : CUSTOMER_ORDER_SECTIONS.all))} type={DELIVERY_UI.buttonType}>
         {customerOrderSection === CUSTOMER_ORDER_SECTIONS.all
           ? CUSTOMER_ORDER_WORKSPACE_COPY.allSectionToggleCollapse
           : CUSTOMER_ORDER_WORKSPACE_COPY.allSectionToggleExpand}
       </button>
-      <button className={customerOrderSection === CUSTOMER_ORDER_SECTIONS.active ? 'primary-button' : 'secondary-button'} onClick={() => setCustomerOrderSection((current) => (current === CUSTOMER_ORDER_SECTIONS.active ? CUSTOMER_ORDER_SECTIONS.none : CUSTOMER_ORDER_SECTIONS.active))} type="button">
+      <button className={customerOrderSection === CUSTOMER_ORDER_SECTIONS.active ? DELIVERY_UI.primaryButtonClassName : DELIVERY_UI.secondaryButtonClassName} onClick={() => setCustomerOrderSection((current) => (current === CUSTOMER_ORDER_SECTIONS.active ? CUSTOMER_ORDER_SECTIONS.none : CUSTOMER_ORDER_SECTIONS.active))} type={DELIVERY_UI.buttonType}>
         {customerOrderSection === CUSTOMER_ORDER_SECTIONS.active
           ? CUSTOMER_ORDER_WORKSPACE_COPY.activeSectionToggleCollapse
           : CUSTOMER_ORDER_WORKSPACE_COPY.activeSectionToggleExpand}
       </button>
-      <button className={customerOrderSection === CUSTOMER_ORDER_SECTIONS.review ? 'primary-button' : 'secondary-button'} onClick={() => setCustomerOrderSection((current) => (current === CUSTOMER_ORDER_SECTIONS.review ? CUSTOMER_ORDER_SECTIONS.none : CUSTOMER_ORDER_SECTIONS.review))} type="button">
+      <button className={customerOrderSection === CUSTOMER_ORDER_SECTIONS.review ? DELIVERY_UI.primaryButtonClassName : DELIVERY_UI.secondaryButtonClassName} onClick={() => setCustomerOrderSection((current) => (current === CUSTOMER_ORDER_SECTIONS.review ? CUSTOMER_ORDER_SECTIONS.none : CUSTOMER_ORDER_SECTIONS.review))} type={DELIVERY_UI.buttonType}>
         {customerOrderSection === CUSTOMER_ORDER_SECTIONS.review
           ? CUSTOMER_ORDER_WORKSPACE_COPY.reviewSectionToggleCollapse
           : CUSTOMER_ORDER_WORKSPACE_COPY.reviewSectionToggleExpand}
@@ -173,14 +185,14 @@ function OrderSectionContent({
   stores: CustomerRoleProps['stores']
 }) {
   if (!sectionData) {
-    return <div className="empty-card">{CUSTOMER_ORDER_WORKSPACE_COPY.emptySelection}</div>
+    return <div className={DELIVERY_UI.emptyCardClassName}>{CUSTOMER_ORDER_WORKSPACE_COPY.emptySelection}</div>
   }
 
   return (
-    <section className="order-section-card">
-      <div className="order-section-header">
+    <section className={CUSTOMER_ORDER_WORKSPACE_LAYOUT.orderSectionCardClassName}>
+      <div className={CUSTOMER_ORDER_WORKSPACE_LAYOUT.orderSectionHeaderClassName}>
         <div>
-          <p className="ticket-kind">{sectionData.title}</p>
+          <p className={DELIVERY_UI.ticketKindClassName}>{sectionData.title}</p>
           <h3>{`${sectionData.count}${CUSTOMER_ORDER_WORKSPACE_COPY.sectionCountSuffix}`}</h3>
         </div>
       </div>
@@ -191,27 +203,27 @@ function OrderSectionContent({
           const repeatAvailability = getRepeatOrderAvailability(order, stores, isStoreCurrentlyOpen)
 
           return (
-            <div className="action-row">
+            <div className={DELIVERY_UI.actionRowClassName}>
               <button
-                className="secondary-button"
+                className={DELIVERY_UI.secondaryButtonClassName}
                 disabled={!repeatAvailability.canRepeat}
                 onClick={() => {
                   if (repeatAvailability.canRepeat) repeatOrder(order)
                 }}
                 title={repeatAvailability.canRepeat ? undefined : repeatAvailability.reason}
-                type="button"
+                type={DELIVERY_UI.buttonType}
               >
                 {CUSTOMER_ORDER_WORKSPACE_COPY.repeatOrderButton}
               </button>
               {!repeatAvailability.canRepeat ? (
-                <small className="meta-line">{repeatAvailability.reason}</small>
+                <small className={DELIVERY_UI.metaLineClassName}>{repeatAvailability.reason}</small>
               ) : null}
             </div>
           )
         }}
         formatPrice={formatPrice}
         formatTime={formatTime}
-        onOpenOrder={(orderId) => navigate(buildCustomerOrderDetailRoute(orderId))}
+        onOpenOrder={(orderId) => navigate(buildCustomerOrderDetailRoute(asDomainText<OrderId>(orderId)))}
         statusLabels={statusLabels}
       />
     </section>
@@ -254,8 +266,8 @@ export function CustomerOrdersWorkspace(props: CustomerRoleProps) {
 
   useEffect(() => {
     if (!customerOrderSection) return
-    if (customerOrderSection === CUSTOMER_ORDER_SECTIONS.review && pendingCustomerReviewOrders.length === 0) return
-    if (customerOrderSection === CUSTOMER_ORDER_SECTIONS.active && activeCustomerOrders.length === 0) return
+    if (customerOrderSection === CUSTOMER_ORDER_SECTIONS.review && pendingCustomerReviewOrders.length === ZERO_COUNT) return
+    if (customerOrderSection === CUSTOMER_ORDER_SECTIONS.active && activeCustomerOrders.length === ZERO_COUNT) return
   }, [activeCustomerOrders.length, customerOrderSection, pendingCustomerReviewOrders.length])
 
   if (props.customerWorkspaceView === CUSTOMER_WORKSPACE_VIEW.orderDetail) {
@@ -265,13 +277,13 @@ export function CustomerOrdersWorkspace(props: CustomerRoleProps) {
   return (
     <Panel
       title={CUSTOMER_ORDER_WORKSPACE_COPY.orderWorkspacePanelTitle}
-      description={CUSTOMER_ORDER_WORKSPACE_COPY.orderWorkspacePanelDescription(REVIEW_WINDOW_DAYS)}
+      description={formatOrderWorkspacePanelDescription(REVIEW_WINDOW_DAYS)}
     >
       <OrderWorkspaceBanner
         pendingCustomerReviewOrders={pendingCustomerReviewOrders}
         REVIEW_WINDOW_DAYS={REVIEW_WINDOW_DAYS}
       />
-      <div className="summary-bar">
+      <div className={DELIVERY_UI.summaryBarClassName}>
         <div>
           <p>{CUSTOMER_ORDER_WORKSPACE_COPY.historyOrderCountLabel}</p>
           <strong>{customerOrders.length}</strong>

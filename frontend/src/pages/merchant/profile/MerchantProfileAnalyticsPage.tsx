@@ -1,5 +1,5 @@
 import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
-import type { MerchantTrendPoint } from '@/objects/merchant/page/MerchantPageObjects'
+import type { MerchantTrendPoint } from '@/pages/merchant/objects/MerchantPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { ROUTE_PATH } from '@/objects/core/SharedObjects'
 
@@ -7,7 +7,6 @@ const MERCHANT_PROFILE_ANALYTICS = {
   chartHeight: 240,
   chartWidth: 720,
   emptyDateLabel: '--',
-  pointRadius: '3.5',
   xAxisPadding: 20,
   yAxisPadding: 24,
 } as const
@@ -49,13 +48,11 @@ function getMerchantTrendSummary(merchantMonthlyTrend: MerchantRoleProps['mercha
 
 function TrendLineChart({
   title,
-  accentClassName,
   data,
   valueKey,
   formatValue,
 }: {
   title: string
-  accentClassName: string
   data: MerchantTrendPoint[]
   valueKey: MerchantTrendValueKey
   formatValue: (value: number) => string
@@ -65,7 +62,6 @@ function TrendLineChart({
   const paddingX = MERCHANT_PROFILE_ANALYTICS.xAxisPadding
   const paddingY = MERCHANT_PROFILE_ANALYTICS.yAxisPadding
   const values = data.map((entry) => entry[valueKey])
-  const maxValue = Math.max(...values, 1)
   const path = buildLineChartPath(values, chartWidth, chartHeight, paddingX, paddingY)
   const lastValue = values[values.length - 1] ?? 0
   const totalValue = values.reduce((sum, value) => sum + value, 0)
@@ -77,7 +73,6 @@ function TrendLineChart({
           <p className="ticket-kind">近 30 天</p>
           <h3>{title}</h3>
         </div>
-        <span className="merchant-line-chart__peak">峰值 {formatValue(maxValue)}</span>
       </div>
       <div className="merchant-line-chart__stats">
         <span>累计 <strong>{formatValue(totalValue)}</strong></span>
@@ -87,21 +82,7 @@ function TrendLineChart({
         <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} aria-label={title} role="img">
           <line className="merchant-line-chart__axis" x1={paddingX} x2={paddingX} y1={paddingY} y2={chartHeight - paddingY} />
           <line className="merchant-line-chart__axis" x1={paddingX} x2={chartWidth - paddingX} y1={chartHeight - paddingY} y2={chartHeight - paddingY} />
-          <path className={`merchant-line-chart__path ${accentClassName}`} d={path} />
-          {values.map((value, index) => {
-            const x =
-              paddingX + (values.length > 1 ? ((chartWidth - paddingX * 2) / (values.length - 1)) * index : 0)
-            const y = chartHeight - paddingY - ((chartHeight - paddingY * 2) * value) / maxValue
-            return (
-              <circle
-                key={`${title}-${data[index]?.dateLabel}`}
-                className={`merchant-line-chart__point ${accentClassName}`}
-                cx={x}
-                cy={y}
-                r={MERCHANT_PROFILE_ANALYTICS.pointRadius}
-              />
-            )
-          })}
+          <path className="merchant-line-chart__path" d={path} />
         </svg>
         <div className="merchant-line-chart__labels">
           <span>{data[0]?.dateLabel ?? MERCHANT_PROFILE_ANALYTICS.emptyDateLabel}</span>
@@ -134,8 +115,8 @@ export function MerchantProfileAnalyticsPage(props: MerchantRoleProps) {
       </div>
 
       <div className="merchant-analytics-grid">
-        <TrendLineChart accentClassName="orders" data={merchantMonthlyTrend} formatValue={(value) => `${value} 单`} title="每日订单数" valueKey={MERCHANT_TREND_VALUE_KEY.orderCount} />
-        <TrendLineChart accentClassName="income" data={merchantMonthlyTrend} formatValue={(value) => formatPrice(value)} title="每日收入" valueKey={MERCHANT_TREND_VALUE_KEY.incomeCents} />
+        <TrendLineChart data={merchantMonthlyTrend} formatValue={(value) => `${value} 单`} title="每日订单数" valueKey={MERCHANT_TREND_VALUE_KEY.orderCount} />
+        <TrendLineChart data={merchantMonthlyTrend} formatValue={(value) => formatPrice(value)} title="每日收入" valueKey={MERCHANT_TREND_VALUE_KEY.incomeCents} />
       </div>
     </Panel>
   )

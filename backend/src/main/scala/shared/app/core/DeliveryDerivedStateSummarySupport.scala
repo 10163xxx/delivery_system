@@ -23,17 +23,16 @@ private[app] def collectReviewDerivedCollections(
 ): ReviewDerivedCollections =
   val activeReviewedOrders = state.orders.filter(order =>
     order.reviewStatus == ReviewStatus.Active &&
-      order.storeRating.nonEmpty &&
-      order.riderRating.nonEmpty,
+      (order.storeRating.nonEmpty || order.riderRating.nonEmpty),
   )
   val revokedReviewedOrders = state.orders.filter(order =>
     order.reviewStatus == ReviewStatus.Revoked &&
       (order.storeRating.nonEmpty || order.riderRating.nonEmpty),
   )
-  val storeRatings = activeReviewedOrders.flatMap(order =>
+  val storeRatings = state.orders.filter(_.reviewStatus == ReviewStatus.Active).flatMap(order =>
     order.storeRating.map(rating => order.storeId -> rating)
   )
-  val riderRatings = activeReviewedOrders.flatMap(order =>
+  val riderRatings = state.orders.filter(_.reviewStatus == ReviewStatus.Active).flatMap(order =>
     for
       riderId <- order.riderId
       rating <- order.riderRating

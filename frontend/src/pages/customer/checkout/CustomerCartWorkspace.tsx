@@ -9,10 +9,10 @@ import { CustomerDeliveryRoutePanel } from '@/pages/customer/checkout/CustomerDe
 import {
   CUSTOMER_CHECKOUT_COPY,
 } from '@/pages/customer/checkout/CustomerCheckoutCopy'
-import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CheckoutPanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { ROUTE_PATH } from '@/objects/core/SharedObjects'
-import { buildCustomerOrderStoreRoute } from '@/objects/page/DeliveryAppObjects'
+import { buildCustomerOrderStoreRoute } from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   getSelectedCartLines,
   getMenuItemConfiguredUnitPriceCents,
@@ -29,11 +29,11 @@ function getSelectedCartItems(props: CheckoutPanelProps) {
 }
 
 export function CustomerCartWorkspace(props: CheckoutPanelProps & { navigate: NavigateFunction }) {
-  const { formatPrice, navigate, quantities, selectedStore, updateCartLineQuantity } = props
+  const { formatPrice, navigate, quantities, selectedMenuItemConfigurations, selectedStore, updateCartLineQuantity } = props
   const selectedItems = getSelectedCartItems(props)
   const requiresRequiredCategory = selectedStore ? storeHasRequiredMenuCategory(selectedStore) : false
   const hasRequiredCategorySelection =
-    selectedStore ? hasSelectedRequiredCategoryItem(selectedStore, quantities) : false
+    selectedStore ? hasSelectedRequiredCategoryItem(selectedStore, quantities, selectedMenuItemConfigurations) : false
 
   return (
     <Panel

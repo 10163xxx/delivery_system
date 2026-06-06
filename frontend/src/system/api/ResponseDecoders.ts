@@ -100,18 +100,18 @@ function decodeEnum<T extends string>(value: unknown, path = '$', members: reado
   return decoded
 }
 
-function decodeField<T>(value: unknown, path: string, key: string, decoder: Decoder<T>): T {
-  return decoder(decodeRecord(value, path)[key], `${path}.${key}`)
+function decodeField<T>(value: unknown, path: string, key: string, decoder: Decoder<unknown>): T {
+  return decoder(decodeRecord(value, path)[key], `${path}.${key}`) as T
 }
 
 function decodeOptionalField<T>(
   value: unknown,
   path: string,
   key: string,
-  decoder: Decoder<T>,
+  decoder: Decoder<unknown>,
 ): T | undefined {
   const entry = decodeRecord(value, path)[key]
-  return entry === undefined || entry === null ? undefined : decoder(entry, `${path}.${key}`)
+  return entry === undefined || entry === null ? undefined : decoder(entry, `${path}.${key}`) as T
 }
 
 function decodeOptionalArrayField<T>(
@@ -173,7 +173,7 @@ const decodeStore: Decoder<Store> = (value, path = '$') => {
 }
 const decodeMerchantApplication: Decoder<MerchantApplication> = (value, path = '$') => {
   const review: MerchantApplicationReview = { status: decodeField(value, path, 'status', decodeApplicationStatus), reviewNote: decodeOptionalField(value, path, 'reviewNote', decodeString), submittedAt: decodeField(value, path, 'submittedAt', decodeString), reviewedAt: decodeOptionalField(value, path, 'reviewedAt', decodeString) }
-  return { id: decodeField(value, path, 'id', decodeString), merchantName: decodeField(value, path, 'merchantName', decodeString), storeName: decodeField(value, path, 'storeName', decodeString), category: decodeField(value, path, 'category', decodeStoreCategory), storeAddress: decodeOptionalField(value, path, 'storeAddress', decodeAddressText) ?? decodeAddressText('', `${path}.storeAddress`), businessHours: decodeField(value, path, 'businessHours', decodeBusinessHours), avgPrepMinutes: decodeField(value, path, 'avgPrepMinutes', decodeNumber), imageUrl: decodeOptionalField(value, path, 'imageUrl', decodeString), note: decodeOptionalField(value, path, 'note', decodeString), ...review, review }
+  return { id: decodeField(value, path, 'id', decodeString), merchantName: decodeField(value, path, 'merchantName', decodeString), storeName: decodeField(value, path, 'storeName', decodeString), category: decodeField(value, path, 'category', decodeStoreCategory), storeAddress: decodeOptionalField(value, path, 'storeAddress', decodeAddressText) ?? decodeAddressText('', `${path}.storeAddress`), location: decodeOptionalField(value, path, 'location', decodeStoreLocation), businessHours: decodeField(value, path, 'businessHours', decodeBusinessHours), avgPrepMinutes: decodeField(value, path, 'avgPrepMinutes', decodeNumber), imageUrl: decodeOptionalField(value, path, 'imageUrl', decodeString), note: decodeOptionalField(value, path, 'note', decodeString), ...review, review }
 }
 const decodeReviewAppeal: Decoder<ReviewAppeal> = (value, path = '$') => {
   const review: ReviewAppealReview = { status: decodeField(value, path, 'status', decodeAppealStatus), resolutionNote: decodeOptionalField(value, path, 'resolutionNote', decodeString), submittedAt: decodeField(value, path, 'submittedAt', decodeString), reviewedAt: decodeOptionalField(value, path, 'reviewedAt', decodeString) }
@@ -212,16 +212,16 @@ export const decodeVoid: Decoder<void> = (value, path = '$') => {
   if (value !== undefined) fail(path, 'expected empty response')
 }
 export const decodeDeliveryAppState: Decoder<DeliveryAppState> = (value, path = '$') => {
-  const customers = decodeField(value, path, 'customers', (entry, entryPath) => decodeArray(entry, entryPath, decodeCustomer))
-  const merchantProfiles = decodeField(value, path, 'merchantProfiles', (entry, entryPath) => decodeArray(entry, entryPath, decodeMerchantProfile))
-  const riders = decodeField(value, path, 'riders', (entry, entryPath) => decodeArray(entry, entryPath, decodeRider))
-  const admins = decodeField(value, path, 'admins', (entry, entryPath) => decodeArray(entry, entryPath, decodeAdminProfile))
-  const stores = decodeField(value, path, 'stores', (entry, entryPath) => decodeArray(entry, entryPath, decodeStore))
-  const merchantApplications = decodeField(value, path, 'merchantApplications', (entry, entryPath) => decodeArray(entry, entryPath, decodeMerchantApplication))
-  const reviewAppeals = decodeField(value, path, 'reviewAppeals', (entry, entryPath) => decodeArray(entry, entryPath, decodeReviewAppeal))
-  const eligibilityReviews = decodeField(value, path, 'eligibilityReviews', (entry, entryPath) => decodeArray(entry, entryPath, decodeEligibilityReview))
-  const orders = decodeField(value, path, 'orders', (entry, entryPath) => decodeArray(entry, entryPath, decodeOrderSummary))
-  const tickets = decodeField(value, path, 'tickets', (entry, entryPath) => decodeArray(entry, entryPath, decodeAdminTicket))
-  const metrics = decodeField(value, path, 'metrics', decodeSystemMetrics)
+  const customers = decodeField<DeliveryAppState['customers']>(value, path, 'customers', (entry, entryPath) => decodeArray(entry, entryPath, decodeCustomer))
+  const merchantProfiles = decodeField<DeliveryAppState['merchantProfiles']>(value, path, 'merchantProfiles', (entry, entryPath) => decodeArray(entry, entryPath, decodeMerchantProfile))
+  const riders = decodeField<DeliveryAppState['riders']>(value, path, 'riders', (entry, entryPath) => decodeArray(entry, entryPath, decodeRider))
+  const admins = decodeField<DeliveryAppState['admins']>(value, path, 'admins', (entry, entryPath) => decodeArray(entry, entryPath, decodeAdminProfile))
+  const stores = decodeField<DeliveryAppState['stores']>(value, path, 'stores', (entry, entryPath) => decodeArray(entry, entryPath, decodeStore))
+  const merchantApplications = decodeField<DeliveryAppState['merchantApplications']>(value, path, 'merchantApplications', (entry, entryPath) => decodeArray(entry, entryPath, decodeMerchantApplication))
+  const reviewAppeals = decodeField<DeliveryAppState['reviewAppeals']>(value, path, 'reviewAppeals', (entry, entryPath) => decodeArray(entry, entryPath, decodeReviewAppeal))
+  const eligibilityReviews = decodeField<DeliveryAppState['eligibilityReviews']>(value, path, 'eligibilityReviews', (entry, entryPath) => decodeArray(entry, entryPath, decodeEligibilityReview))
+  const orders = decodeField<DeliveryAppState['orders']>(value, path, 'orders', (entry, entryPath) => decodeArray(entry, entryPath, decodeOrderSummary))
+  const tickets = decodeField<DeliveryAppState['tickets']>(value, path, 'tickets', (entry, entryPath) => decodeArray(entry, entryPath, decodeAdminTicket))
+  const metrics = decodeField<DeliveryAppState['metrics']>(value, path, 'metrics', decodeSystemMetrics)
   return { customers, merchantProfiles, riders, admins, stores, merchantApplications, reviewAppeals, eligibilityReviews, orders, tickets, metrics, deliveryState: { orders, tickets, metrics } }
 }

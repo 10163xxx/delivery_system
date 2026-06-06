@@ -4,7 +4,7 @@ import { MerchantConsolePanel } from '@/pages/merchant/workspace/MerchantConsole
 import { MerchantOrdersWorkspacePanel } from '@/pages/merchant/workspace/MerchantOrdersWorkspacePanel'
 import { MerchantProfilePanel } from '@/pages/merchant/profile/MerchantProfilePanel'
 import { MerchantWorkspaceHeader } from '@/pages/merchant/workspace/MerchantWorkspaceHeader'
-import { MERCHANT_WORKSPACE_VIEW } from '@/objects/page/DeliveryAppObjects'
+import { MERCHANT_WORKSPACE_VIEW } from '@/pages/delivery/objects/DeliveryAppObjects'
 import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
 
 export function MerchantRoleView(props: MerchantRoleProps) {

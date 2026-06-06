@@ -1,6 +1,12 @@
-import type { RiderProfileAccountSectionProps } from '@/objects/rider/page/RiderPageObjects'
-import { PAYOUT_ACCOUNT_TYPE } from '@/objects/core/SharedObjects'
+import type { RiderProfileAccountSectionProps } from '@/pages/rider/objects/RiderPageObjects'
+import {
+  PAYOUT_ACCOUNT_TYPE,
+  type AccountHolderName,
+  type AccountNumber,
+  type BankName,
+} from '@/objects/core/SharedObjects'
 import { DELIVERY_CONSOLE_MESSAGES } from '@/features/delivery/DeliveryServices'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 export function getCurrentPayoutAccountLabel(selectedRider: RiderProfileAccountSectionProps['selectedRider']) {
   return selectedRider.payoutAccount
@@ -22,7 +28,7 @@ export function RiderProfilePayoutTypeField({
         value={profileDraft.payoutAccountType}
         onChange={(event) => {
           const value = event.target.value === PAYOUT_ACCOUNT_TYPE.bank ? PAYOUT_ACCOUNT_TYPE.bank : PAYOUT_ACCOUNT_TYPE.alipay
-          setProfileDraft((current) => ({ ...current, payoutAccountType: value, bankName: value === PAYOUT_ACCOUNT_TYPE.bank ? current.bankName : '' }))
+          setProfileDraft((current) => ({ ...current, payoutAccountType: value, bankName: value === PAYOUT_ACCOUNT_TYPE.bank ? current.bankName : asDomainText<BankName>('') }))
           setProfileErrors((current) => ({ ...current, bankName: undefined, accountNumber: undefined, accountHolder: undefined }))
         }}
       >
@@ -49,7 +55,7 @@ export function RiderProfilePayoutFields({
             className={profileErrors.bankName ? 'field-error' : undefined}
             value={profileDraft.bankName}
             onChange={(event) => {
-              setProfileDraft((current) => ({ ...current, bankName: event.target.value }))
+              setProfileDraft((current) => ({ ...current, bankName: asDomainText<BankName>(event.target.value) }))
               setProfileErrors((current) => ({ ...current, bankName: undefined }))
             }}
           >
@@ -66,7 +72,7 @@ export function RiderProfilePayoutFields({
           value={profileDraft.accountNumber}
           placeholder={profileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? '输入银行卡号' : '输入支付宝账号'}
           onChange={(event) => {
-            setProfileDraft((current) => ({ ...current, accountNumber: event.target.value }))
+            setProfileDraft((current) => ({ ...current, accountNumber: asDomainText<AccountNumber>(event.target.value) }))
             setProfileErrors((current) => ({ ...current, accountNumber: undefined }))
           }}
         />
@@ -79,7 +85,7 @@ export function RiderProfilePayoutFields({
           value={profileDraft.accountHolder}
           placeholder="输入姓名"
           onChange={(event) => {
-            setProfileDraft((current) => ({ ...current, accountHolder: event.target.value }))
+            setProfileDraft((current) => ({ ...current, accountHolder: asDomainText<AccountHolderName>(event.target.value) }))
             setProfileErrors((current) => ({ ...current, accountHolder: undefined }))
           }}
         />

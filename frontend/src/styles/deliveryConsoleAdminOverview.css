@@ -1,6 +1,8 @@
 .admin-overview {
   position: relative;
   overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
+  padding: 24px;
 }
 
 .admin-overview::before {
@@ -24,6 +26,34 @@
 
 .admin-overview__metrics {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-overview h1 {
+  margin-bottom: 10px;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.admin-overview .hero-copy {
+  max-width: 620px;
+  font-size: 0.96rem;
+}
+
+.admin-overview .metric-card {
+  padding: 16px;
+}
+
+.admin-overview .metric-card strong {
+  font-size: 1.35rem;
+}
+
+.admin-workspace-nav {
+  align-items: center;
+}
+
+.admin-workspace-nav .action-row {
+  justify-content: flex-end;
 }
 
 .admin-overview__grid {
@@ -132,7 +162,16 @@
 }
 
 @media (max-width: 720px) {
+  .admin-overview {
+    grid-template-columns: 1fr;
+  }
+
   .admin-overview__metrics {
     grid-template-columns: 1fr;
+  }
+
+  .admin-workspace-nav .action-row {
+    justify-content: flex-start;
+    width: 100%;
   }
 }

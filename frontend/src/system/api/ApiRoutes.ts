@@ -1,3 +1,4 @@
+// Single source of truth for typed frontend route definitions that mirror backend endpoints.
 import type {
   AddMenuItemRequest,
   AddCustomerAddressRequest,

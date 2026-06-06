@@ -1,6 +1,10 @@
 import { AddressDetailsCard } from '@/components/address/AddressDetailsCard'
 import type { AddressDetailsCardData, AddressDetailsRecord } from '@/components/address/AddressDetailsObjects'
-import type { MerchantConsolePanelProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import type { MerchantConsolePanelProps } from '@/pages/merchant/objects/MerchantConsoleObjects'
+import {
+  DELIVERY_ROUTE_RECORD_PREVIEW_COUNT,
+  ZERO_COUNT,
+} from '@/features/delivery/DeliveryConstants'
 import { buildDeliveryRouteEstimate } from '@/features/delivery/DeliveryRouteEstimates'
 import { formatBusinessHours } from '@/features/delivery/DeliverySchedule'
 import { ORDER_STATUS } from '@/objects/core/SharedObjects'
@@ -16,7 +20,7 @@ function buildMerchantRecords(props: MerchantConsolePanelProps): AddressDetailsR
       order.status === ORDER_STATUS.preparing ||
       order.status === ORDER_STATUS.readyForPickup,
     )
-    .slice(0, 3)
+    .slice(ZERO_COUNT, DELIVERY_ROUTE_RECORD_PREVIEW_COUNT)
     .map((order) => {
       const estimate = buildDeliveryRouteEstimate({
         avgPrepMinutes: focusStore.avgPrepMinutes,

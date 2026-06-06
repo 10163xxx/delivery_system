@@ -8,6 +8,7 @@ import io.circe.generic.semiauto.*
 
 final case class UpdateStoreOperationalRequest(
     storeAddress: AddressText,
+    location: Option[StoreLocation],
     businessHours: BusinessHours,
     avgPrepMinutes: Minutes,
 )

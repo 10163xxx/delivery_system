@@ -11,6 +11,7 @@ final case class MerchantRegistrationRequest(
     storeName: DisplayText,
     category: DisplayText,
     storeAddress: AddressText,
+    location: Option[StoreLocation],
     businessHours: BusinessHours,
     avgPrepMinutes: Minutes,
     imageUrl: Option[ImageUrl],

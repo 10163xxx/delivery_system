@@ -1,4 +1,6 @@
+import type { Latitude, Longitude } from './DomainTypes'
+
 export type DeliveryCoordinate = {
-  latitude: number
-  longitude: number
+  latitude: Latitude
+  longitude: Longitude
 }

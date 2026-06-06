@@ -1,6 +1,6 @@
 import { AddressDetailsCard } from '@/components/address/AddressDetailsCard'
 import type { AddressDetailsCardData } from '@/components/address/AddressDetailsObjects'
-import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CheckoutPanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import { buildDeliveryRouteEstimate } from '@/features/delivery/DeliveryRouteEstimates'
 import { formatBusinessHours, formatDateTimeLocalValue } from '@/features/delivery/DeliverySchedule'
 

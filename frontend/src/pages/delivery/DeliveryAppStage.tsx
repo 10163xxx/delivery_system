@@ -1,11 +1,10 @@
 import { AdminRoleView } from '@/pages/admin/workspace/AdminRoleView'
 import { CustomerRoleView } from '@/pages/customer/workspace/CustomerRoleView'
 import { DELIVERY_CONSOLE_COPY } from '@/components/primitives/DeliveryConsoleCopy'
-import { MetricCard } from '@/components/primitives/LayoutPrimitives'
 import { MerchantRoleView } from '@/pages/merchant/workspace/MerchantRoleView'
 import { RiderRoleView } from '@/pages/rider/workspace/RiderRoleView'
 import { ROLE } from '@/objects/core/SharedObjects'
-import { FEEDBACK_PREFIX, FEEDBACK_TONE } from '@/objects/page/DeliveryAppObjects'
+import { FEEDBACK_PREFIX, FEEDBACK_TONE } from '@/pages/delivery/objects/DeliveryAppObjects'
 import type { DeliveryConsoleStageProps } from '@/objects/core/SharedViewObjects'
 
 function getFeedbackState(message: string | null) {
@@ -45,33 +44,6 @@ export function DeliveryAppStage(props: DeliveryConsoleStageProps) {
 
   return (
     <main className={`delivery-app delivery-app--${role}`}>
-      {role === ROLE.admin ? (
-        <section className="hero-panel admin-summary-panel">
-          <div className="metrics-grid">
-            <MetricCard
-              label={DELIVERY_CONSOLE_COPY.metrics.totalOrders}
-              value={String(state?.metrics.totalOrders ?? DELIVERY_CONSOLE_COPY.metrics.missingValue)}
-            />
-            <MetricCard
-              label={DELIVERY_CONSOLE_COPY.metrics.activeOrders}
-              value={String(state?.metrics.activeOrders ?? DELIVERY_CONSOLE_COPY.metrics.missingValue)}
-            />
-            <MetricCard
-              label={DELIVERY_CONSOLE_COPY.metrics.resolvedTickets}
-              value={String(
-                state?.metrics.resolvedTickets ?? DELIVERY_CONSOLE_COPY.metrics.missingValue,
-              )}
-            />
-            <MetricCard
-              label={DELIVERY_CONSOLE_COPY.metrics.averageRating}
-              value={(
-                state?.metrics.averageRating ?? DELIVERY_CONSOLE_COPY.metrics.defaultAverageRating
-              ).toFixed(1)}
-            />
-          </div>
-        </section>
-      ) : null}
-
       <section className="workspace">
         <aside className="role-strip">
           <div className="session-card">

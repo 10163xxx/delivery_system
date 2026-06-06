@@ -24,9 +24,12 @@ final case class StoreMetrics(
 )
 
 final case class StoreLocation(
-    latitude: Double,
-    longitude: Double,
+    latitude: Latitude,
+    longitude: Longitude,
 )
+object StoreLocation:
+  given Encoder[StoreLocation] = deriveEncoder
+  given Decoder[StoreLocation] = deriveDecoder
 
 final case class Store(
     id: StoreId,
@@ -38,8 +41,6 @@ final case class Store(
     metrics: StoreMetrics,
 )
 object Store:
-  given Encoder[StoreLocation] = deriveEncoder
-  given Decoder[StoreLocation] = deriveDecoder
   given Encoder[StoreOperations] = deriveEncoder
   given Decoder[StoreOperations] = deriveDecoder
   given Encoder[StoreMetrics] = deriveEncoder

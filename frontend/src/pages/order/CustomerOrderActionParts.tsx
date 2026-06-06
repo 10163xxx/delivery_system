@@ -2,13 +2,15 @@ import {
   AFTER_SALES_REQUEST_TYPE,
   APPLICATION_STATUS,
   TICKET_STATUS,
+  type DisplayText,
   type OrderLineItem,
+  type OrderId,
   type OrderSummary,
 } from '@/objects/core/SharedObjects'
 import {
   buildCustomerReviewRoute,
   buildPartialRefundDraftKey,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   DEFAULT_PARTIAL_REFUND_QUANTITY,
   createInitialPartialRefundDraft,
@@ -16,9 +18,10 @@ import {
 import type {
   CustomerOrderHelpersProps,
   PartialRefundActionRowProps,
-} from '@/objects/order/page/OrderPageObjects'
+} from '@/pages/order/objects/OrderPageObjects'
 import { clearRecordError, renderOrderChat } from '@/pages/order/CustomerOrderDisplayParts'
 import { ORDER_PAGE_COPY } from '@/pages/order/OrderPageCopy'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowProps) {
   const {
@@ -60,7 +63,7 @@ function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowPr
             ...current,
             [draftKey]: {
               quantity: Number(event.target.value) || DEFAULT_PARTIAL_REFUND_QUANTITY,
-              reason: current[draftKey]?.reason ?? '',
+              reason: current[draftKey]?.reason ?? asDomainText<DisplayText>(''),
             },
           }))
         }
@@ -74,7 +77,7 @@ function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowPr
             ...current,
             [draftKey]: {
               quantity: current[draftKey]?.quantity ?? DEFAULT_PARTIAL_REFUND_QUANTITY,
-              reason: event.target.value,
+              reason: asDomainText<DisplayText>(event.target.value),
             },
           }))
           clearRecordError(draftKey, setPartialRefundErrors)
@@ -151,8 +154,8 @@ export function AfterSalesActionPanel({
 }: {
   order: OrderSummary
   orderTicket: CustomerOrderHelpersProps['stateTickets'][number] | undefined
-  afterSalesDraft: CustomerOrderHelpersProps['afterSalesDrafts'][string]
-  afterSalesError: string | undefined
+  afterSalesDraft: CustomerOrderHelpersProps['afterSalesDrafts'][OrderId]
+  afterSalesError: DisplayText | undefined
   setAfterSalesDrafts: CustomerOrderHelpersProps['setAfterSalesDrafts']
   setAfterSalesErrors: CustomerOrderHelpersProps['setAfterSalesErrors']
   submitAfterSalesRequest: CustomerOrderHelpersProps['submitAfterSalesRequest']
@@ -192,7 +195,7 @@ export function AfterSalesActionPanel({
               ...current,
               [order.id]: {
                 ...(current[order.id] ?? afterSalesDraft),
-                expectedCompensationYuan: event.target.value,
+                expectedCompensationYuan: asDomainText<DisplayText>(event.target.value),
               },
             }))
           }
@@ -211,7 +214,7 @@ export function AfterSalesActionPanel({
             ...current,
             [order.id]: {
               ...(current[order.id] ?? afterSalesDraft),
-              reason: event.target.value,
+              reason: asDomainText<DisplayText>(event.target.value),
             },
           }))
           clearRecordError(order.id, setAfterSalesErrors)

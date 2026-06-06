@@ -3,17 +3,22 @@ import {
   type AfterSalesDateRange,
   type AfterSalesQueue,
   type AfterSalesQueueOption,
-} from '@/objects/admin/page/AdminPageObjects'
+} from '@/pages/admin/objects/AdminPageObjects'
 import {
   AFTER_SALES_APPROVED_NOTE,
   AFTER_SALES_REJECTED_STANDARD_NOTE,
 } from '@/features/delivery/DeliveryServices'
-import type { AfterSalesResolutionDraft } from '@/objects/page/DeliveryAppObjects'
+import type { AfterSalesResolutionDraft } from '@/pages/delivery/objects/DeliveryAppObjects'
 import {
   AFTER_SALES_RESOLUTION_MODE,
   TICKET_STATUS,
+  type ApprovalFlag,
   type AdminTicket,
+  type DisplayText,
+  type IsoDateTime,
+  type TicketId,
 } from '@/objects/core/SharedObjects'
+import { asDomainBoolean, asDomainText } from '@/features/delivery/DeliveryShared'
 
 export const AFTER_SALES_DEFAULTS = {
   approvedNote: AFTER_SALES_APPROVED_NOTE,
@@ -35,8 +40,6 @@ export const AFTER_SALES_PAGE_SIZE = 5
 
 export const AFTER_SALES_QUEUE_OPTIONS: AfterSalesQueueOption[] = [
   { value: AFTER_SALES_QUEUE.open, label: '待处理' },
-  { value: AFTER_SALES_QUEUE.resolved, label: '已处理' },
-  { value: AFTER_SALES_QUEUE.all, label: '全部' },
 ]
 
 export function getNextAfterSalesDateRange(
@@ -77,7 +80,7 @@ export function isAfterSalesDateRangeMatch(ticket: AdminTicket, dateRange: After
   if (fromTime === undefined && toTime === undefined) return true
 
   return [ticket.submittedAt, ticket.reviewedAt, ticket.updatedAt]
-    .filter((value): value is string => Boolean(value))
+    .filter((value): value is IsoDateTime => Boolean(value))
     .some((value) => {
       const ticketTime = new Date(value).getTime()
       if (Number.isNaN(ticketTime)) return false
@@ -87,16 +90,16 @@ export function isAfterSalesDateRangeMatch(ticket: AdminTicket, dateRange: After
 
 export function createInitialAfterSalesDraft() {
   return {
-    approved: true,
+    approved: asDomainBoolean<ApprovalFlag>(true),
     resolutionNote: AFTER_SALES_DEFAULTS.approvedNote,
     resolutionMode: AFTER_SALES_DEFAULTS.defaultMode,
-    actualCompensationYuan: '',
+    actualCompensationYuan: asDomainText<DisplayText>(''),
   } satisfies AfterSalesResolutionDraft
 }
 
 export function updateAfterSalesResolutionDraft(
-  current: Record<string, AfterSalesResolutionDraft>,
-  ticketId: string,
+  current: Record<TicketId, AfterSalesResolutionDraft>,
+  ticketId: TicketId,
   patch: Partial<AfterSalesResolutionDraft>,
 ) {
   return {

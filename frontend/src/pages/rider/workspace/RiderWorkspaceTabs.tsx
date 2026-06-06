@@ -2,7 +2,7 @@ import {
   RIDER_CONSOLE_COPY,
   RIDER_WORKSPACE_VIEW,
   type RiderWorkspaceView,
-} from '@/objects/rider/page/RiderWorkspaceObjects'
+} from '@/pages/rider/objects/RiderWorkspaceObjects'
 
 export function RiderWorkspaceTabs({
   workspaceView,

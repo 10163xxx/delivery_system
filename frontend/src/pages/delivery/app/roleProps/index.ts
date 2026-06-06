@@ -7,7 +7,7 @@ export type {
   CustomerPropsArgs,
   MerchantPropsArgs,
   RiderPropsArgs,
-} from '@/objects/page/AppBuildRolePropsObjects'
+} from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 import { buildAdminProps } from '@/pages/delivery/app/roleProps/AdminRolePropsBuilder'
 import { buildCustomerProps } from '@/pages/delivery/app/roleProps/CustomerRolePropsBuilder'
 import { buildMerchantProps } from '@/pages/delivery/app/roleProps/MerchantRolePropsBuilder'

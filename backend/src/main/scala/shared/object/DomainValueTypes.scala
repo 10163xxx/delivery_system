@@ -238,6 +238,22 @@ object AverageRating:
   given Conversion[Double, AverageRating] = value => new AverageRating(value)
   given Conversion[AverageRating, Double] = _.value
 
+final class Latitude(val value: Double) extends AnyVal:
+  override def toString: String = String.valueOf(value)
+  def raw: Double = value
+object Latitude:
+  given WrappedDoubleType[Latitude] = wrappedDoubleType(value => new Latitude(value), _.value)
+  given Conversion[Double, Latitude] = value => new Latitude(value)
+  given Conversion[Latitude, Double] = _.value
+
+final class Longitude(val value: Double) extends AnyVal:
+  override def toString: String = String.valueOf(value)
+  def raw: Double = value
+object Longitude:
+  given WrappedDoubleType[Longitude] = wrappedDoubleType(value => new Longitude(value), _.value)
+  given Conversion[Double, Longitude] = value => new Longitude(value)
+  given Conversion[Longitude, Double] = _.value
+
 final class TimeoutMilliseconds(val value: Long) extends AnyVal:
   override def toString: String = String.valueOf(value)
   def raw: Long = value

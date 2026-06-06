@@ -2,11 +2,13 @@ import type {
   MerchantProfileOverviewMetricsProps,
   MerchantProfileOverviewSidebarProps,
   MerchantProfileWithdrawalSectionProps,
-} from '@/objects/merchant/page/MerchantPageObjects'
+} from '@/pages/merchant/objects/MerchantPageObjects'
 import { DELIVERY_CONSOLE_MESSAGES } from '@/features/delivery/DeliveryServices'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   PAYOUT_ACCOUNT_TYPE,
   ROUTE_PATH,
+  type DisplayText,
   type MerchantWithdrawal,
 } from '@/objects/core/SharedObjects'
 
@@ -125,7 +127,7 @@ export function MerchantProfileWithdrawalSection({
           placeholder="输入提现金额，例如 200"
           value={merchantWithdrawAmount}
           onChange={(event) => {
-            setMerchantWithdrawAmount(event.target.value)
+            setMerchantWithdrawAmount(asDomainText<DisplayText>(event.target.value))
             setMerchantWithdrawFieldError(null)
           }}
         />

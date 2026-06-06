@@ -1,5 +1,5 @@
 import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
-import { MERCHANT_APPLICATION_VIEW } from '@/objects/page/DeliveryAppObjects'
+import { MERCHANT_APPLICATION_VIEW } from '@/pages/delivery/objects/DeliveryAppObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import {
   MerchantApplicationForm,

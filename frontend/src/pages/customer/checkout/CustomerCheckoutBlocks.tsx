@@ -1,5 +1,13 @@
-import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
-import type { AddressEntry, Coupon } from '@/objects/core/SharedObjects'
+import type { CheckoutPanelProps } from '@/pages/customer/objects/CustomerPageObjects'
+import type {
+  AddressEntry,
+  AddressText,
+  Coupon,
+  CouponId,
+  DisplayText,
+  IsoDateTime,
+} from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   canBalancePay,
   CUSTOMER_CHECKOUT_COPY,
@@ -39,7 +47,7 @@ export function CustomerCheckoutFormFields(props: CheckoutPanelProps) {
           list={CUSTOMER_CHECKOUT_FIELDS.customerAddressOptionsId}
           value={deliveryAddress}
           onChange={(event) => {
-            setDeliveryAddress(event.target.value)
+            setDeliveryAddress(asDomainText<AddressText>(event.target.value))
             if (deliveryAddressError) setDeliveryAddressError(null)
           }}
         />
@@ -61,7 +69,7 @@ export function CustomerCheckoutFormFields(props: CheckoutPanelProps) {
           type="datetime-local"
           value={scheduledDeliveryTime}
           onChange={(event) => {
-            setScheduledDeliveryTime(event.target.value)
+            setScheduledDeliveryTime(asDomainText<IsoDateTime>(event.target.value))
             setScheduledDeliveryTouched(true)
             if (scheduledDeliveryError) {
               setScheduledDeliveryError(null)
@@ -80,12 +88,15 @@ export function CustomerCheckoutFormFields(props: CheckoutPanelProps) {
         <input
           placeholder={CUSTOMER_CHECKOUT_COPY.remark.orderRemarkPlaceholder}
           value={remark}
-          onChange={(event) => setRemark(event.target.value)}
+          onChange={(event) => setRemark(asDomainText<DisplayText>(event.target.value))}
         />
       </label>
       <label className="full">
         <span>{CUSTOMER_CHECKOUT_COPY.coupon.couponFieldTitle}</span>
-        <select value={selectedCouponId} onChange={(event) => setSelectedCouponId(event.target.value)}>
+        <select
+          value={selectedCouponId}
+          onChange={(event) => setSelectedCouponId(event.target.value ? asDomainText<CouponId>(event.target.value) : '')}
+        >
           <option value="">{CUSTOMER_CHECKOUT_COPY.coupon.removeCoupon}</option>
           {availableCheckoutCoupons.map((coupon: Coupon) => (
             <option key={coupon.id} value={coupon.id}>

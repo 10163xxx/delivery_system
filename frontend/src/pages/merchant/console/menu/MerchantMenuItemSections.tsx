@@ -1,7 +1,7 @@
 import type {
   MerchantMenuSectionItemCardActionProps,
   MerchantMenuSectionItemCardInfoProps,
-} from '@/objects/merchant/page/MerchantConsoleObjects'
+} from '@/pages/merchant/objects/MerchantConsoleObjects'
 
 const MERCHANT_MENU_ITEM_PRICE_INPUT_MIN = 0.01
 const MERCHANT_MENU_ITEM_STOCK_INPUT_MAX = 10

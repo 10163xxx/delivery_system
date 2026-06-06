@@ -1,4 +1,4 @@
-import type { MerchantStoreSidebarProps } from '@/objects/merchant/page/MerchantConsoleObjects'
+import type { MerchantStoreSidebarProps } from '@/pages/merchant/objects/MerchantConsoleObjects'
 import { ELIGIBILITY_REVIEW_TARGET, STORE_STATUS } from '@/objects/core/SharedObjects'
 
 export function MerchantStoreOverviewCard({ store, props }: MerchantStoreSidebarProps) {

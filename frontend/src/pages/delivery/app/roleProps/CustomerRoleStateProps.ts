@@ -1,7 +1,7 @@
 import type {
   PageState,
   SessionService,
-} from '@/objects/page/AppBuildRolePropsObjects'
+} from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 
 function getCustomerDraftStateProps(pageState: PageState) {
   return {

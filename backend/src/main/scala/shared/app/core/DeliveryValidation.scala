@@ -35,6 +35,7 @@ def validateMerchantRegistration(
       storeName = storeName,
       category = category,
       storeAddress = storeAddress,
+      location = request.location,
       businessHours = businessHours,
       avgPrepMinutes = request.avgPrepMinutes,
       imageUrl = sanitizeOptionalText(request.imageUrl, DeliveryValidationDefaults.ImageUrlMaxLength),

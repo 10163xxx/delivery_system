@@ -12,10 +12,10 @@ private def radians(value: Double): Double =
   value * Math.PI / 180
 
 private def distanceKm(left: DeliveryCoordinate, right: DeliveryCoordinate): BigDecimal =
-  val latitudeDelta = radians(right.latitude - left.latitude)
-  val longitudeDelta = radians(right.longitude - left.longitude)
-  val latitudeA = radians(left.latitude)
-  val latitudeB = radians(right.latitude)
+  val latitudeDelta = radians(right.latitude.raw - left.latitude.raw)
+  val longitudeDelta = radians(right.longitude.raw - left.longitude.raw)
+  val latitudeA = radians(left.latitude.raw)
+  val latitudeB = radians(right.latitude.raw)
   val haversine =
     Math.sin(latitudeDelta / 2) * Math.sin(latitudeDelta / 2) +
       Math.cos(latitudeA) * Math.cos(latitudeB) * Math.sin(longitudeDelta / 2) * Math.sin(longitudeDelta / 2)
@@ -27,7 +27,7 @@ private def deliveryFeeCents(distanceKm: BigDecimal): CurrencyCents =
   else if distanceKm <= DeliveryDistanceLimitKm then 1400
   else 1800
 
-private def deliveryCoordinate(latitude: Double, longitude: Double): DeliveryCoordinate =
+private def deliveryCoordinate(latitude: Latitude, longitude: Longitude): DeliveryCoordinate =
   DeliveryCoordinate(latitude = latitude, longitude = longitude)
 
 def buildDeliveryQuote(

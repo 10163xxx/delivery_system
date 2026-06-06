@@ -1,11 +1,11 @@
-import type { MerchantPropsArgs } from '@/objects/page/AppBuildRolePropsObjects'
+import type { MerchantPropsArgs } from '@/pages/delivery/objects/AppBuildRolePropsObjects'
 import {
   getMerchantActionProps,
   getMerchantApiActionProps,
   getMerchantDraftSetters,
   getMerchantDraftStateProps,
-  getMerchantSupportSetters,
-  getMerchantSupportStateProps,
+  getMerchantOrderIssueSetters,
+  getMerchantOrderIssueStateProps,
   getMerchantUtilityFieldProps,
   getMerchantViewIdentityProps,
   getMerchantViewStoreProps,
@@ -26,9 +26,9 @@ export function buildMerchantProps({
     ...getMerchantViewWorkspaceProps(pageView),
     ...getMerchantViewStoreProps(pageView),
     ...getMerchantDraftStateProps(pageState),
-    ...getMerchantSupportStateProps(pageState, sessionService),
+    ...getMerchantOrderIssueStateProps(pageState, sessionService),
     ...getMerchantDraftSetters(pageState),
-    ...getMerchantSupportSetters(pageState),
+    ...getMerchantOrderIssueSetters(pageState),
     ...getMerchantActionProps(merchantActionArgs),
     ...getMerchantApiActionProps(submitOrderChatMessage),
   }

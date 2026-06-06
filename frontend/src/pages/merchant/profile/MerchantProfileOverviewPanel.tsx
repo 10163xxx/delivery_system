@@ -1,8 +1,15 @@
 import type { MerchantRoleProps } from '@/pages/delivery/app/roleProps'
-import type { MerchantProfileFormProps } from '@/objects/merchant/page/MerchantPageObjects'
+import type { MerchantProfileFormProps } from '@/pages/merchant/objects/MerchantPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { DELIVERY_CONSOLE_MESSAGES } from '@/features/delivery/DeliveryServices'
-import { PAYOUT_ACCOUNT_TYPE } from '@/objects/core/SharedObjects'
+import {
+  PAYOUT_ACCOUNT_TYPE,
+  type AccountHolderName,
+  type AccountNumber,
+  type BankName,
+  type PhoneNumber,
+} from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 import {
   getCurrentPayoutAccountLabel,
   MerchantProfileOverviewMetrics,
@@ -19,7 +26,7 @@ function MerchantProfileContactField({
   return (
     <label>
       <span>联系电话</span>
-      <input className={merchantProfileFormErrors.contactPhone ? 'field-error' : undefined} placeholder="例如 13800138000" value={merchantProfileDraft.contactPhone} onChange={(event) => { setMerchantProfileDraft((current) => ({ ...current, contactPhone: event.target.value })); setMerchantProfileFormErrors((current) => ({ ...current, contactPhone: undefined })) }} />
+      <input className={merchantProfileFormErrors.contactPhone ? 'field-error' : undefined} placeholder="例如 13800138000" value={merchantProfileDraft.contactPhone} onChange={(event) => { setMerchantProfileDraft((current) => ({ ...current, contactPhone: asDomainText<PhoneNumber>(event.target.value) })); setMerchantProfileFormErrors((current) => ({ ...current, contactPhone: undefined })) }} />
       {merchantProfileFormErrors.contactPhone ? <small className="field-error-text">{merchantProfileFormErrors.contactPhone}</small> : null}
     </label>
   )
@@ -36,7 +43,7 @@ function MerchantProfilePayoutFields({
     <>
       <label>
         <span>提现方式</span>
-        <select value={merchantProfileDraft.payoutAccountType} onChange={(event) => { const value = event.target.value === PAYOUT_ACCOUNT_TYPE.bank ? PAYOUT_ACCOUNT_TYPE.bank : PAYOUT_ACCOUNT_TYPE.alipay; setMerchantProfileDraft((current) => ({ ...current, payoutAccountType: value, bankName: value === PAYOUT_ACCOUNT_TYPE.bank ? current.bankName : '' })); setMerchantProfileFormErrors((current) => ({ ...current, bankName: undefined, accountNumber: undefined, accountHolder: undefined })) }}>
+        <select value={merchantProfileDraft.payoutAccountType} onChange={(event) => { const value = event.target.value === PAYOUT_ACCOUNT_TYPE.bank ? PAYOUT_ACCOUNT_TYPE.bank : PAYOUT_ACCOUNT_TYPE.alipay; setMerchantProfileDraft((current) => ({ ...current, payoutAccountType: value, bankName: value === PAYOUT_ACCOUNT_TYPE.bank ? current.bankName : asDomainText<BankName>('') })); setMerchantProfileFormErrors((current) => ({ ...current, bankName: undefined, accountNumber: undefined, accountHolder: undefined })) }}>
           <option value={PAYOUT_ACCOUNT_TYPE.alipay}>支付宝</option>
           <option value={PAYOUT_ACCOUNT_TYPE.bank}>银行卡</option>
         </select>
@@ -44,7 +51,7 @@ function MerchantProfilePayoutFields({
       {merchantProfileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? (
         <label>
           <span>开户银行</span>
-          <select className={merchantProfileFormErrors.bankName ? 'field-error' : undefined} value={merchantProfileDraft.bankName} onChange={(event) => { setMerchantProfileDraft((current) => ({ ...current, bankName: event.target.value })); setMerchantProfileFormErrors((current) => ({ ...current, bankName: undefined })) }}>
+          <select className={merchantProfileFormErrors.bankName ? 'field-error' : undefined} value={merchantProfileDraft.bankName} onChange={(event) => { setMerchantProfileDraft((current) => ({ ...current, bankName: asDomainText<BankName>(event.target.value) })); setMerchantProfileFormErrors((current) => ({ ...current, bankName: undefined })) }}>
             <option value="">{DELIVERY_CONSOLE_MESSAGES.profile.bankOptionPlaceholder}</option>
             {BANK_OPTIONS.map((bank) => <option key={bank} value={bank}>{bank}</option>)}
           </select>
@@ -53,12 +60,12 @@ function MerchantProfilePayoutFields({
       ) : null}
       <label>
         <span>{merchantProfileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? '银行卡号' : '支付宝账号'}</span>
-        <input className={merchantProfileFormErrors.accountNumber ? 'field-error' : undefined} placeholder={merchantProfileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? '输入银行卡号' : '输入支付宝账号'} value={merchantProfileDraft.accountNumber} onChange={(event) => { setMerchantProfileDraft((current) => ({ ...current, accountNumber: event.target.value })); setMerchantProfileFormErrors((current) => ({ ...current, accountNumber: undefined })) }} />
+        <input className={merchantProfileFormErrors.accountNumber ? 'field-error' : undefined} placeholder={merchantProfileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? '输入银行卡号' : '输入支付宝账号'} value={merchantProfileDraft.accountNumber} onChange={(event) => { setMerchantProfileDraft((current) => ({ ...current, accountNumber: asDomainText<AccountNumber>(event.target.value) })); setMerchantProfileFormErrors((current) => ({ ...current, accountNumber: undefined })) }} />
         {merchantProfileFormErrors.accountNumber ? <small className="field-error-text">{merchantProfileFormErrors.accountNumber}</small> : null}
       </label>
       <label>
         <span>{merchantProfileDraft.payoutAccountType === PAYOUT_ACCOUNT_TYPE.bank ? '持卡人姓名' : '账户姓名'}</span>
-        <input className={merchantProfileFormErrors.accountHolder ? 'field-error' : undefined} placeholder="输入姓名" value={merchantProfileDraft.accountHolder} onChange={(event) => { setMerchantProfileDraft((current) => ({ ...current, accountHolder: event.target.value })); setMerchantProfileFormErrors((current) => ({ ...current, accountHolder: undefined })) }} />
+        <input className={merchantProfileFormErrors.accountHolder ? 'field-error' : undefined} placeholder="输入姓名" value={merchantProfileDraft.accountHolder} onChange={(event) => { setMerchantProfileDraft((current) => ({ ...current, accountHolder: asDomainText<AccountHolderName>(event.target.value) })); setMerchantProfileFormErrors((current) => ({ ...current, accountHolder: undefined })) }} />
         {merchantProfileFormErrors.accountHolder ? <small className="field-error-text">{merchantProfileFormErrors.accountHolder}</small> : null}
       </label>
     </>

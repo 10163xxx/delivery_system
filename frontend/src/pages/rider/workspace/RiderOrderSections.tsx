@@ -1,5 +1,5 @@
 import type { RiderRoleProps } from '@/pages/delivery/app/roleProps'
-import { RIDER_CONSOLE_COPY } from '@/objects/rider/page/RiderWorkspaceObjects'
+import { RIDER_CONSOLE_COPY } from '@/pages/rider/objects/RiderWorkspaceObjects'
 import { OrderChatPanel } from '@/pages/order/OrderChatPanel'
 import {
   APPEAL_ROLE,
@@ -10,6 +10,7 @@ import {
   type DisplayText,
   type OrderId,
 } from '@/objects/core/SharedObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 function RiderOrderActionButtons({ order, props }: { order: RiderRoleProps['riderOrders'][number], props: RiderRoleProps }) {
   const { deliverOrder, pickupOrder, runAction, selectedRiderId } = props
@@ -96,10 +97,10 @@ export function RiderOrderFooter({ order, props }: { order: RiderRoleProps['ride
       <OrderChatPanel
         currentDisplayName={props.currentDisplayName}
         currentRole={ROLE.rider}
-        draft={props.orderChatDrafts[order.id] ?? ''}
+        draft={props.orderChatDrafts[order.id] ?? asDomainText<DisplayText>('')}
         errorText={props.orderChatErrors[order.id]}
         disabled={order.riderId !== props.selectedRiderId}
-        disabledReason={order.riderId === props.selectedRiderId ? undefined : RIDER_CONSOLE_COPY.consolePanel.chatDisabledReason}
+        disabledReason={order.riderId === props.selectedRiderId ? undefined : asDomainText<DisplayText>(RIDER_CONSOLE_COPY.consolePanel.chatDisabledReason)}
         formatTime={props.formatTime}
         order={order}
         onChangeDraft={(value) => {

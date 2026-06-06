@@ -1,13 +1,16 @@
 import { AddressDetailsCard } from '@/components/address/AddressDetailsCard'
 import type { AddressDetailsCardData } from '@/components/address/AddressDetailsObjects'
+import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
 import { ORDER_STATUS } from '@/objects/core/SharedObjects'
 import type { OrderSummary } from '@/objects/core/SharedObjects'
+import { CURRENCY_CENTS_SCALE, DEFAULT_MERCHANT_PREP_MINUTES } from '@/features/delivery/DeliveryConstants'
 import { buildDeliveryRouteEstimate } from '@/features/delivery/DeliveryRouteEstimates'
 
 type OrderRoutePanelProps = {
   order: OrderSummary
   formatTime: (value: string) => string
   storeAddress?: string
+  storeCoordinate?: DeliveryCoordinate
   riderTitle?: string
   riderDetail?: string
 }
@@ -45,37 +48,33 @@ function buildOrderRouteDetailsData(props: OrderRoutePanelProps): AddressDetails
   const { order, formatTime, storeAddress } = props
   const resolvedStoreAddress = storeAddress?.trim() || order.storeName
   const estimate = buildDeliveryRouteEstimate({
-    avgPrepMinutes: 20,
+    avgPrepMinutes: DEFAULT_MERCHANT_PREP_MINUTES,
     status: order.status,
     referenceTime: order.scheduledDeliveryAt,
   })
   const hasMerchantAddress = Boolean(resolvedStoreAddress.trim())
-  const hasActiveRoute =
-    hasMerchantAddress &&
-    (order.status === ORDER_STATUS.pendingMerchantAcceptance ||
-      order.status === ORDER_STATUS.preparing ||
-      order.status === ORDER_STATUS.readyForPickup ||
-      order.status === ORDER_STATUS.delivering)
+  const hasRoutePreview = hasMerchantAddress && Boolean(order.deliveryAddress.trim())
   const riderHasAccepted =
     order.status === ORDER_STATUS.readyForPickup || order.status === ORDER_STATUS.delivering
 
   return {
     eyebrow: '订单地址',
     title: '本单配送信息',
-    summary: hasActiveRoute
+    summary: hasRoutePreview
       ? getRouteStatusLabel(props, estimate)
       : `预计 ${formatTime(order.scheduledDeliveryAt)} 送达，配送时间会根据天气情况自动调整。`,
     weatherTone: estimate.weatherTone,
     weatherLabel: estimate.weatherLabel,
     metrics: [
       { label: '订单状态', value: order.status },
-      { label: '订单金额', value: String(order.totalPriceCents / 100) + ' 元' },
+      { label: '订单金额', value: String(order.totalPriceCents / CURRENCY_CENTS_SCALE) + ' 元' },
       { label: '顾客', value: order.customerName },
     ],
-    routePreview: hasActiveRoute && resolvedStoreAddress
+    routePreview: hasRoutePreview && resolvedStoreAddress
         ? {
           startLabel: '商家地址',
           startAddress: resolvedStoreAddress,
+          startCoordinate: props.storeCoordinate,
           startQuery: storeAddress || order.storeName,
           endLabel: '顾客地址',
           endAddress: order.deliveryAddress,
@@ -83,8 +82,8 @@ function buildOrderRouteDetailsData(props: OrderRoutePanelProps): AddressDetails
           statusLabel: getRouteStatusLabel(props, estimate),
           etaLabel: getRouteEtaLabel(order, estimate),
           weatherTone: estimate.weatherTone,
-          showRouteCurve: riderHasAccepted,
-          showDestinationMarker: riderHasAccepted,
+          showRouteCurve: riderHasAccepted || order.status === ORDER_STATUS.completed,
+          showDestinationMarker: true,
         }
       : undefined,
     records: [

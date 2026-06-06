@@ -4,8 +4,8 @@ import type {
   AfterSalesDateRangeFilterProps,
   AfterSalesPaginationProps,
   AfterSalesQueue,
-} from '@/objects/admin/page/AdminPageObjects'
-import { AFTER_SALES_QUEUE } from '@/objects/admin/page/AdminPageObjects'
+} from '@/pages/admin/objects/AdminPageObjects'
+import { AFTER_SALES_QUEUE } from '@/pages/admin/objects/AdminPageObjects'
 import { Panel } from '@/components/primitives/LayoutPrimitives'
 import { TICKET_STATUS, type AdminTicket } from '@/objects/core/SharedObjects'
 import { AdminAfterSalesTicketCard } from '@/pages/admin/afterSales/AdminAfterSalesTicketCard'
@@ -85,13 +85,13 @@ export function AfterSalesTicketsPanel({ props }: { props: AdminRoleProps }) {
   function updateDateRange(field: keyof AfterSalesDateRange, value: string) {
     setDateRange((current) => getNextAfterSalesDateRange(current, field, value))
     setSelectedPage(1)
-    if (value) setSelectedQueue(AFTER_SALES_QUEUE.all)
   }
 
   const visibleAfterSalesTickets = useMemo(
     () =>
       afterSalesTickets.filter(
         (ticket) =>
+          ticket.status === TICKET_STATUS.open &&
           isAfterSalesQueueMatch(ticket, selectedQueue) &&
           isAfterSalesDateRangeMatch(ticket, dateRange),
       ),
@@ -106,7 +106,6 @@ export function AfterSalesTicketsPanel({ props }: { props: AdminRoleProps }) {
   const openTicketCount = afterSalesTickets.filter(
     (ticket) => ticket.status === TICKET_STATUS.open,
   ).length
-  const resolvedTicketCount = afterSalesTickets.length - openTicketCount
   function resetDateRange() {
     setDateRange({ from: '', to: '' })
     setSelectedPage(1)
@@ -130,9 +129,7 @@ export function AfterSalesTicketsPanel({ props }: { props: AdminRoleProps }) {
               <strong>
                 {option.value === AFTER_SALES_QUEUE.open
                   ? openTicketCount
-                  : option.value === AFTER_SALES_QUEUE.resolved
-                    ? resolvedTicketCount
-                    : afterSalesTickets.length}
+                  : openTicketCount}
               </strong>
             </button>
           ))}

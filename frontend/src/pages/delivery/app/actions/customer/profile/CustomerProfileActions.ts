@@ -11,7 +11,9 @@ import {
   validateCustomerAddressDraft,
 } from '@/features/delivery/DeliveryServices'
 import { geocodeDeliveryAddress } from '@/features/delivery/DeliveryGeocoding'
-import type { CustomerProfileParams } from '@/objects/customer/page/CustomerActionObjects'
+import type { AddressLabel, AddressText, DisplayText } from '@/objects/core/SharedObjects'
+import type { CustomerProfileParams } from '@/pages/customer/objects/CustomerActionObjects'
+import { asDomainText } from '@/features/delivery/DeliveryShared'
 
 export function createCustomerProfileActions(params: CustomerProfileParams) {
   const {
@@ -29,7 +31,7 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
     if (!selectedCustomer) return
     const payload = buildCustomerProfilePayload(customerNameDraft)
     if (!payload.name) {
-      setError(DELIVERY_CONSOLE_MESSAGES.profile.customerNameRequired)
+      setError(asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.profile.customerNameRequired))
       return
     }
     const success = await runAction(() => updateCustomerProfileApi(selectedCustomer.id, payload))
@@ -52,23 +54,28 @@ export function createCustomerProfileActions(params: CustomerProfileParams) {
     if (nextErrors.label || nextErrors.address) return
     const location = await geocodeDeliveryAddress(addressDraft.address)
     if (!location) {
-      setAddressFormErrors({ address: DELIVERY_CONSOLE_MESSAGES.profile.addressLocationRequired })
+      setAddressFormErrors({
+        address: asDomainText<DisplayText>(DELIVERY_CONSOLE_MESSAGES.profile.addressLocationRequired),
+      })
       return
     }
     const success = await runAction(() =>
       addCustomerAddressApi(selectedCustomer.id, buildCustomerAddressPayload(addressDraft, location)),
     )
     if (!success) return
-    setAddressDraft({ label: '', address: '' })
+    setAddressDraft({
+      label: asDomainText<AddressLabel>(''),
+      address: asDomainText<AddressText>(''),
+    })
     setAddressFormErrors({})
   }
 
-  async function removeCustomerAddress(addressId: string) {
+  async function removeCustomerAddress(addressId: AddressText) {
     if (!selectedCustomer) return
     await runAction(() => removeCustomerAddressApi(selectedCustomer.id, { address: addressId }))
   }
 
-  async function setDefaultCustomerAddress(addressId: string) {
+  async function setDefaultCustomerAddress(addressId: AddressText) {
     if (!selectedCustomer) return
     await runAction(() => setDefaultCustomerAddressApi(selectedCustomer.id, { address: addressId }))
   }

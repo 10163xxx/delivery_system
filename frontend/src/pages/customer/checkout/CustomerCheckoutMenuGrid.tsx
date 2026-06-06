@@ -1,36 +1,22 @@
+// Store menu grid with category navigation and option-selection modal support.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CheckoutPanelProps } from '@/objects/customer/page/CustomerPageObjects'
+import type { CheckoutPanelProps } from '@/pages/customer/objects/CustomerPageObjects'
 import { DisplayImageSlot } from '@/components/primitives/DisplayImageSlot'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import type { MenuItem } from '@/objects/core/SharedObjects'
 import {
-  CUSTOMER_CHECKOUT_LAYOUT,
   CUSTOMER_CHECKOUT_COPY,
 } from '@/pages/customer/checkout/CustomerCheckoutCopy'
 import {
-  formatPrice as formatPriceText,
   getMenuItemCartQuantity,
   getMenuItemDisplayPriceText,
   REQUIRED_MENU_CATEGORY_HASH,
   REQUIRED_MENU_CATEGORY_NAME,
 } from '@/features/delivery/DeliveryServices'
-
-type MenuCategorySection = {
-  id: string
-  name: string
-  items: MenuItem[]
-}
-
-function toCategorySectionId(categoryName: string, index: number) {
-  return `menu-category-${index}-${categoryName.trim().replace(/\s+/g, '-').toLowerCase()}`
-}
+import { MenuItemConfigurationDialog } from '@/pages/customer/checkout/MenuItemConfigurationDialog'
+import {
+  toCategorySectionId,
+  type MenuCategorySection,
+} from '@/pages/customer/checkout/CustomerCheckoutMenuTypes'
 
 export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
   const {
@@ -51,6 +37,7 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
   const configurableItem = menuItems.find((item) => item.id === menuItemConfigurationModal?.itemId) ?? null
 
   const sections = useMemo<MenuCategorySection[]>(() => {
+    // Grouping is derived at render time so merchant menu edits immediately reshape the category nav.
     const grouped = new Map<string, MenuItem[]>()
     menuItems.forEach((item) => {
       const categoryName = item.category?.trim() || CUSTOMER_CHECKOUT_COPY.menu.categoryFallback
@@ -75,7 +62,7 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
       activeCategoryIdRef.current = nextCategoryId
       return nextCategoryId
     })
-  }, [sections])
+  }, [sections, selectedStore?.id])
 
   useEffect(() => {
     let animationFrame = 0
@@ -148,12 +135,26 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
   }, [sections])
 
   useEffect(() => {
-    if (window.location.hash !== `#${REQUIRED_MENU_CATEGORY_HASH}`) return
-    const requiredSection = sections.find((section) => section.name === REQUIRED_MENU_CATEGORY_NAME)
-    if (!requiredSection) return
-    sectionRefs.current[requiredSection.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    activeCategoryIdRef.current = requiredSection.id
-    setActiveCategoryId(requiredSection.id)
+    function scrollToRequiredCategoryFromHash() {
+      if (window.location.hash !== `#${REQUIRED_MENU_CATEGORY_HASH}`) return
+      const requiredSection = sections.find((section) => section.name === REQUIRED_MENU_CATEGORY_NAME)
+      if (!requiredSection) return
+      sectionRefs.current[requiredSection.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      activeCategoryIdRef.current = requiredSection.id
+      setActiveCategoryId(requiredSection.id)
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${window.location.pathname}${window.location.search}`,
+      )
+    }
+
+    scrollToRequiredCategoryFromHash()
+    window.addEventListener('hashchange', scrollToRequiredCategoryFromHash)
+
+    return () => {
+      window.removeEventListener('hashchange', scrollToRequiredCategoryFromHash)
+    }
   }, [sections])
 
   function scrollToCategory(categoryId: string) {
@@ -308,117 +309,5 @@ export function CustomerCheckoutMenuGrid(props: CheckoutPanelProps) {
         onConfirm={confirmMenuItemConfiguration}
       />
     </>
-  )
-}
-
-type MenuItemConfigurationDialogProps = {
-  item: MenuItem | null
-  modalState: CheckoutPanelProps['menuItemConfigurationModal']
-  onClose: CheckoutPanelProps['closeMenuItemConfiguration']
-  onConfirm: CheckoutPanelProps['confirmMenuItemConfiguration']
-}
-
-function MenuItemConfigurationDialog(props: MenuItemConfigurationDialogProps) {
-  const { item, modalState, onClose, onConfirm } = props
-  const [draftSelections, setDraftSelections] = useState<Record<string, string[]>>({})
-
-  useEffect(() => {
-    if (!modalState) return
-    setDraftSelections(modalState.draftSelections)
-  }, [modalState])
-
-  if (!item || !modalState) return null
-
-  function toggleOption(groupName: string, option: string, maxSelections: number) {
-    setDraftSelections((current) => {
-      const currentValues = current[groupName] ?? []
-      const exists = currentValues.includes(option)
-      if (exists) {
-        return { ...current, [groupName]: currentValues.filter((value) => value !== option) }
-      }
-      if (maxSelections <= 1) {
-        return { ...current, [groupName]: [option] }
-      }
-      if (currentValues.length >= maxSelections) return current
-      return { ...current, [groupName]: [...currentValues, option] }
-    })
-  }
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="rounded-3xl bg-white p-6 shadow-2xl">
-        <DialogHeader>
-          <DialogTitle>{item.name}</DialogTitle>
-          <DialogDescription>
-            {CUSTOMER_CHECKOUT_COPY.menu.configurationDialogDescription}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="stack">
-          {item.selectionGroups.map((group) => {
-            const selectedOptions = draftSelections[group.name] ?? []
-            return (
-              <section key={group.name}>
-                <div
-                  className="meta-line"
-                  style={{ marginBottom: CUSTOMER_CHECKOUT_LAYOUT.configurationGroupSpacing }}
-                >
-                  <strong>{group.name}</strong>
-                  {group.minSelections === 1 && group.maxSelections === 1
-                    ? CUSTOMER_CHECKOUT_COPY.menu.configurationGroupRequiredSingle
-                    : CUSTOMER_CHECKOUT_COPY.menu.configurationGroupSelectionRange(
-                        group.minSelections,
-                        group.maxSelections,
-                      )}
-                </div>
-                <div
-                  className="menu-configuration-options"
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: CUSTOMER_CHECKOUT_LAYOUT.configurationOptionGap,
-                  }}
-                >
-                  {group.options.map((option) => {
-                    const selected = selectedOptions.includes(option.name)
-                    return (
-                      <button
-                        key={option.name}
-                        type="button"
-                        aria-pressed={selected}
-                        className={`menu-configuration-option${selected ? ' is-selected' : ''}`}
-                        onClick={() => toggleOption(group.name, option.name, group.maxSelections)}
-                      >
-                        <span className="menu-configuration-option__check">{selected ? '✓' : ''}</span>
-                        {option.name}
-                        {option.additionalPriceCents > 0 ? ` +${formatPriceText(option.additionalPriceCents)}` : ''}
-                      </button>
-                    )
-                  })}
-                </div>
-                {selectedOptions.length > 0 ? (
-                  <p className="meta-line menu-configuration-selected">
-                    {CUSTOMER_CHECKOUT_COPY.menu.configurationDialogSelectedPrefix}
-                    {selectedOptions.join(CUSTOMER_CHECKOUT_COPY.menu.selectionSummarySeparator)}
-                  </p>
-                ) : null}
-              </section>
-            )
-          })}
-          {modalState.errorText ? <p className="field-error-text">{modalState.errorText}</p> : null}
-        </div>
-        <DialogFooter>
-          <button className="secondary-button" onClick={onClose} type="button">
-            {CUSTOMER_CHECKOUT_COPY.menu.configurationDialogCancelButton}
-          </button>
-          <button
-            className="primary-button"
-            onClick={() => onConfirm(item, modalState.quantityAfterConfirm, draftSelections)}
-            type="button"
-          >
-            {CUSTOMER_CHECKOUT_COPY.menu.configurationDialogConfirmButton}
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   )
 }

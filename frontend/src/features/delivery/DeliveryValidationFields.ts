@@ -1,7 +1,7 @@
 import type {
   MenuItemFormField,
   MerchantFormField,
-} from '@/objects/page/DeliveryAppObjects'
+} from '@/pages/delivery/objects/DeliveryAppObjects'
 
 export function getMerchantFieldId(field: MerchantFormField) {
   return `merchant-application-${field}`
