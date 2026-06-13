@@ -4,14 +4,14 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { router } from '@/router'
 
-import './styles/SharedStyles.css'
-import './styles/review.css'
-import './styles/orderChat.css'
-import './styles/deliveryConsoleShell.css'
-import './styles/deliveryConsoleCatalog.css'
-import './styles/deliveryConsoleOrders.css'
-import './styles/deliveryConsoleMerchant.css'
-import './styles/auth.css'
+import './pages/DeliveryConsole/styles/SharedStyles.css'
+import './pages/DeliveryConsole/styles/review.css'
+import './pages/DeliveryConsole/styles/orderChat.css'
+import './pages/DeliveryConsole/styles/deliveryConsoleShell.css'
+import './pages/DeliveryConsole/styles/deliveryConsoleCatalog.css'
+import './pages/DeliveryConsole/styles/deliveryConsoleOrders.css'
+import './pages/DeliveryConsole/styles/deliveryConsoleMerchant.css'
+import './pages/DeliveryConsole/styles/auth.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

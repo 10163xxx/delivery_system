@@ -1,4 +1,4 @@
-import type { CurrencyCents, DisplayText } from '@/objects/domain/DomainObjects'
+import type { CurrencyCents, DisplayText } from '@/objects/core/SharedObjects'
 
 export type MenuItemSelectionOption = {
   name: DisplayText

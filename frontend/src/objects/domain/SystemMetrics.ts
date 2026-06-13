@@ -1,4 +1,4 @@
-import type { EntityCount, RatingValue } from '@/objects/domain/DomainObjects'
+import type { EntityCount, RatingValue } from '@/objects/core/SharedObjects'
 
 export type SystemMetrics = {
   totalOrders: EntityCount

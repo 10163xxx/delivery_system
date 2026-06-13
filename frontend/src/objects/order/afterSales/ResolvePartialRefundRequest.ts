@@ -1,4 +1,4 @@
-import type { ApprovalFlag, ResolutionText } from '@/objects/domain/DomainObjects'
+import type { ApprovalFlag, ResolutionText } from '@/objects/core/SharedObjects'
 
 export type ResolvePartialRefundRequest = {
   approved: ApprovalFlag

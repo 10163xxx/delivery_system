@@ -1,4 +1,4 @@
-import type { AdminId, CurrencyCents, PersonName } from '@/objects/domain/DomainObjects'
+import type { AdminId, CurrencyCents, PersonName } from '@/objects/core/SharedObjects'
 
 export type AdminProfile = {
   id: AdminId

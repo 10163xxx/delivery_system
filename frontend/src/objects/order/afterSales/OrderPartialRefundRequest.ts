@@ -8,7 +8,7 @@ import type {
   ResolutionText,
   IsoDateTime,
   ReasonText,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type OrderPartialRefundRequestIdentity = {
   id: RefundRequestId

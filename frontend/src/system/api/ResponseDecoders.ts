@@ -33,116 +33,48 @@ import type { OrderTimelineEntry } from '@/objects/order/core/OrderTimelineEntry
 import type { EligibilityReview } from '@/objects/review/EligibilityReview'
 import type { ReviewAppeal, ReviewAppealReview } from '@/objects/review/ReviewAppeal'
 import type { Rider, RiderPayout, RiderPerformance } from '@/objects/rider/profile/Rider'
-import {
-  ACCOUNT_STATUS,
-  AFTER_SALES_REQUEST_TYPE,
-  AFTER_SALES_RESOLUTION_MODE,
-  APPEAL_ROLE,
-  APPEAL_STATUS,
-  APPLICATION_STATUS,
-  ELIGIBILITY_REVIEW_TARGET,
-  MEMBERSHIP_TIER,
-  NOTE_STATUS,
-  ORDER_STATUS,
-  PARTIAL_REFUND_STATUS,
-  PAYOUT_ACCOUNT_TYPE,
-  REVIEW_STATUS,
-  RIDER_AVAILABILITY,
-  ROLE,
-  STORE_CATEGORY,
-  STORE_STATUS,
-  TICKET_KIND,
-  TICKET_STATUS,
-} from '@/objects/domain/DomainConstants'
-import type { DeliveryAppState } from '@/objects/domain/DomainState'
+import type { DeliveryAppState } from '@/objects/domain/DeliveryAppState'
 import type { SystemMetrics } from '@/objects/domain/SystemMetrics'
 import type {
   AddressText,
   DemoNote,
   EchoResponse,
   HealthResponse,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
+import {
+  decodeAfterSalesRequestType,
+  decodeAfterSalesResolutionMode,
+  decodeAccountStatus,
+  decodeAppealRole,
+  decodeAppealStatus,
+  decodeApplicationStatus,
+  decodeAvailability,
+  decodeEligibilityReviewTarget,
+  decodeMembershipTier,
+  decodeNoteStatus,
+  decodeOrderStatus,
+  decodePartialRefundStatus,
+  decodePayoutAccountType,
+  decodeReviewStatus,
+  decodeRole,
+  decodeStoreCategory,
+  decodeStoreStatus,
+  decodeTicketKind,
+  decodeTicketStatus,
+} from '@/system/api/DecoderEnums'
+import {
+  decodeArray,
+  decodeBoolean,
+  decodeField,
+  decodeNumber,
+  decodeOptionalArrayField,
+  decodeOptionalField,
+  decodeString,
+  fail,
+  type Decoder,
+} from '@/system/api/DecoderSupport'
 
-export type Decoder<T> = (value: unknown, path?: string) => T
-
-function fail(path: string, message: string): never {
-  throw new Error(`Invalid response at ${path}: ${message}`)
-}
-
-function decodeRecord(value: unknown, path = '$'): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) fail(path, 'expected object')
-  return value as Record<string, unknown>
-}
-
-function decodeString<T extends string>(value: unknown, path = '$'): T {
-  if (typeof value !== 'string') fail(path, 'expected string')
-  return value as T
-}
-
-function decodeNumber<T extends number>(value: unknown, path = '$'): T {
-  if (typeof value !== 'number' || !Number.isFinite(value)) fail(path, 'expected finite number')
-  return value as T
-}
-
-function decodeBoolean<T extends boolean>(value: unknown, path = '$'): T {
-  if (typeof value !== 'boolean') fail(path, 'expected boolean')
-  return value as T
-}
-
-function decodeArray<T>(value: unknown, path = '$', itemDecoder: Decoder<T>): T[] {
-  if (!Array.isArray(value)) fail(path, 'expected array')
-  return value.map((item, index) => itemDecoder(item, `${path}[${index}]`))
-}
-
-function decodeEnum<T extends string>(value: unknown, path = '$', members: readonly T[]): T {
-  const decoded = decodeString<T>(value, path)
-  if (!members.includes(decoded)) fail(path, `expected one of ${members.join(', ')}`)
-  return decoded
-}
-
-function decodeField<T>(value: unknown, path: string, key: string, decoder: Decoder<unknown>): T {
-  return decoder(decodeRecord(value, path)[key], `${path}.${key}`) as T
-}
-
-function decodeOptionalField<T>(
-  value: unknown,
-  path: string,
-  key: string,
-  decoder: Decoder<unknown>,
-): T | undefined {
-  const entry = decodeRecord(value, path)[key]
-  return entry === undefined || entry === null ? undefined : decoder(entry, `${path}.${key}`) as T
-}
-
-function decodeOptionalArrayField<T>(
-  value: unknown,
-  path: string,
-  key: string,
-  itemDecoder: Decoder<T>,
-): T[] {
-  const entry = decodeRecord(value, path)[key]
-  return entry === undefined || entry === null ? [] : decodeArray(entry, `${path}.${key}`, itemDecoder)
-}
-
-const decodeRole = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(ROLE))
-const decodeAccountStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(ACCOUNT_STATUS))
-const decodeMembershipTier = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(MEMBERSHIP_TIER))
-const decodeStoreCategory = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(STORE_CATEGORY))
-const decodeStoreStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(STORE_STATUS))
-const decodeReviewStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(REVIEW_STATUS))
-const decodeAppealStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(APPEAL_STATUS))
-const decodeAppealRole = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(APPEAL_ROLE))
-const decodeApplicationStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(APPLICATION_STATUS))
-const decodeAvailability = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(RIDER_AVAILABILITY))
-const decodeTicketKind = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(TICKET_KIND))
-const decodeTicketStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(TICKET_STATUS))
-const decodeOrderStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(ORDER_STATUS))
-const decodeAfterSalesRequestType = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(AFTER_SALES_REQUEST_TYPE))
-const decodeAfterSalesResolutionMode = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(AFTER_SALES_RESOLUTION_MODE))
-const decodePartialRefundStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(PARTIAL_REFUND_STATUS))
-const decodeEligibilityReviewTarget = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(ELIGIBILITY_REVIEW_TARGET))
-const decodePayoutAccountType = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(PAYOUT_ACCOUNT_TYPE))
-const decodeNoteStatus = (value: unknown, path = '$') => decodeEnum(value, path, Object.values(NOTE_STATUS))
+export type { Decoder } from '@/system/api/DecoderSupport'
 
 const decodeAddressEntry: Decoder<AddressEntry> = (value, path = '$') => ({ label: decodeField(value, path, 'label', decodeString), address: decodeField(value, path, 'address', decodeString), location: decodeOptionalField(value, path, 'location', decodeCustomerLocation) })
 const decodeAddressText: Decoder<AddressText> = (value, path = '$') => decodeString(value, path)

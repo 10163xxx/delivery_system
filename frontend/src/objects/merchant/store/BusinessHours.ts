@@ -1,4 +1,4 @@
-import type { TimeOfDay } from '@/objects/domain/DomainObjects'
+import type { TimeOfDay } from '@/objects/core/SharedObjects'
 
 export type BusinessHours = {
   openTime: TimeOfDay

@@ -7,7 +7,7 @@ import type {
   IsoDateTime,
   ReasonText,
   ResolutionText,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type EligibilityReview = {
   id: EligibilityReviewId

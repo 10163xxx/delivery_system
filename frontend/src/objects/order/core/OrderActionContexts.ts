@@ -10,7 +10,7 @@ import type {
   IsoDateTime,
   NoteText,
   ReasonText,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type CreateOrderContext = {
   customer: Customer

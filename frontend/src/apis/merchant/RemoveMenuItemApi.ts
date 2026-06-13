@@ -1,10 +1,12 @@
-import type {
-  MenuItemId,
-  StoreId,
-} from '@/objects/core/SharedObjects'
-import { removeMenuItemApiDefinition } from '@/system/api/ApiRoutes'
+import type { DeliveryAppState, MenuItemId, StoreId } from '@/objects/core/SharedObjects'
 import { postNormalizedDeliveryStateWithoutBody } from '@/system/api/DeliveryStateClient'
-import { buildApiPath2 } from '@/system/api/TypedApiDefinitions'
+import { buildApiPath2, defineJsonPostApi2, routeSegment } from '@/system/api/TypedApiDefinitions'
+
+export const removeMenuItemApiDefinition = defineJsonPostApi2<StoreId, MenuItemId, void, DeliveryAppState>(
+    [routeSegment('api'), routeSegment('delivery'), routeSegment('stores')],
+    [routeSegment('menu')],
+    [routeSegment('remove')],
+  )
 
 export function removeMenuItem(storeId: StoreId, menuItemId: MenuItemId) {
   return postNormalizedDeliveryStateWithoutBody(

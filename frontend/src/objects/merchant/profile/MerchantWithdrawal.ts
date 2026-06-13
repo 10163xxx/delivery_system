@@ -3,7 +3,7 @@ import type {
   DisplayText,
   IsoDateTime,
   MerchantWithdrawalId,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type MerchantWithdrawal = {
   id: MerchantWithdrawalId

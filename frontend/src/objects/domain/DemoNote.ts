@@ -4,7 +4,7 @@ import type {
   NoteId,
   NoteStatus,
   NoteTitle,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type DemoNote = {
   id: NoteId

@@ -2,7 +2,7 @@ import type {
   AccountHolderName,
   AccountNumber,
   BankName,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { MerchantPayoutAccountType } from '@/objects/merchant/profile/MerchantPayoutAccountType'
 
 export type MerchantPayoutAccount = {

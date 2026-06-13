@@ -2,7 +2,7 @@ import type {
   AfterSalesRequestType,
   CurrencyCents,
   ReasonText,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type SubmitAfterSalesRequest = {
   requestType: AfterSalesRequestType

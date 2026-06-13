@@ -1,44 +1,20 @@
-import {
-  CUSTOMER_BLOCKED_STORE_IDS_KEY_PREFIX,
-  CUSTOMER_FAVORITE_STORE_IDS_KEY_PREFIX,
-  CUSTOMER_PROFILE_NOTICE_SEEN_KEY_PREFIX,
-  CUSTOMER_STORE_SEARCH_HISTORY_KEY,
-  MAX_CUSTOMER_STORE_SEARCH_HISTORY,
-} from '@/features/delivery/DeliveryServices'
-import { decodeStringArray } from '@/system/api/ResponseDecoders'
+import { CUSTOMER_BLOCKED_STORE_IDS_KEY_PREFIX, CUSTOMER_FAVORITE_STORE_IDS_KEY_PREFIX, CUSTOMER_PROFILE_NOTICE_SEEN_KEY_PREFIX, CUSTOMER_STORE_SEARCH_HISTORY_KEY, MAX_CUSTOMER_STORE_SEARCH_HISTORY } from '@/pages/DeliveryConsole/functions/shared/DeliveryConstants'
 
-const SESSION_TOKEN_STORAGE_KEY = 'delivery-session-token'
-
-function readJsonStorageValue(key: string): unknown {
-  const stored = window.localStorage.getItem(key)
-  if (!stored) return null
-  try {
-    return JSON.parse(stored)
-  } catch {
-    return null
-  }
-}
+const memoryStorage = new Map<string, string[]>()
+let memorySessionToken: string | null = null
 
 function readStringArrayStorageValue(key: string, maxSize?: number) {
-  const parsed = readJsonStorageValue(key)
-  let values: string[]
-
-  try {
-    values = decodeStringArray(parsed)
-  } catch {
-    return []
-  }
-
+  const values = memoryStorage.get(key) ?? []
   return typeof maxSize === 'number' ? values.slice(0, maxSize) : values
 }
 
 function writeStringArrayStorageValue(key: string, values: string[]) {
   if (values.length === 0) {
-    window.localStorage.removeItem(key)
+    memoryStorage.delete(key)
     return
   }
 
-  window.localStorage.setItem(key, JSON.stringify(values))
+  memoryStorage.set(key, values)
 }
 
 export function getCustomerProfileNoticeSeenStorageKey(userId: string) {
@@ -54,15 +30,15 @@ export function getCustomerBlockedStoreIdsStorageKey(userId: string) {
 }
 
 export function readSessionToken() {
-  return window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY)
+  return memorySessionToken
 }
 
 export function saveSessionToken(token: string) {
-  window.localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token)
+  memorySessionToken = token
 }
 
 export function clearSessionToken() {
-  window.localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY)
+  memorySessionToken = null
 }
 
 export function readCustomerStoreSearchHistory() {
@@ -77,7 +53,7 @@ export function saveCustomerStoreSearchHistory(values: string[]) {
 }
 
 export function clearCustomerStoreSearchHistory() {
-  window.localStorage.removeItem(CUSTOMER_STORE_SEARCH_HISTORY_KEY)
+  memoryStorage.delete(CUSTOMER_STORE_SEARCH_HISTORY_KEY)
 }
 
 export function readCustomerFavoriteStoreIds(userId: string) {
@@ -89,7 +65,7 @@ export function saveCustomerFavoriteStoreIds(userId: string, values: string[]) {
 }
 
 export function clearCustomerFavoriteStoreIds(userId: string) {
-  window.localStorage.removeItem(getCustomerFavoriteStoreIdsStorageKey(userId))
+  memoryStorage.delete(getCustomerFavoriteStoreIdsStorageKey(userId))
 }
 
 export function readCustomerBlockedStoreIds(userId: string) {
@@ -101,7 +77,7 @@ export function saveCustomerBlockedStoreIds(userId: string, values: string[]) {
 }
 
 export function clearCustomerBlockedStoreIds(userId: string) {
-  window.localStorage.removeItem(getCustomerBlockedStoreIdsStorageKey(userId))
+  memoryStorage.delete(getCustomerBlockedStoreIdsStorageKey(userId))
 }
 
 export function readSeenCustomerProfileNoticeIds(userId: string) {
@@ -113,5 +89,5 @@ export function saveSeenCustomerProfileNoticeIds(userId: string, noticeIds: stri
 }
 
 export function clearSeenCustomerProfileNoticeIds(userId: string) {
-  window.localStorage.removeItem(getCustomerProfileNoticeSeenStorageKey(userId))
+  memoryStorage.delete(getCustomerProfileNoticeSeenStorageKey(userId))
 }

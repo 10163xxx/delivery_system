@@ -13,7 +13,7 @@ import type {
   TicketKind,
   TicketStatus,
   UserRole,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type AdminTicketIdentity = {
   id: TicketId

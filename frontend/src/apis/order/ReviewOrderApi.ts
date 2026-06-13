@@ -1,10 +1,11 @@
-import type {
-  OrderId,
-  ReviewOrderRequest,
-} from '@/objects/core/SharedObjects'
-import { reviewOrderApiDefinition } from '@/system/api/ApiRoutes'
+import type { DeliveryAppState, OrderId, ReviewOrderRequest } from '@/objects/core/SharedObjects'
 import { postNormalizedDeliveryState } from '@/system/api/DeliveryStateClient'
-import { buildApiPath1 } from '@/system/api/TypedApiDefinitions'
+import { buildApiPath1, defineJsonPostApi1, routeSegment } from '@/system/api/TypedApiDefinitions'
+
+export const reviewOrderApiDefinition = defineJsonPostApi1<OrderId, ReviewOrderRequest, DeliveryAppState>(
+    [routeSegment('api'), routeSegment('delivery'), routeSegment('orders')],
+    [routeSegment('review')],
+  )
 
 export function reviewOrder(orderId: OrderId, payload: ReviewOrderRequest) {
   return postNormalizedDeliveryState(buildApiPath1(reviewOrderApiDefinition, orderId), payload)

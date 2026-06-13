@@ -1,4 +1,4 @@
-import type { Password, UserRole, Username } from '@/objects/domain/DomainObjects'
+import type { Password, UserRole, Username } from '@/objects/core/SharedObjects'
 
 export type RegisterRequest = {
   username: Username

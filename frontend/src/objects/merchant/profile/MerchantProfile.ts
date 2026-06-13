@@ -3,7 +3,7 @@ import type {
   MerchantId,
   PersonName,
   PhoneNumber,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { MerchantPayoutAccount } from '@/objects/merchant/profile/MerchantPayoutAccount'
 import type { MerchantWithdrawal } from '@/objects/merchant/profile/MerchantWithdrawal'
 

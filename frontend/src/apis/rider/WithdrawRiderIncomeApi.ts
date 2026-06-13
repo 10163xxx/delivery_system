@@ -1,10 +1,11 @@
-import type {
-  RiderId,
-  WithdrawRiderIncomeRequest,
-} from '@/objects/core/SharedObjects'
-import { withdrawRiderIncomeApiDefinition } from '@/system/api/ApiRoutes'
+import type { DeliveryAppState, RiderId, WithdrawRiderIncomeRequest } from '@/objects/core/SharedObjects'
 import { postNormalizedDeliveryState } from '@/system/api/DeliveryStateClient'
-import { buildApiPath1 } from '@/system/api/TypedApiDefinitions'
+import { buildApiPath1, defineJsonPostApi1, routeSegment } from '@/system/api/TypedApiDefinitions'
+
+export const withdrawRiderIncomeApiDefinition = defineJsonPostApi1<RiderId, WithdrawRiderIncomeRequest, DeliveryAppState>(
+    [routeSegment('api'), routeSegment('delivery'), routeSegment('riders')],
+    [routeSegment('withdraw')],
+  )
 
 export function withdrawRiderIncome(
   riderId: RiderId,

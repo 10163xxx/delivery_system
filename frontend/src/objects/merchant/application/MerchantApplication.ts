@@ -10,7 +10,7 @@ import type {
   NoteText,
   PersonName,
   ResolutionText,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { BusinessHours } from '@/objects/merchant/store/BusinessHours'
 
 export type MerchantApplicationIdentity = {

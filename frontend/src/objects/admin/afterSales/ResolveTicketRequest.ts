@@ -1,4 +1,4 @@
-import type { NoteText, ResolutionText } from '@/objects/domain/DomainObjects'
+import type { NoteText, ResolutionText } from '@/objects/core/SharedObjects'
 
 export type ResolveTicketRequest = {
   resolution: ResolutionText

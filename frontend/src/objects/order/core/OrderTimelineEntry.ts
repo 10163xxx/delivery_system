@@ -1,4 +1,4 @@
-import type { DisplayText, IsoDateTime, OrderStatus } from '@/objects/domain/DomainObjects'
+import type { DisplayText, IsoDateTime, OrderStatus } from '@/objects/core/SharedObjects'
 
 export type OrderTimelineEntry = {
   status: OrderStatus

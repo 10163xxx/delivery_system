@@ -4,7 +4,7 @@ import type {
   IsoDateTime,
   PersonName,
   UserRole,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type OrderChatMessage = {
   id: ChatMessageId

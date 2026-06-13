@@ -1,4 +1,4 @@
-import type { FileNameText } from '@/objects/domain/DomainObjects'
+import type { FileNameText } from '@/objects/core/SharedObjects'
 import { API_CLIENT_DEFAULTS } from '@/system/api/ApiConstants'
 import { buildApiPath1, defineJsonGetApi1, routeSegment } from '@/system/api/TypedApiDefinitions'
 

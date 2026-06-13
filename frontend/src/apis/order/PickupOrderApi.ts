@@ -1,7 +1,11 @@
-import type { OrderId } from '@/objects/core/SharedObjects'
-import { pickupOrderApiDefinition } from '@/system/api/ApiRoutes'
+import type { DeliveryAppState, OrderId } from '@/objects/core/SharedObjects'
 import { postNormalizedDeliveryStateWithoutBody } from '@/system/api/DeliveryStateClient'
-import { buildApiPath1 } from '@/system/api/TypedApiDefinitions'
+import { buildApiPath1, defineJsonPostApi1, routeSegment } from '@/system/api/TypedApiDefinitions'
+
+export const pickupOrderApiDefinition = defineJsonPostApi1<OrderId, void, DeliveryAppState>(
+  [routeSegment('api'), routeSegment('delivery'), routeSegment('orders')],
+  [routeSegment('pickup')],
+)
 
 export function pickupOrder(orderId: OrderId) {
   return postNormalizedDeliveryStateWithoutBody(buildApiPath1(pickupOrderApiDefinition, orderId))

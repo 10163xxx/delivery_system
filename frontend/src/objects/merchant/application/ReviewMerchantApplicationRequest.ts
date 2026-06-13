@@ -1,4 +1,4 @@
-import type { ResolutionText } from '@/objects/domain/DomainObjects'
+import type { ResolutionText } from '@/objects/core/SharedObjects'
 
 export type ReviewMerchantApplicationRequest = {
   reviewNote: ResolutionText

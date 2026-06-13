@@ -5,7 +5,7 @@ import type {
   IsoDateTime,
   NoteText,
   StoreId,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { OrderItemInput } from '@/objects/order/core/OrderItemInput'
 
 export type CreateOrderRequest = {

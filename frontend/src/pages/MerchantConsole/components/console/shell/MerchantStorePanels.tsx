@@ -1,0 +1,173 @@
+import type { MerchantStoreSidebarProps } from '@/pages/MerchantConsole/objects/MerchantConsoleObjects'
+import { ELIGIBILITY_REVIEW_TARGET, STORE_STATUS } from '@/objects/core/SharedObjects'
+
+export function MerchantStoreOverviewCard({ store, props }: MerchantStoreSidebarProps) {
+  const { formatAggregateRating, formatBusinessHours, formatPrice } = props
+
+  return (
+    <div className="merchant-section-card">
+      <p className="ticket-kind">概览</p>
+      <div className="merchant-metric-list">
+        <div><p>商家评分</p><strong>{formatAggregateRating(store.averageRating, store.ratingCount)}</strong></div>
+        <div><p>营业额</p><strong>{formatPrice(store.revenueCents)}</strong></div>
+        <div><p>营业时间</p><strong>{formatBusinessHours(store.businessHours)}</strong></div>
+        <div><p>预计出餐</p><strong>{store.avgPrepMinutes} 分钟</strong></div>
+        <div><p>店铺地址</p><strong>{store.storeAddress}</strong></div>
+      </div>
+    </div>
+  )
+}
+
+export function MerchantStoreOperationCard({ store, props }: MerchantStoreSidebarProps) {
+  const {
+    getStoreOperationDraft,
+    setStoreOperationDrafts,
+    setStoreOperationErrors,
+    storeOperationErrors,
+    submitStoreOperationalInfo,
+  } = props
+  const operationErrors = storeOperationErrors[store.id]
+  const draft = getStoreOperationDraft(store)
+
+  return (
+    <div className="merchant-section-card">
+      <p className="ticket-kind">营业设置</p>
+      <div className="form-grid">
+        <label>
+          <span>开业时间</span>
+          <input
+            className={operationErrors?.openTime ? 'field-error' : undefined}
+            type="time"
+            value={draft.openTime}
+            onChange={(event) => {
+              const value = event.target.value
+              setStoreOperationDrafts((current) => ({
+                ...current,
+                [store.id]: { ...getStoreOperationDraft(store), openTime: value },
+              }))
+              setStoreOperationErrors((current) => ({
+                ...current,
+                [store.id]: { ...(current[store.id] ?? {}), openTime: undefined, closeTime: undefined },
+              }))
+            }}
+          />
+          {operationErrors?.openTime ? <small className="field-error-text">{operationErrors.openTime}</small> : null}
+        </label>
+        <label>
+          <span>打烊时间</span>
+          <input
+            className={operationErrors?.closeTime ? 'field-error' : undefined}
+            type="time"
+            value={draft.closeTime}
+            onChange={(event) => {
+              const value = event.target.value
+              setStoreOperationDrafts((current) => ({
+                ...current,
+                [store.id]: { ...getStoreOperationDraft(store), closeTime: value },
+              }))
+              setStoreOperationErrors((current) => ({
+                ...current,
+                [store.id]: { ...(current[store.id] ?? {}), openTime: undefined, closeTime: undefined },
+              }))
+            }}
+          />
+          {operationErrors?.closeTime ? <small className="field-error-text">{operationErrors.closeTime}</small> : null}
+        </label>
+        <label className="full">
+          <span>店铺地址</span>
+          <input
+            className={operationErrors?.storeAddress ? 'field-error' : undefined}
+            value={draft.storeAddress}
+            onChange={(event) => {
+              const value = event.target.value
+              setStoreOperationDrafts((current) => ({
+                ...current,
+                [store.id]: { ...getStoreOperationDraft(store), storeAddress: value },
+              }))
+              setStoreOperationErrors((current) => ({
+                ...current,
+                [store.id]: { ...(current[store.id] ?? {}), storeAddress: undefined },
+              }))
+            }}
+          />
+          {operationErrors?.storeAddress ? <small className="field-error-text">{operationErrors.storeAddress}</small> : <small className="field-hint">填写真实门牌地址，地图与导航能力会基于这里展示。</small>}
+        </label>
+        <label className="full">
+          <span>预计出餐时间</span>
+          <input
+            className={operationErrors?.avgPrepMinutes ? 'field-error' : undefined}
+            inputMode="numeric"
+            max={120}
+            min={1}
+            value={draft.avgPrepMinutes}
+            onChange={(event) => {
+              const value = event.target.value
+              setStoreOperationDrafts((current) => ({
+                ...current,
+                [store.id]: { ...getStoreOperationDraft(store), avgPrepMinutes: value },
+              }))
+              setStoreOperationErrors((current) => ({
+                ...current,
+                [store.id]: { ...(current[store.id] ?? {}), avgPrepMinutes: undefined },
+              }))
+            }}
+          />
+          {operationErrors?.avgPrepMinutes ? <small className="field-error-text">{operationErrors.avgPrepMinutes}</small> : <small className="field-hint">填写 1 到 120 的整数，单位为分钟。</small>}
+        </label>
+      </div>
+      <div className="summary-bar">
+        <div><p>当前设置</p><strong>{draft.storeAddress} · {draft.openTime} - {draft.closeTime} · {draft.avgPrepMinutes} 分钟</strong></div>
+        <button className="primary-button" onClick={() => void submitStoreOperationalInfo(store)} type="button">
+          保存营业设置
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export function MerchantStoreEligibilityCard({ store, props }: MerchantStoreSidebarProps) {
+  const {
+    buildEligibilityReviewPayload,
+    eligibilityReviewDrafts,
+    runAction,
+    setEligibilityReviewDrafts,
+    submitEligibilityReview,
+  } = props
+
+  if (store.status !== STORE_STATUS.revoked) return null
+
+  return (
+    <div className="merchant-section-card">
+      <p className="ticket-kind">资格处理</p>
+      <div className="ticket-actions merchant-module-actions">
+        <input
+          placeholder="店铺复核理由"
+          value={eligibilityReviewDrafts[store.id] ?? ''}
+          onChange={(event) =>
+            setEligibilityReviewDrafts((current) => ({
+              ...current,
+              [store.id]: event.target.value,
+            }))
+          }
+        />
+        <button
+          className="primary-button"
+          onClick={() =>
+            void runAction(() =>
+              submitEligibilityReview(
+                buildEligibilityReviewPayload(
+                  ELIGIBILITY_REVIEW_TARGET.store,
+                  store.id,
+                  eligibilityReviewDrafts[store.id] ?? '',
+                ),
+              ),
+            )
+          }
+          type="button"
+        >
+          发起营业资格复核
+        </button>
+      </div>
+    </div>
+  )
+}

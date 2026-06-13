@@ -1,4 +1,4 @@
-import type { ReasonText } from '@/objects/domain/DomainObjects'
+import type { ReasonText } from '@/objects/core/SharedObjects'
 
 export type RejectOrderRequest = {
   reason: ReasonText

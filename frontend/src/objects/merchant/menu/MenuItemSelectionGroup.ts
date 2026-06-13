@@ -1,4 +1,4 @@
-import type { DisplayText, EntityCount } from '@/objects/domain/DomainObjects'
+import type { DisplayText, EntityCount } from '@/objects/core/SharedObjects'
 import type { MenuItemSelectionOption } from '@/objects/merchant/menu/MenuItemSelectionOption'
 
 export type MenuItemSelectionGroup = {

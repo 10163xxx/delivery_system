@@ -6,7 +6,7 @@ import type {
   PersonName,
   UserRole,
   Username,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type PersistedAuthAccount = {
   id: AuthUserId

@@ -10,7 +10,7 @@ import type {
   ReviewAppealId,
   RiderId,
   StoreId,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type ReviewAppealIdentity = {
   id: ReviewAppealId

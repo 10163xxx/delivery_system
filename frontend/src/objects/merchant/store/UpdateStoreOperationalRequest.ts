@@ -1,5 +1,5 @@
 import type { BusinessHours } from '@/objects/merchant/store/BusinessHours'
-import type { AddressText, DeliveryCoordinate, Minutes } from '@/objects/domain/DomainObjects'
+import type { AddressText, DeliveryCoordinate, Minutes } from '@/objects/core/SharedObjects'
 
 export type UpdateStoreOperationalRequest = {
   storeAddress: AddressText

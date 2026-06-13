@@ -1,4 +1,4 @@
-import type { MenuItemId, Quantity } from '@/objects/domain/DomainObjects'
+import type { MenuItemId, Quantity } from '@/objects/core/SharedObjects'
 import type { OrderItemSelection } from '@/objects/order/core/OrderItemSelection'
 
 export type OrderItemInput = {

@@ -6,8 +6,8 @@ import type {
   RiderId,
   VehicleLabel,
   ZoneLabel,
-} from '@/objects/domain/DomainObjects'
-import type { AvailabilityLabel } from '@/objects/domain/DomainTypes'
+} from '@/objects/core/SharedObjects'
+import type { AvailabilityLabel } from '@/objects/core/SharedObjects'
 import type { MerchantPayoutAccount } from '@/objects/merchant/profile/MerchantPayoutAccount'
 import type { MerchantWithdrawal } from '@/objects/merchant/profile/MerchantWithdrawal'
 

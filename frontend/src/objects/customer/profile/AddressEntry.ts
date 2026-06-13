@@ -2,7 +2,7 @@ import type {
   AddressLabel,
   AddressText,
   DeliveryCoordinate,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type AddressEntry = {
   label: AddressLabel

@@ -1,11 +1,12 @@
-import type {
-  MenuItemId,
-  StoreId,
-  UpdateMenuItemPriceRequest,
-} from '@/objects/core/SharedObjects'
-import { updateMenuItemPriceApiDefinition } from '@/system/api/ApiRoutes'
+import type { DeliveryAppState, MenuItemId, StoreId, UpdateMenuItemPriceRequest } from '@/objects/core/SharedObjects'
 import { postNormalizedDeliveryState } from '@/system/api/DeliveryStateClient'
-import { buildApiPath2 } from '@/system/api/TypedApiDefinitions'
+import { buildApiPath2, defineJsonPostApi2, routeSegment } from '@/system/api/TypedApiDefinitions'
+
+export const updateMenuItemPriceApiDefinition = defineJsonPostApi2<StoreId, MenuItemId, UpdateMenuItemPriceRequest, DeliveryAppState>(
+    [routeSegment('api'), routeSegment('delivery'), routeSegment('stores')],
+    [routeSegment('menu')],
+    [routeSegment('price')],
+  )
 
 export function updateMenuItemPrice(
   storeId: StoreId,

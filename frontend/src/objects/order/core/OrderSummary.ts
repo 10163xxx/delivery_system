@@ -14,7 +14,7 @@ import type {
   ReviewStatus,
   RiderId,
   StoreId,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { Coupon } from '@/objects/customer/profile/Coupon'
 import type { OrderChatMessage } from '@/objects/order/core/OrderChatMessage'
 import type { OrderLineItem } from '@/objects/order/core/OrderLineItem'

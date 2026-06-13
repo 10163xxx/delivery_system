@@ -1,4 +1,4 @@
-import type { NoteText, RatingValue, ReasonText } from '@/objects/domain/DomainObjects'
+import type { NoteText, RatingValue, ReasonText } from '@/objects/core/SharedObjects'
 
 export type ReviewSubmission = {
   rating: RatingValue

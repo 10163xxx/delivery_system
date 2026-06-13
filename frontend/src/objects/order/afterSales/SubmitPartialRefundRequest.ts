@@ -1,4 +1,4 @@
-import type { MenuItemId, Quantity, ReasonText } from '@/objects/domain/DomainObjects'
+import type { MenuItemId, Quantity, ReasonText } from '@/objects/core/SharedObjects'
 
 export type SubmitPartialRefundRequest = {
   menuItemId: MenuItemId

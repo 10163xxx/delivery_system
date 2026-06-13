@@ -4,7 +4,7 @@ import type {
   DescriptionText,
   DisplayText,
   IsoDateTime,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type Coupon = {
   id: CouponId

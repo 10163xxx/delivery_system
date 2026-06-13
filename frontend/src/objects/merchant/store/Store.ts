@@ -11,7 +11,7 @@ import type {
   DeliveryCoordinate,
   StoreId,
   StoreStatus,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { MenuItem } from '@/objects/merchant/menu/MenuItem'
 import type { BusinessHours } from '@/objects/merchant/store/BusinessHours'
 

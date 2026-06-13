@@ -3,7 +3,7 @@ import type {
   ApprovalFlag,
   CurrencyCents,
   ResolutionText,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 
 export type ResolveAfterSalesRequest = {
   approved: ApprovalFlag

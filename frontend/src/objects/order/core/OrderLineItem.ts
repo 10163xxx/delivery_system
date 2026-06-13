@@ -3,7 +3,7 @@ import type {
   DisplayText,
   MenuItemId,
   Quantity,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { OrderItemSelection } from '@/objects/order/core/OrderItemSelection'
 
 export type OrderLineItem = {

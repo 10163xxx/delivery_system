@@ -4,7 +4,7 @@ import type {
   DisplayText,
   ImageUrl,
   Quantity,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { MenuItemSelectionGroup } from '@/objects/merchant/menu/MenuItemSelectionGroup'
 
 export type AddMenuItemRequest = {

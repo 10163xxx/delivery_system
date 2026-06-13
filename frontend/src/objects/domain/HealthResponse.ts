@@ -1,4 +1,4 @@
-import type { ServiceName, ServiceStatus } from '@/objects/domain/DomainObjects'
+import type { ServiceName, ServiceStatus } from '@/objects/core/SharedObjects'
 
 export type HealthResponse = {
   status: ServiceStatus

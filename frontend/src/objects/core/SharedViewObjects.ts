@@ -1,4 +1,4 @@
-import type { AdminRoleProps, CustomerRoleProps, MerchantRoleProps, RiderRoleProps } from '@/pages/delivery/app/roleProps'
+import type { AdminRoleProps, CustomerRoleProps, MerchantRoleProps, RiderRoleProps } from '@/pages/DeliveryConsole/functions/roleProps'
 import type { AuthSession, DeliveryAppState, Role } from '@/objects/core/SharedObjects'
 
 export type AuthScreenProps = {
@@ -22,7 +22,7 @@ export type CustomerWorkspaceHeaderTab = {
 
 export type CustomerWorkspaceViewMeta = {
   readonly title: string
-  readonly activeTab: keyof typeof import('@/components/primitives/DeliveryConsoleCopy').CUSTOMER_WORKSPACE_HEADER_TABS
+  readonly activeTab: keyof typeof import('@/pages/DeliveryConsole/components/primitives/DeliveryConsoleCopy').CUSTOMER_WORKSPACE_HEADER_TABS
 }
 
 export type DisplayImageSlotProps = {

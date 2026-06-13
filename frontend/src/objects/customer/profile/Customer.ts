@@ -8,7 +8,7 @@ import type {
   MembershipTier,
   PersonName,
   PhoneNumber,
-} from '@/objects/domain/DomainObjects'
+} from '@/objects/core/SharedObjects'
 import type { AddressEntry } from '@/objects/customer/profile/AddressEntry'
 import type { Coupon } from '@/objects/customer/profile/Coupon'
 
