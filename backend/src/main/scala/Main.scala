@@ -8,7 +8,7 @@ import org.http4s.server.middleware.CORS
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.server.middleware.Logger
-import routes.backendApiApp
+import routes.apiRouter
 import services.auth.utils.initializeAuthPersistence
 import system.initializeDatabaseSession
 import system.app.initializeDeliveryStatePersistence
@@ -31,7 +31,7 @@ object Main extends IOApp.Simple:
 
   private val httpApp =
     CORS.policy.withAllowOriginAll(
-      Logger.httpApp(logHeaders = true, logBody = false)(backendApiApp)
+      Logger.httpApp(logHeaders = true, logBody = false)(apiRouter)
     )
 
   private val serverResource: cats.effect.Resource[IO, Server] =

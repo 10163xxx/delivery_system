@@ -2,7 +2,7 @@ package system.api.health
 
 import domain.shared.given
 
-import domain.shared.HealthResponse
+import system.objects.HealthResponse
 import system.api.*
 
 val healthApi: FixedMethodApi0[HealthResponse] =

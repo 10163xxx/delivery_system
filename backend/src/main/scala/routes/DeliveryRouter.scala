@@ -12,5 +12,5 @@ import org.http4s.HttpRoutes
 import services.review.routes.reviewRoutes
 import services.rider.routes.riderRoutes
 
-val deliveryRoutes: HttpRoutes[IO] =
+val deliveryRouter: HttpRoutes[IO] =
   customerRoutes <+> merchantRoutes <+> riderRoutes <+> orderRoutes <+> reviewRoutes <+> adminRoutes
