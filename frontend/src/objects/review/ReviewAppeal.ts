@@ -1,38 +1,13 @@
-import type {
-  AppealRole,
-  AppealStatus,
-  CustomerId,
-  IsoDateTime,
-  OrderId,
-  PersonName,
-  ReasonText,
-  ResolutionText,
-  ReviewAppealId,
-  RiderId,
-  StoreId,
-} from '@/objects/core/SharedObjects'
+import type { ReviewAppealDecision } from '@/objects/review/ReviewAppealDecision'
+import type { ReviewAppealIdentity } from '@/objects/review/ReviewAppealIdentity'
+import type { ReviewAppealReview } from '@/objects/review/ReviewAppealReview'
 
-export type ReviewAppealIdentity = {
-  id: ReviewAppealId
-  orderId: OrderId
-  customerId: CustomerId
-  customerName: PersonName
-  storeId: StoreId
-  riderId?: RiderId
-}
-
-export type ReviewAppealDecision = {
-  appellantRole: AppealRole
-  reason: ReasonText
-}
-
-export type ReviewAppealReview = {
-  status: AppealStatus
-  resolutionNote?: ResolutionText
-  submittedAt: IsoDateTime
-  reviewedAt?: IsoDateTime
-}
+export type { ReviewAppealDecision } from '@/objects/review/ReviewAppealDecision'
+export type { ReviewAppealIdentity } from '@/objects/review/ReviewAppealIdentity'
+export type { ReviewAppealReview } from '@/objects/review/ReviewAppealReview'
 
 export type ReviewAppeal = ReviewAppealIdentity & ReviewAppealDecision & {
+  identity: ReviewAppealIdentity
+  decision: ReviewAppealDecision
   review: ReviewAppealReview
 } & ReviewAppealReview

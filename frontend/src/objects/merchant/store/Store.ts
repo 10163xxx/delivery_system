@@ -1,46 +1,11 @@
-import type {
-  AddressText,
-  CuisineLabel,
-  CurrencyCents,
-  DisplayText,
-  EntityCount,
-  ImageUrl,
-  Minutes,
-  PersonName,
-  AverageRating,
-  DeliveryCoordinate,
-  StoreId,
-  StoreStatus,
-} from '@/objects/core/SharedObjects'
-import type { MenuItem } from '@/objects/merchant/menu/MenuItem'
-import type { BusinessHours } from '@/objects/merchant/store/BusinessHours'
+import type { StoreIdentity } from '@/objects/merchant/store/StoreIdentity'
+import type { StoreMetrics } from '@/objects/merchant/store/StoreMetrics'
+import type { StoreOperations } from '@/objects/merchant/store/StoreOperations'
 
-export type StoreIdentity = {
-  id: StoreId
-  merchantName: PersonName
-  name: DisplayText
-  category: DisplayText
-  cuisine: CuisineLabel
-}
-
-export type StoreOperations = {
-  status: StoreStatus
-  storeAddress: AddressText
-  location?: StoreLocation
-  businessHours: BusinessHours
-  avgPrepMinutes: Minutes
-  imageUrl?: ImageUrl
-  menu: MenuItem[]
-}
-
-export type StoreLocation = DeliveryCoordinate
-
-export type StoreMetrics = {
-  averageRating: AverageRating
-  ratingCount: EntityCount
-  oneStarRatingCount: EntityCount
-  revenueCents: CurrencyCents
-}
+export type { StoreIdentity } from '@/objects/merchant/store/StoreIdentity'
+export type { StoreLocation } from '@/objects/merchant/store/StoreLocation'
+export type { StoreMetrics } from '@/objects/merchant/store/StoreMetrics'
+export type { StoreOperations } from '@/objects/merchant/store/StoreOperations'
 
 export type Store = StoreIdentity & {
   operations: StoreOperations

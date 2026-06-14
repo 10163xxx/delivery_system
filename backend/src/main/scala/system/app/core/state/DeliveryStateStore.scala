@@ -120,11 +120,13 @@ private def registerRiderProfile(displayName: PersonName): Either[ErrorMessage, 
 
 private def buildRiderProfile(riderId: RiderId, displayName: PersonName): Rider =
     Rider(
-      id = riderId,
-      name = displayName,
-      vehicle = riderVehiclePending,
-      zone = riderZonePending,
-      availability = riderAvailable,
+      identity = RiderIdentity(
+        id = riderId,
+        name = displayName,
+        vehicle = riderVehiclePending,
+        zone = riderZonePending,
+        availability = riderAvailable,
+      ),
       performance = RiderPerformance(
         averageRating = NumericDefaults.ZeroAverageRating,
         ratingCount = NumericDefaults.ZeroCount,

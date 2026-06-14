@@ -7,36 +7,18 @@ import io.circe.generic.semiauto.*
 import domain.merchant.{MerchantPayoutAccount, MerchantWithdrawal, legacyMerchantPayoutAccountFromText}
 import domain.shared.*
 
-final case class RiderPerformance(
-    averageRating: AverageRating,
-    ratingCount: EntityCount,
-    oneStarRatingCount: EntityCount,
-    earningsCents: CurrencyCents,
-)
-
-final case class RiderPayout(
-    payoutAccount: Option[MerchantPayoutAccount],
-    withdrawnCents: CurrencyCents,
-    availableToWithdrawCents: CurrencyCents,
-    withdrawalHistory: List[MerchantWithdrawal],
-)
-
 final case class Rider(
-    id: RiderId,
-    name: PersonName,
-    vehicle: VehicleLabel,
-    zone: ZoneLabel,
-    availability: AvailabilityLabel,
+    identity: RiderIdentity,
     performance: RiderPerformance,
     payout: RiderPayout,
 )
 object Rider:
-  given Encoder[RiderPerformance] = deriveEncoder
-  given Decoder[RiderPerformance] = deriveDecoder
-  given Encoder[RiderPayout] = deriveEncoder
-  given Decoder[RiderPayout] = deriveDecoder
-
   extension (rider: Rider)
+    def id: RiderId = rider.identity.id
+    def name: PersonName = rider.identity.name
+    def vehicle: VehicleLabel = rider.identity.vehicle
+    def zone: ZoneLabel = rider.identity.zone
+    def availability: AvailabilityLabel = rider.identity.availability
     def averageRating: AverageRating = rider.performance.averageRating
     def ratingCount: EntityCount = rider.performance.ratingCount
     def oneStarRatingCount: EntityCount = rider.performance.oneStarRatingCount
@@ -49,9 +31,10 @@ object Rider:
   given Encoder[Rider] = Encoder.instance(rider =>
     deriveEncoder[Rider]
       .apply(rider)
+      .deepMerge(deriveEncoder[RiderIdentity].apply(rider.identity))
       .deepMerge(deriveEncoder[RiderPerformance].apply(rider.performance))
       .deepMerge(deriveEncoder[RiderPayout].apply(rider.payout))
-      .mapObject(_.remove("performance").remove("payout"))
+      .mapObject(_.remove("identity").remove("performance").remove("payout"))
   )
   given Decoder[Rider] = Decoder.instance { cursor =>
     for
@@ -74,11 +57,13 @@ object Rider:
         )
       withdrawalHistory <- cursor.getOrElse[List[MerchantWithdrawal]]("withdrawalHistory")(List.empty)
     yield Rider(
-      id = id,
-      name = name,
-      vehicle = vehicle,
-      zone = zone,
-      availability = availability,
+      identity = RiderIdentity(
+        id = id,
+        name = name,
+        vehicle = vehicle,
+        zone = zone,
+        availability = availability,
+      ),
       performance = RiderPerformance(
         averageRating = averageRating,
         ratingCount = ratingCount,

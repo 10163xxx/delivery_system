@@ -45,11 +45,13 @@ def applyRatingToRider(
     earningsCents: CurrencyCents,
 ): Rider =
   rider.copy(
-    availability =
-      if oneStarCount > OneStarRevocationThreshold then riderSuspended
-      else if rider.availability == riderOnDelivery then riderOnDelivery
-      else if rider.availability == riderUnavailable then riderUnavailable
-      else riderAvailable,
+    identity = rider.identity.copy(
+      availability =
+        if oneStarCount > OneStarRevocationThreshold then riderSuspended
+        else if rider.availability == riderOnDelivery then riderOnDelivery
+        else if rider.availability == riderUnavailable then riderUnavailable
+        else riderAvailable,
+    ),
     performance = rider.performance.copy(
       averageRating = roundAverage(ratings),
       ratingCount = ratings.size,

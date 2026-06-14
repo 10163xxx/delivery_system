@@ -1,82 +1,32 @@
-import type {
-  AddressText,
-  CurrencyCents,
-  CustomerId,
-  DescriptionText,
-  DisplayText,
-  IsoDateTime,
-  NoteText,
-  OrderId,
-  OrderStatus,
-  PersonName,
-  RatingValue,
-  ReasonText,
-  ReviewStatus,
-  RiderId,
-  StoreId,
-} from '@/objects/core/SharedObjects'
-import type { Coupon } from '@/objects/customer/profile/Coupon'
-import type { OrderChatMessage } from '@/objects/order/core/OrderChatMessage'
-import type { OrderLineItem } from '@/objects/order/core/OrderLineItem'
-import type { OrderTimelineEntry } from '@/objects/order/core/OrderTimelineEntry'
-import type { OrderPartialRefundRequest } from '@/objects/order/afterSales/OrderPartialRefundRequest'
+import type { OrderSummaryActivity } from '@/objects/order/core/OrderSummaryActivity'
+import type { OrderSummaryFulfillment } from '@/objects/order/core/OrderSummaryFulfillment'
+import type { OrderSummaryIdentity } from '@/objects/order/core/OrderSummaryIdentity'
+import type { OrderSummaryLifecycle } from '@/objects/order/core/OrderSummaryLifecycle'
+import type { OrderSummaryPricing } from '@/objects/order/core/OrderSummaryPricing'
+import type { OrderSummaryReviewContent } from '@/objects/order/core/OrderSummaryReviewContent'
+import type { OrderSummaryReviewState } from '@/objects/order/core/OrderSummaryReviewState'
 
-export type OrderSummaryIdentity = {
-  id: OrderId
-  customerId: CustomerId
-  customerName: PersonName
-  storeId: StoreId
-  storeName: DisplayText
-  riderId?: RiderId
-  riderName?: PersonName
-}
-
-export type OrderSummaryFulfillment = {
-  status: OrderStatus
-  deliveryAddress: AddressText
-  scheduledDeliveryAt: IsoDateTime
-  remark?: NoteText
-  items: OrderLineItem[]
-}
-
-export type OrderSummaryPricing = {
-  itemSubtotalCents: CurrencyCents
-  deliveryFeeCents: CurrencyCents
-  couponDiscountCents: CurrencyCents
-  appliedCoupon?: Coupon
-  totalPriceCents: CurrencyCents
-}
-
-export type OrderSummaryLifecycle = {
-  createdAt: IsoDateTime
-  updatedAt: IsoDateTime
-}
-
-export type OrderSummaryActivity = {
-  timeline: OrderTimelineEntry[]
-  chatMessages: OrderChatMessage[]
-  partialRefundRequests: OrderPartialRefundRequest[]
-}
-
-export type OrderSummaryReviewState = {
-  storeRating?: RatingValue
-  riderRating?: RatingValue
-  merchantRejectReason?: ReasonText
-  reviewStatus: ReviewStatus
-  reviewRevokedReason?: ReasonText
-  reviewRevokedAt?: IsoDateTime
-}
-
-export type OrderSummaryReviewContent = {
-  reviewComment?: DescriptionText
-  reviewExtraNote?: NoteText
-  storeReviewComment?: DescriptionText
-  storeReviewExtraNote?: NoteText
-  storeMerchantReply?: NoteText
-  storeMerchantReplyAt?: IsoDateTime
-  riderReviewComment?: DescriptionText
-  riderReviewExtraNote?: NoteText
-}
+export type {
+  OrderSummaryActivity,
+} from '@/objects/order/core/OrderSummaryActivity'
+export type {
+  OrderSummaryFulfillment,
+} from '@/objects/order/core/OrderSummaryFulfillment'
+export type {
+  OrderSummaryIdentity,
+} from '@/objects/order/core/OrderSummaryIdentity'
+export type {
+  OrderSummaryLifecycle,
+} from '@/objects/order/core/OrderSummaryLifecycle'
+export type {
+  OrderSummaryPricing,
+} from '@/objects/order/core/OrderSummaryPricing'
+export type {
+  OrderSummaryReviewContent,
+} from '@/objects/order/core/OrderSummaryReviewContent'
+export type {
+  OrderSummaryReviewState,
+} from '@/objects/order/core/OrderSummaryReviewState'
 
 export type OrderSummary = {
   identity: OrderSummaryIdentity

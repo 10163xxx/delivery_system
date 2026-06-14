@@ -111,7 +111,9 @@ def updateRiderAvailability(
           withDerivedData(
             current.copy(
               riders = current.riders.map(entry =>
-                if entry.id == rider.id then entry.copy(availability = availability) else entry
+                if entry.id == rider.id then
+                  entry.copy(identity = entry.identity.copy(availability = availability))
+                else entry
               ),
             ),
             now(),

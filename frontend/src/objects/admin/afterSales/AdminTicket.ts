@@ -1,52 +1,18 @@
-import type { Coupon } from '@/objects/customer/profile/Coupon'
-import type {
-  AfterSalesRequestType,
-  AfterSalesResolutionMode,
-  ApprovalFlag,
-  CurrencyCents,
-  IsoDateTime,
-  OrderId,
-  PersonName,
-  ResolutionText,
-  SummaryText,
-  TicketId,
-  TicketKind,
-  TicketStatus,
-  UserRole,
-} from '@/objects/core/SharedObjects'
+import type { AdminTicketIdentity } from '@/objects/admin/afterSales/AdminTicketIdentity'
+import type { AdminTicketLifecycle } from '@/objects/admin/afterSales/AdminTicketLifecycle'
+import type { AdminTicketResolution } from '@/objects/admin/afterSales/AdminTicketResolution'
+import type { AdminTicketSubmission } from '@/objects/admin/afterSales/AdminTicketSubmission'
 
-export type AdminTicketIdentity = {
-  id: TicketId
-  orderId: OrderId
-  kind: TicketKind
-  status: TicketStatus
-  summary: SummaryText
-}
-
-export type AdminTicketSubmission = {
-  requestType?: AfterSalesRequestType
-  submittedByRole?: UserRole
-  submittedByName?: PersonName
-  expectedCompensationCents?: CurrencyCents
-  submittedAt: IsoDateTime
-}
-
-export type AdminTicketResolution = {
-  actualCompensationCents?: CurrencyCents
-  approved?: ApprovalFlag
-  resolutionMode?: AfterSalesResolutionMode
-  issuedCoupon?: Coupon
-  resolutionNote?: ResolutionText
-  reviewedAt?: IsoDateTime
-}
-
-export type AdminTicketLifecycle = {
-  updatedAt: IsoDateTime
-}
+export type { AdminTicketIdentity } from '@/objects/admin/afterSales/AdminTicketIdentity'
+export type { AdminTicketLifecycle } from '@/objects/admin/afterSales/AdminTicketLifecycle'
+export type { AdminTicketResolution } from '@/objects/admin/afterSales/AdminTicketResolution'
+export type { AdminTicketSubmission } from '@/objects/admin/afterSales/AdminTicketSubmission'
 
 export type AdminTicket = AdminTicketIdentity &
   AdminTicketLifecycle & {
+    identity: AdminTicketIdentity
     submission: AdminTicketSubmission
     resolution: AdminTicketResolution
+    lifecycle: AdminTicketLifecycle
   } & AdminTicketSubmission &
   AdminTicketResolution

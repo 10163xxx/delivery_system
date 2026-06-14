@@ -88,7 +88,8 @@ def applyAutomaticDispatch(
             else order
           )
           val updatedRiders = riders.map(entry =>
-            if entry.id == rider.id then entry.copy(availability = riderOnDelivery)
+            if entry.id == rider.id then
+              entry.copy(identity = entry.identity.copy(availability = riderOnDelivery))
             else entry
           )
           (updatedOrders, updatedRiders)

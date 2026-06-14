@@ -116,5 +116,5 @@ private[app] def deriveAppealsWithCustomerAliases(
     appeals: List[ReviewAppeal]
 ): List[ReviewAppeal] =
   appeals.map(appeal =>
-    appeal.copy(customerName = customerAlias(appeal.customerId))
+    appeal.copy(identity = appeal.identity.copy(customerName = customerAlias(appeal.customerId)))
   )

@@ -79,14 +79,18 @@ private[utils] def buildReviewAppeal(
       timestamp: IsoDateTime,
   ): ReviewAppeal =
     ReviewAppeal(
-      id = nextId(wrapText[DisplayText]("apl")),
-      orderId = order.id,
-      customerId = order.customerId,
-      customerName = order.customerName,
-      storeId = order.storeId,
-      riderId = order.riderId,
-      appellantRole = appellantRole,
-      reason = reason,
+      identity = ReviewAppealIdentity(
+        id = nextId(wrapText[DisplayText]("apl")),
+        orderId = order.id,
+        customerId = order.customerId,
+        customerName = order.customerName,
+        storeId = order.storeId,
+        riderId = order.riderId,
+      ),
+      decision = ReviewAppealDecision(
+        appellantRole = appellantRole,
+        reason = reason,
+      ),
       review = ReviewAppealReview(
         status = AppealStatus.Pending,
         resolutionNote = None,
@@ -161,13 +165,13 @@ private[utils] def resolveAdminTickets(
     tickets.map(ticket =>
       if ticket.orderId == orderId && ticket.status == TicketStatus.Open && ticket.kind != TicketKind.DeliveryIssue then
         ticket.copy(
-          status = TicketStatus.Resolved,
+          identity = ticket.identity.copy(status = TicketStatus.Resolved),
           resolution = ticket.resolution.copy(
             approved = None,
             resolutionNote = Some(resolutionText),
             reviewedAt = Some(timestamp),
           ),
-          updatedAt = timestamp,
+          lifecycle = ticket.lifecycle.copy(updatedAt = timestamp),
         )
       else ticket
     )

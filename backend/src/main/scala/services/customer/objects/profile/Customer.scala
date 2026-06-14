@@ -6,14 +6,6 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 import domain.shared.*
 
-final case class CustomerMetrics(
-    revokedReviewCount: EntityCount,
-    membershipTier: MembershipTier,
-    monthlySpendCents: CurrencyCents,
-    balanceCents: CurrencyCents,
-    coupons: List[Coupon],
-)
-
 final case class Customer(
     id: CustomerId,
     name: PersonName,
@@ -25,18 +17,7 @@ final case class Customer(
     metrics: CustomerMetrics,
 )
 
-final case class CustomerLocation(
-    latitude: Latitude,
-    longitude: Longitude,
-)
-object CustomerLocation:
-  given Encoder[CustomerLocation] = deriveEncoder
-  given Decoder[CustomerLocation] = deriveDecoder
-
 object Customer:
-  given Encoder[CustomerMetrics] = deriveEncoder
-  given Decoder[CustomerMetrics] = deriveDecoder
-
   extension (customer: Customer)
     def revokedReviewCount: EntityCount = customer.metrics.revokedReviewCount
     def membershipTier: MembershipTier = customer.metrics.membershipTier

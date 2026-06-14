@@ -1,39 +1,13 @@
-import type {
-  CurrencyCents,
-  EntityCount,
-  PersonName,
-  RatingValue,
-  RiderId,
-  VehicleLabel,
-  ZoneLabel,
-} from '@/objects/core/SharedObjects'
-import type { AvailabilityLabel } from '@/objects/core/SharedObjects'
-import type { MerchantPayoutAccount } from '@/objects/merchant/profile/MerchantPayoutAccount'
-import type { MerchantWithdrawal } from '@/objects/merchant/profile/MerchantWithdrawal'
+import type { RiderIdentity } from '@/objects/rider/profile/RiderIdentity'
+import type { RiderPayout } from '@/objects/rider/profile/RiderPayout'
+import type { RiderPerformance } from '@/objects/rider/profile/RiderPerformance'
 
-export type RiderIdentity = {
-  id: RiderId
-  name: PersonName
-  vehicle: VehicleLabel
-  zone: ZoneLabel
-  availability: AvailabilityLabel
-}
-
-export type RiderPerformance = {
-  averageRating: RatingValue
-  ratingCount: EntityCount
-  oneStarRatingCount: EntityCount
-  earningsCents: CurrencyCents
-}
-
-export type RiderPayout = {
-  payoutAccount?: MerchantPayoutAccount
-  withdrawnCents: CurrencyCents
-  availableToWithdrawCents: CurrencyCents
-  withdrawalHistory: MerchantWithdrawal[]
-}
+export type { RiderIdentity } from '@/objects/rider/profile/RiderIdentity'
+export type { RiderPayout } from '@/objects/rider/profile/RiderPayout'
+export type { RiderPerformance } from '@/objects/rider/profile/RiderPerformance'
 
 export type Rider = RiderIdentity & {
+  identity: RiderIdentity
   performance: RiderPerformance
   payout: RiderPayout
 } & RiderPerformance & RiderPayout

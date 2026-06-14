@@ -179,11 +179,13 @@ def buildAfterSalesTicket(
     timestamp: IsoDateTime,
 ): AdminTicket =
   AdminTicket(
-    id = nextId(wrapText[DisplayText]("ticket")),
-    orderId = order.id,
-    kind = TicketKind.DeliveryIssue,
-    status = TicketStatus.Open,
-    summary = buildAfterSalesTicketSummary(request.requestType, reason, expectedCompensationCents),
+    identity = AdminTicketIdentity(
+      id = nextId(wrapText[DisplayText]("ticket")),
+      orderId = order.id,
+      kind = TicketKind.DeliveryIssue,
+      status = TicketStatus.Open,
+      summary = buildAfterSalesTicketSummary(request.requestType, reason, expectedCompensationCents),
+    ),
     submission = AdminTicketSubmission(
       requestType = Some(request.requestType),
       submittedByRole = Some(UserRole.customer),
@@ -199,7 +201,7 @@ def buildAfterSalesTicket(
       reviewedAt = None,
       resolutionNote = None,
     ),
-    updatedAt = timestamp,
+    lifecycle = AdminTicketLifecycle(updatedAt = timestamp),
   )
 
 def buildAfterSalesCoupon(

@@ -4,7 +4,7 @@ import type { Store } from '@/objects/merchant/store/Store'
 import type { OrderLineItem } from '@/objects/order/core/OrderLineItem'
 import type { OrderPriceBreakdown } from '@/objects/order/core/OrderPriceBreakdown'
 import type { OrderSummary } from '@/objects/order/core/OrderSummary'
-import type { ReviewOrderRequest } from '@/objects/review/ReviewOrderRequest'
+import type { ReviewOrderRequest } from '@/objects/review/apiTypes/ReviewOrderRequest'
 import type {
   AddressText,
   IsoDateTime,

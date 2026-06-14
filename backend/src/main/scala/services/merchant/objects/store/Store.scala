@@ -6,31 +6,6 @@ import domain.shared.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 
-final case class StoreOperations(
-    status: DisplayText,
-    storeAddress: AddressText,
-    location: Option[StoreLocation],
-    businessHours: BusinessHours,
-    avgPrepMinutes: Minutes,
-    imageUrl: Option[ImageUrl],
-    menu: List[MenuItem],
-)
-
-final case class StoreMetrics(
-    averageRating: AverageRating,
-    ratingCount: EntityCount,
-    oneStarRatingCount: EntityCount,
-    revenueCents: CurrencyCents,
-)
-
-final case class StoreLocation(
-    latitude: Latitude,
-    longitude: Longitude,
-)
-object StoreLocation:
-  given Encoder[StoreLocation] = deriveEncoder
-  given Decoder[StoreLocation] = deriveDecoder
-
 final case class Store(
     id: StoreId,
     merchantName: PersonName,
@@ -41,11 +16,6 @@ final case class Store(
     metrics: StoreMetrics,
 )
 object Store:
-  given Encoder[StoreOperations] = deriveEncoder
-  given Decoder[StoreOperations] = deriveDecoder
-  given Encoder[StoreMetrics] = deriveEncoder
-  given Decoder[StoreMetrics] = deriveDecoder
-
   extension (store: Store)
     def status: DisplayText = store.operations.status
     def storeAddress: AddressText = store.operations.storeAddress

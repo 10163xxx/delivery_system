@@ -6,63 +6,6 @@ import io.circe.{Decoder, Encoder, Json}
 import domain.customer.Coupon
 import domain.shared.*
 
-final case class OrderSummaryIdentity(
-    id: OrderId,
-    customerId: CustomerId,
-    customerName: PersonName,
-    storeId: StoreId,
-    storeName: DisplayText,
-    riderId: Option[RiderId],
-    riderName: Option[PersonName],
-)
-
-final case class OrderSummaryFulfillment(
-    status: OrderStatus,
-    deliveryAddress: AddressText,
-    scheduledDeliveryAt: IsoDateTime,
-    remark: Option[NoteText],
-    items: List[OrderLineItem],
-)
-
-final case class OrderSummaryPricing(
-    itemSubtotalCents: CurrencyCents,
-    deliveryFeeCents: CurrencyCents,
-    couponDiscountCents: CurrencyCents,
-    appliedCoupon: Option[Coupon],
-    totalPriceCents: CurrencyCents,
-)
-
-final case class OrderSummaryLifecycle(
-    createdAt: IsoDateTime,
-    updatedAt: IsoDateTime,
-)
-
-final case class OrderSummaryReviewState(
-    storeRating: Option[RatingValue],
-    riderRating: Option[RatingValue],
-    merchantRejectReason: Option[ReasonText],
-    reviewStatus: ReviewStatus,
-    reviewRevokedReason: Option[ReasonText],
-    reviewRevokedAt: Option[IsoDateTime],
-)
-
-final case class OrderSummaryReviewContent(
-    reviewComment: Option[ReasonText],
-    reviewExtraNote: Option[NoteText],
-    storeReviewComment: Option[ReasonText],
-    storeReviewExtraNote: Option[NoteText],
-    storeMerchantReply: Option[NoteText],
-    storeMerchantReplyAt: Option[IsoDateTime],
-    riderReviewComment: Option[ReasonText],
-    riderReviewExtraNote: Option[NoteText],
-)
-
-final case class OrderSummaryActivity(
-    timeline: List[OrderTimelineEntry],
-    chatMessages: List[OrderChatMessage],
-    partialRefundRequests: List[OrderPartialRefundRequest],
-)
-
 final case class OrderSummary(
     identity: OrderSummaryIdentity,
     fulfillment: OrderSummaryFulfillment,

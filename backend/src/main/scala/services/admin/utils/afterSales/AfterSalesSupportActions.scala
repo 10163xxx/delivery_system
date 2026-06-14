@@ -62,7 +62,7 @@ def resolveAfterSalesTicket(
           val nextTickets = current.tickets.map(entry =>
             if entry.id == ticket.id then
               entry.copy(
-                status = TicketStatus.Resolved,
+                identity = entry.identity.copy(status = TicketStatus.Resolved),
                 resolution = entry.resolution.copy(
                   approved = Some(request.approved),
                   actualCompensationCents =
@@ -72,7 +72,7 @@ def resolveAfterSalesTicket(
                   resolutionNote = Some(resolutionNote),
                   reviewedAt = Some(timestamp),
                 ),
-                updatedAt = timestamp,
+                lifecycle = entry.lifecycle.copy(updatedAt = timestamp),
               )
             else entry
           )

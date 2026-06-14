@@ -79,11 +79,13 @@ def reviewTicket(
 
       ticketKind.map(kind =>
         AdminTicket(
-          id = nextId(text("tkt")),
-          orderId = order.id,
-          kind = kind,
-          status = TicketStatus.Open,
-          summary = buildTicketSummary(order, request, kind),
+          identity = AdminTicketIdentity(
+            id = nextId(text("tkt")),
+            orderId = order.id,
+            kind = kind,
+            status = TicketStatus.Open,
+            summary = buildTicketSummary(order, request, kind),
+          ),
           submission = AdminTicketSubmission(
             requestType = None,
             submittedByRole = Some(UserRole.customer),
@@ -99,7 +101,7 @@ def reviewTicket(
             reviewedAt = None,
             resolutionNote = None,
           ),
-          updatedAt = timestamp,
+          lifecycle = AdminTicketLifecycle(updatedAt = timestamp),
         )
       )
 
@@ -188,13 +190,13 @@ def closeTicketsForOrder(
     tickets.map(ticket =>
       if ticket.orderId == orderId && ticket.status == TicketStatus.Open then
         ticket.copy(
-          status = TicketStatus.Resolved,
+          identity = ticket.identity.copy(status = TicketStatus.Resolved),
           resolution = ticket.resolution.copy(
             approved = None,
             resolutionNote = Some(resolutionNote),
             reviewedAt = Some(timestamp),
           ),
-          updatedAt = timestamp,
+          lifecycle = ticket.lifecycle.copy(updatedAt = timestamp),
         )
       else ticket
     )

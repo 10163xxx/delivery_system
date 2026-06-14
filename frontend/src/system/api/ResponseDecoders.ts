@@ -1,4 +1,10 @@
-import type { AdminTicket } from '@/objects/admin/afterSales/AdminTicket'
+import type {
+  AdminTicket,
+  AdminTicketIdentity,
+  AdminTicketLifecycle,
+  AdminTicketResolution,
+  AdminTicketSubmission,
+} from '@/objects/admin/afterSales/AdminTicket'
 import type { AdminProfile } from '@/objects/admin/profile/AdminProfile'
 import type { AuthSession } from '@/objects/auth/AuthSession'
 import type { AuthAccount } from '@/objects/auth/AuthAccount'
@@ -6,7 +12,7 @@ import type { AddressEntry } from '@/objects/customer/profile/AddressEntry'
 import type { Coupon } from '@/objects/customer/profile/Coupon'
 import type { Customer, CustomerLocation, CustomerMetrics } from '@/objects/customer/profile/Customer'
 import type { MerchantApplication, MerchantApplicationReview } from '@/objects/merchant/application/MerchantApplication'
-import type { ImageUploadResponse } from '@/objects/merchant/menu/ImageUploadResponse'
+import type { ImageUploadResponse } from '@/objects/merchant/apiTypes/ImageUploadResponse'
 import type { MenuItem } from '@/objects/merchant/menu/MenuItem'
 import type { MenuItemSelectionGroup } from '@/objects/merchant/menu/MenuItemSelectionGroup'
 import type { MenuItemSelectionOption } from '@/objects/merchant/menu/MenuItemSelectionOption'
@@ -31,8 +37,18 @@ import type {
 } from '@/objects/order/core/OrderSummary'
 import type { OrderTimelineEntry } from '@/objects/order/core/OrderTimelineEntry'
 import type { EligibilityReview } from '@/objects/review/EligibilityReview'
-import type { ReviewAppeal, ReviewAppealReview } from '@/objects/review/ReviewAppeal'
-import type { Rider, RiderPayout, RiderPerformance } from '@/objects/rider/profile/Rider'
+import type {
+  ReviewAppeal,
+  ReviewAppealDecision,
+  ReviewAppealIdentity,
+  ReviewAppealReview,
+} from '@/objects/review/ReviewAppeal'
+import type {
+  Rider,
+  RiderIdentity,
+  RiderPayout,
+  RiderPerformance,
+} from '@/objects/rider/profile/Rider'
 import type { DeliveryAppState } from '@/objects/domain/DeliveryAppState'
 import type { SystemMetrics } from '@/objects/domain/SystemMetrics'
 import type {
@@ -93,9 +109,10 @@ const decodeCustomer: Decoder<Customer> = (value, path = '$') => {
 }
 const decodeMerchantProfile: Decoder<MerchantProfile> = (value, path = '$') => ({ id: decodeField(value, path, 'id', decodeString), merchantName: decodeField(value, path, 'merchantName', decodeString), contactPhone: decodeField(value, path, 'contactPhone', decodeString), payoutAccount: decodeOptionalField(value, path, 'payoutAccount', decodeMerchantPayoutAccount), settledIncomeCents: decodeField(value, path, 'settledIncomeCents', decodeNumber), withdrawnCents: decodeField(value, path, 'withdrawnCents', decodeNumber), availableToWithdrawCents: decodeField(value, path, 'availableToWithdrawCents', decodeNumber), withdrawalHistory: decodeField(value, path, 'withdrawalHistory', (entry, entryPath) => decodeArray(entry, entryPath, decodeMerchantWithdrawal)) })
 const decodeRider: Decoder<Rider> = (value, path = '$') => {
+  const identity: RiderIdentity = { id: decodeField(value, path, 'id', decodeString), name: decodeField(value, path, 'name', decodeString), vehicle: decodeField(value, path, 'vehicle', decodeString), zone: decodeField(value, path, 'zone', decodeString), availability: decodeField(value, path, 'availability', decodeAvailability) }
   const performance: RiderPerformance = { averageRating: decodeField(value, path, 'averageRating', decodeNumber), ratingCount: decodeField(value, path, 'ratingCount', decodeNumber), oneStarRatingCount: decodeField(value, path, 'oneStarRatingCount', decodeNumber), earningsCents: decodeField(value, path, 'earningsCents', decodeNumber) }
   const payout: RiderPayout = { payoutAccount: decodeOptionalField(value, path, 'payoutAccount', decodeMerchantPayoutAccount), withdrawnCents: decodeField(value, path, 'withdrawnCents', decodeNumber), availableToWithdrawCents: decodeField(value, path, 'availableToWithdrawCents', decodeNumber), withdrawalHistory: decodeField(value, path, 'withdrawalHistory', (entry, entryPath) => decodeArray(entry, entryPath, decodeMerchantWithdrawal)) }
-  return { id: decodeField(value, path, 'id', decodeString), name: decodeField(value, path, 'name', decodeString), vehicle: decodeField(value, path, 'vehicle', decodeString), zone: decodeField(value, path, 'zone', decodeString), availability: decodeField(value, path, 'availability', decodeAvailability), ...performance, ...payout, performance, payout }
+  return { ...identity, ...performance, ...payout, identity, performance, payout }
 }
 const decodeAdminProfile: Decoder<AdminProfile> = (value, path = '$') => ({ id: decodeField(value, path, 'id', decodeString), name: decodeField(value, path, 'name', decodeString), platformIncomeCents: decodeField(value, path, 'platformIncomeCents', decodeNumber) })
 const decodeStore: Decoder<Store> = (value, path = '$') => {
@@ -108,8 +125,10 @@ const decodeMerchantApplication: Decoder<MerchantApplication> = (value, path = '
   return { id: decodeField(value, path, 'id', decodeString), merchantName: decodeField(value, path, 'merchantName', decodeString), storeName: decodeField(value, path, 'storeName', decodeString), category: decodeField(value, path, 'category', decodeStoreCategory), storeAddress: decodeOptionalField(value, path, 'storeAddress', decodeAddressText) ?? decodeAddressText('', `${path}.storeAddress`), location: decodeOptionalField(value, path, 'location', decodeStoreLocation), businessHours: decodeField(value, path, 'businessHours', decodeBusinessHours), avgPrepMinutes: decodeField(value, path, 'avgPrepMinutes', decodeNumber), imageUrl: decodeOptionalField(value, path, 'imageUrl', decodeString), note: decodeOptionalField(value, path, 'note', decodeString), ...review, review }
 }
 const decodeReviewAppeal: Decoder<ReviewAppeal> = (value, path = '$') => {
+  const identity: ReviewAppealIdentity = { id: decodeField(value, path, 'id', decodeString), orderId: decodeField(value, path, 'orderId', decodeString), customerId: decodeField(value, path, 'customerId', decodeString), customerName: decodeField(value, path, 'customerName', decodeString), storeId: decodeField(value, path, 'storeId', decodeString), riderId: decodeOptionalField(value, path, 'riderId', decodeString) }
+  const decision: ReviewAppealDecision = { appellantRole: decodeField(value, path, 'appellantRole', decodeAppealRole), reason: decodeField(value, path, 'reason', decodeString) }
   const review: ReviewAppealReview = { status: decodeField(value, path, 'status', decodeAppealStatus), resolutionNote: decodeOptionalField(value, path, 'resolutionNote', decodeString), submittedAt: decodeField(value, path, 'submittedAt', decodeString), reviewedAt: decodeOptionalField(value, path, 'reviewedAt', decodeString) }
-  return { id: decodeField(value, path, 'id', decodeString), orderId: decodeField(value, path, 'orderId', decodeString), customerId: decodeField(value, path, 'customerId', decodeString), customerName: decodeField(value, path, 'customerName', decodeString), storeId: decodeField(value, path, 'storeId', decodeString), riderId: decodeOptionalField(value, path, 'riderId', decodeString), appellantRole: decodeField(value, path, 'appellantRole', decodeAppealRole), reason: decodeField(value, path, 'reason', decodeString), ...review, review }
+  return { ...identity, ...decision, ...review, identity, decision, review }
 }
 const decodeEligibilityReview: Decoder<EligibilityReview> = (value, path = '$') => ({ id: decodeField(value, path, 'id', decodeString), target: decodeField(value, path, 'target', decodeEligibilityReviewTarget), targetId: decodeField(value, path, 'targetId', decodeString), targetName: decodeField(value, path, 'targetName', decodeString), reason: decodeField(value, path, 'reason', decodeString), status: decodeField(value, path, 'status', decodeAppealStatus), resolutionNote: decodeOptionalField(value, path, 'resolutionNote', decodeString), submittedAt: decodeField(value, path, 'submittedAt', decodeString), reviewedAt: decodeOptionalField(value, path, 'reviewedAt', decodeString) })
 const decodeItemSelection: Decoder<OrderItemSelection> = (value, path = '$') => ({ groupName: decodeField(value, path, 'groupName', decodeString), selectedOptions: decodeField(value, path, 'selectedOptions', (entry, entryPath) => decodeArray(entry, entryPath, decodeString)) })
@@ -130,7 +149,13 @@ const decodeOrderSummary: Decoder<OrderSummary> = (value, path = '$') => {
   const activity: OrderSummaryActivity = { timeline: decodeField(value, path, 'timeline', (entry, entryPath) => decodeArray(entry, entryPath, decodeTimelineEntry)), chatMessages: decodeField(value, path, 'chatMessages', (entry, entryPath) => decodeArray(entry, entryPath, decodeChatMessage)), partialRefundRequests: decodeField(value, path, 'partialRefundRequests', (entry, entryPath) => decodeArray(entry, entryPath, decodePartialRefundRequest)) }
   return { ...identity, ...fulfillment, ...pricing, ...lifecycle, ...reviewState, ...reviewContent, ...activity, identity, fulfillment, pricing, lifecycle, reviewState, reviewContent, activity }
 }
-const decodeAdminTicket: Decoder<AdminTicket> = (value, path = '$') => ({ id: decodeField(value, path, 'id', decodeString), orderId: decodeField(value, path, 'orderId', decodeString), kind: decodeField(value, path, 'kind', decodeTicketKind), status: decodeField(value, path, 'status', decodeTicketStatus), summary: decodeField(value, path, 'summary', decodeString), requestType: decodeOptionalField(value, path, 'requestType', decodeAfterSalesRequestType), submittedByRole: decodeOptionalField(value, path, 'submittedByRole', decodeRole), submittedByName: decodeOptionalField(value, path, 'submittedByName', decodeString), expectedCompensationCents: decodeOptionalField(value, path, 'expectedCompensationCents', decodeNumber), submittedAt: decodeField(value, path, 'submittedAt', decodeString), actualCompensationCents: decodeOptionalField(value, path, 'actualCompensationCents', decodeNumber), approved: decodeOptionalField(value, path, 'approved', decodeBoolean), resolutionMode: decodeOptionalField(value, path, 'resolutionMode', decodeAfterSalesResolutionMode), issuedCoupon: decodeOptionalField(value, path, 'issuedCoupon', decodeCoupon), resolutionNote: decodeOptionalField(value, path, 'resolutionNote', decodeString), reviewedAt: decodeOptionalField(value, path, 'reviewedAt', decodeString), updatedAt: decodeField(value, path, 'updatedAt', decodeString), submission: { requestType: decodeOptionalField(value, path, 'requestType', decodeAfterSalesRequestType), submittedByRole: decodeOptionalField(value, path, 'submittedByRole', decodeRole), submittedByName: decodeOptionalField(value, path, 'submittedByName', decodeString), expectedCompensationCents: decodeOptionalField(value, path, 'expectedCompensationCents', decodeNumber), submittedAt: decodeField(value, path, 'submittedAt', decodeString) }, resolution: { actualCompensationCents: decodeOptionalField(value, path, 'actualCompensationCents', decodeNumber), approved: decodeOptionalField(value, path, 'approved', decodeBoolean), resolutionMode: decodeOptionalField(value, path, 'resolutionMode', decodeAfterSalesResolutionMode), issuedCoupon: decodeOptionalField(value, path, 'issuedCoupon', decodeCoupon), resolutionNote: decodeOptionalField(value, path, 'resolutionNote', decodeString), reviewedAt: decodeOptionalField(value, path, 'reviewedAt', decodeString) } })
+const decodeAdminTicket: Decoder<AdminTicket> = (value, path = '$') => {
+  const identity: AdminTicketIdentity = { id: decodeField(value, path, 'id', decodeString), orderId: decodeField(value, path, 'orderId', decodeString), kind: decodeField(value, path, 'kind', decodeTicketKind), status: decodeField(value, path, 'status', decodeTicketStatus), summary: decodeField(value, path, 'summary', decodeString) }
+  const submission: AdminTicketSubmission = { requestType: decodeOptionalField(value, path, 'requestType', decodeAfterSalesRequestType), submittedByRole: decodeOptionalField(value, path, 'submittedByRole', decodeRole), submittedByName: decodeOptionalField(value, path, 'submittedByName', decodeString), expectedCompensationCents: decodeOptionalField(value, path, 'expectedCompensationCents', decodeNumber), submittedAt: decodeField(value, path, 'submittedAt', decodeString) }
+  const resolution: AdminTicketResolution = { actualCompensationCents: decodeOptionalField(value, path, 'actualCompensationCents', decodeNumber), approved: decodeOptionalField(value, path, 'approved', decodeBoolean), resolutionMode: decodeOptionalField(value, path, 'resolutionMode', decodeAfterSalesResolutionMode), issuedCoupon: decodeOptionalField(value, path, 'issuedCoupon', decodeCoupon), resolutionNote: decodeOptionalField(value, path, 'resolutionNote', decodeString), reviewedAt: decodeOptionalField(value, path, 'reviewedAt', decodeString) }
+  const lifecycle: AdminTicketLifecycle = { updatedAt: decodeField(value, path, 'updatedAt', decodeString) }
+  return { ...identity, ...submission, ...resolution, ...lifecycle, identity, submission, resolution, lifecycle }
+}
 const decodeSystemMetrics: Decoder<SystemMetrics> = (value, path = '$') => ({ totalOrders: decodeField(value, path, 'totalOrders', decodeNumber), activeOrders: decodeField(value, path, 'activeOrders', decodeNumber), resolvedTickets: decodeField(value, path, 'resolvedTickets', decodeNumber), averageRating: decodeField(value, path, 'averageRating', decodeNumber) })
 
 export const decodeAuthAccount: Decoder<AuthAccount> = (value, path = '$') => ({ id: decodeField(value, path, 'id', decodeString), username: decodeField(value, path, 'username', decodeString), role: decodeField(value, path, 'role', decodeRole), displayName: decodeField(value, path, 'displayName', decodeString), linkedProfileId: decodeOptionalField(value, path, 'linkedProfileId', decodeString), createdAt: decodeField(value, path, 'createdAt', decodeString) })

@@ -1,37 +1,10 @@
-import type {
-  AccountStatus,
-  AddressText,
-  CurrencyCents,
-  DeliveryCoordinate,
-  CustomerId,
-  EntityCount,
-  MembershipTier,
-  PersonName,
-  PhoneNumber,
-} from '@/objects/core/SharedObjects'
-import type { AddressEntry } from '@/objects/customer/profile/AddressEntry'
-import type { Coupon } from '@/objects/customer/profile/Coupon'
+import type { CustomerIdentity } from '@/objects/customer/profile/CustomerIdentity'
+import type { CustomerMetrics } from '@/objects/customer/profile/CustomerMetrics'
 
-export type CustomerIdentity = {
-  id: CustomerId
-  name: PersonName
-  phone: PhoneNumber
-  defaultAddress: AddressText
-  location?: CustomerLocation
-  addresses: AddressEntry[]
-}
-
-export type CustomerLocation = DeliveryCoordinate
-
-export type CustomerMetrics = {
-  revokedReviewCount: EntityCount
-  membershipTier: MembershipTier
-  monthlySpendCents: CurrencyCents
-  balanceCents: CurrencyCents
-  coupons: Coupon[]
-}
+export type { CustomerIdentity } from '@/objects/customer/profile/CustomerIdentity'
+export type { CustomerLocation } from '@/objects/customer/profile/CustomerLocation'
+export type { CustomerMetrics } from '@/objects/customer/profile/CustomerMetrics'
 
 export type Customer = CustomerIdentity & {
-  accountStatus: AccountStatus
   metrics: CustomerMetrics
 } & CustomerMetrics

@@ -7,40 +7,19 @@ import io.circe.generic.semiauto.*
 import domain.customer.Coupon
 import domain.shared.*
 
-final case class AdminTicketSubmission(
-    requestType: Option[AfterSalesRequestType],
-    submittedByRole: Option[UserRole],
-    submittedByName: Option[PersonName],
-    expectedCompensationCents: Option[CurrencyCents],
-    submittedAt: IsoDateTime,
-)
-
-final case class AdminTicketResolution(
-    actualCompensationCents: Option[CurrencyCents],
-    approved: Option[ApprovalFlag],
-    resolutionMode: Option[AfterSalesResolutionMode],
-    issuedCoupon: Option[Coupon],
-    reviewedAt: Option[IsoDateTime],
-    resolutionNote: Option[ResolutionText],
-)
-
 final case class AdminTicket(
-    id: TicketId,
-    orderId: OrderId,
-    kind: TicketKind,
-    status: TicketStatus,
-    summary: SummaryText,
+    identity: AdminTicketIdentity,
     submission: AdminTicketSubmission,
     resolution: AdminTicketResolution,
-    updatedAt: IsoDateTime,
+    lifecycle: AdminTicketLifecycle,
 )
 object AdminTicket:
-  given Encoder[AdminTicketSubmission] = deriveEncoder
-  given Decoder[AdminTicketSubmission] = deriveDecoder
-  given Encoder[AdminTicketResolution] = deriveEncoder
-  given Decoder[AdminTicketResolution] = deriveDecoder
-
   extension (ticket: AdminTicket)
+    def id: TicketId = ticket.identity.id
+    def orderId: OrderId = ticket.identity.orderId
+    def kind: TicketKind = ticket.identity.kind
+    def status: TicketStatus = ticket.identity.status
+    def summary: SummaryText = ticket.identity.summary
     def requestType: Option[AfterSalesRequestType] = ticket.submission.requestType
     def submittedByRole: Option[UserRole] = ticket.submission.submittedByRole
     def submittedByName: Option[PersonName] = ticket.submission.submittedByName
@@ -52,13 +31,16 @@ object AdminTicket:
     def issuedCoupon: Option[Coupon] = ticket.resolution.issuedCoupon
     def reviewedAt: Option[IsoDateTime] = ticket.resolution.reviewedAt
     def resolutionNote: Option[ResolutionText] = ticket.resolution.resolutionNote
+    def updatedAt: IsoDateTime = ticket.lifecycle.updatedAt
 
   given Encoder[AdminTicket] = Encoder.instance(ticket =>
     deriveEncoder[AdminTicket]
       .apply(ticket)
+      .deepMerge(deriveEncoder[AdminTicketIdentity].apply(ticket.identity))
       .deepMerge(deriveEncoder[AdminTicketSubmission].apply(ticket.submission))
       .deepMerge(deriveEncoder[AdminTicketResolution].apply(ticket.resolution))
-      .mapObject(_.remove("submission").remove("resolution"))
+      .deepMerge(deriveEncoder[AdminTicketLifecycle].apply(ticket.lifecycle))
+      .mapObject(_.remove("identity").remove("submission").remove("resolution").remove("lifecycle"))
   )
   given Decoder[AdminTicket] = Decoder.instance { cursor =>
     for
@@ -80,11 +62,13 @@ object AdminTicket:
       reviewedAt <- cursor.getOrElse[Option[IsoDateTime]]("reviewedAt")(None)
       resolutionNote <- cursor.get[Option[ResolutionText]]("resolutionNote")
     yield AdminTicket(
-      id = id,
-      orderId = orderId,
-      kind = kind,
-      status = status,
-      summary = summary,
+      identity = AdminTicketIdentity(
+        id = id,
+        orderId = orderId,
+        kind = kind,
+        status = status,
+        summary = summary,
+      ),
       submission = AdminTicketSubmission(
         requestType = requestType,
         submittedByRole = submittedByRole,
@@ -100,6 +84,6 @@ object AdminTicket:
         reviewedAt = reviewedAt,
         resolutionNote = resolutionNote,
       ),
-      updatedAt = updatedAt,
+      lifecycle = AdminTicketLifecycle(updatedAt = updatedAt),
     )
   }

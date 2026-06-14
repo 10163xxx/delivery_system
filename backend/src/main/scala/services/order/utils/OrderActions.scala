@@ -52,7 +52,9 @@ def assignRider(orderId: OrderId, request: AssignRiderRequest): IO[Either[ErrorM
             else entry
           )
           val nextRiders = current.riders.map(entry =>
-            if entry.id == rider.id then entry.copy(availability = riderOnDelivery) else entry
+            if entry.id == rider.id then
+              entry.copy(identity = entry.identity.copy(availability = riderOnDelivery))
+            else entry
           )
           withDerivedData(
             current.copy(
@@ -93,7 +95,9 @@ def deliverOrder(orderId: OrderId): IO[Either[ErrorMessage, DeliveryAppState]] =
             else entry
           )
           val nextRiders = current.riders.map(rider =>
-            if Some(rider.id) == order.riderId then rider.copy(availability = riderAvailable) else rider
+            if Some(rider.id) == order.riderId then
+              rider.copy(identity = rider.identity.copy(availability = riderAvailable))
+            else rider
           )
           withDerivedData(
             current.copy(
