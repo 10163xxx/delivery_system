@@ -1,4 +1,5 @@
 import type { MenuItem } from '@/objects/core/SharedObjects'
+import type { MutableRefObject } from 'react'
 
 export type MenuCategorySection = {
   id: string
@@ -6,6 +7,4 @@ export type MenuCategorySection = {
   items: MenuItem[]
 }
 
-export function toCategorySectionId(categoryName: string, index: number) {
-  return `menu-category-${index}-${categoryName.trim().replace(/\s+/g, '-').toLowerCase()}`
-}
+export type MenuSectionRefs = MutableRefObject<Record<string, HTMLElement | null>>
