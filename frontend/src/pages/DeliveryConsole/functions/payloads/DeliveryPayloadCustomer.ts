@@ -9,18 +9,18 @@ export {
   hasSelectedRequiredCategoryItem,
   hasValidMenuItemSelections,
   storeHasRequiredMenuCategory,
-} from '@/pages/DeliveryConsole/functions/payloads/DeliveryCustomerOrderPayload'
-export type { BuildOrderPayloadParams } from '@/pages/DeliveryConsole/functions/payloads/DeliveryCustomerOrderPayload'
+} from '@/pages/CustomerConsole/functions/payloads/DeliveryCustomerOrderPayload'
+export type { BuildOrderPayloadParams } from '@/pages/CustomerConsole/functions/payloads/DeliveryCustomerOrderPayload'
 export {
   buildCustomerAddressPayload,
   buildCustomerProfilePayload,
-} from '@/pages/DeliveryConsole/functions/payloads/DeliveryCustomerProfilePayload'
+} from '@/pages/CustomerConsole/functions/payloads/DeliveryCustomerProfilePayload'
 export {
   buildAfterSalesPayload,
   buildPartialRefundPayload,
   buildReviewPayload,
-} from '@/pages/DeliveryConsole/functions/payloads/DeliveryCustomerIssuePayload'
+} from '@/pages/CustomerConsole/functions/payloads/DeliveryCustomerIssuePayload'
 export {
   buildRechargePayload,
   parseRechargeAmount,
-} from '@/pages/DeliveryConsole/functions/payloads/DeliveryCustomerRechargePayload'
+} from '@/pages/CustomerConsole/functions/payloads/DeliveryCustomerRechargePayload'

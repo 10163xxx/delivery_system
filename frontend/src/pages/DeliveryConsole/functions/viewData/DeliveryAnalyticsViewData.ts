@@ -10,15 +10,15 @@ import { ORDER_STATUS, TICKET_KIND, TICKET_STATUS } from '@/objects/core/SharedO
 import { MONTHLY_TREND_WINDOW_DAYS, MILLISECONDS_PER_DAY } from '@/pages/DeliveryConsole/functions/shared/DeliveryConstants'
 import { isStoreCurrentlyOpen } from '@/pages/DeliveryConsole/functions/schedule/DeliverySchedule'
 import { asDomainNumber } from '@/pages/DeliveryConsole/functions/shared/DeliveryShared'
-import { buildMerchantMonthlyTrend } from '@/pages/DeliveryConsole/functions/viewData/DeliveryMerchantTrendData'
+import { buildMerchantMonthlyTrend } from '@/pages/MerchantConsole/functions/viewData/DeliveryMerchantTrendData'
 import {
   getRecentFrequentStores,
   getStoreBrowseHighlights,
   getStoreCustomerReviews,
-} from '@/pages/DeliveryConsole/functions/viewData/DeliveryStoreAnalyticsData'
+} from '@/pages/CustomerConsole/functions/viewData/DeliveryStoreAnalyticsData'
 
 const THIRTY_DAY_MILLISECONDS = MONTHLY_TREND_WINDOW_DAYS * MILLISECONDS_PER_DAY
-export type { RecentFrequentStoreEntry } from '@/pages/DeliveryConsole/functions/viewData/DeliveryStoreAnalyticsData'
+export type { RecentFrequentStoreEntry } from '@/pages/CustomerConsole/functions/viewData/DeliveryStoreAnalyticsData'
 
 export function getAnalyticsCollections(
   state: DeliveryAppState | null,

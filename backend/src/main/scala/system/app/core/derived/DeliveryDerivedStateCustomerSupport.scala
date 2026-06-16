@@ -69,14 +69,16 @@ private[app] def deriveCustomers(
         MembershipTier.Member
       else MembershipTier.Standard
     customer.copy(
-      name = alias,
-      accountStatus =
-        if collections.revokedCountsByCustomer.getOrElse(
-            customer.id,
-            NumericDefaults.ZeroCount,
-          ) > CustomerBanThreshold
-        then AccountStatus.Suspended
-        else AccountStatus.Active,
+      identity = customer.identity.copy(
+        name = alias,
+        accountStatus =
+          if collections.revokedCountsByCustomer.getOrElse(
+              customer.id,
+              NumericDefaults.ZeroCount,
+            ) > CustomerBanThreshold
+          then AccountStatus.Suspended
+          else AccountStatus.Active,
+      ),
       metrics = customer.metrics.copy(
         revokedReviewCount = collections.revokedCountsByCustomer.getOrElse(
           customer.id,

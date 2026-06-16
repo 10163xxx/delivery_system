@@ -10,14 +10,14 @@ import { hasPendingRiderReview } from '@/pages/DeliveryConsole/functions/review/
 import type {
   CustomerOrderIssueParams,
 } from '@/pages/CustomerConsole/objects/CustomerActionObjects'
-import { clearDraftError, removeKey } from '@/pages/DeliveryConsole/functions/customer/common/CustomerActionHelpers'
+import { clearDraftError, removeKey } from '@/pages/CustomerConsole/functions/actions/common/CustomerActionHelpers'
 import {
   canSubmitPartialRefund,
   getRemainingRefundableQuantity,
   validateAfterSalesDraft,
   validateCustomerReviewSubmission,
   validatePartialRefundDraft,
-} from '@/pages/DeliveryConsole/functions/customer/orderIssue/CustomerOrderIssueValidators'
+} from '@/pages/CustomerConsole/functions/actions/orderIssue/CustomerOrderIssueValidators'
 
 export function createCustomerOrderIssueActions(params: CustomerOrderIssueParams) {
   async function submitPartialRefundRequest(orderId: OrderId, menuItemId: MenuItemId) {

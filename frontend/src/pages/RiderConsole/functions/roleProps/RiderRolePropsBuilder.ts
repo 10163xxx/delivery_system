@@ -6,7 +6,7 @@ import {
   getRiderUtilityProps,
   getRiderViewIdentityProps,
   getRiderViewOrderProps,
-} from '@/pages/DeliveryConsole/functions/roleProps/RiderRolePropGroups'
+} from '@/pages/RiderConsole/functions/roleProps/RiderRolePropGroups'
 
 export function buildRiderProps({
   pageView,

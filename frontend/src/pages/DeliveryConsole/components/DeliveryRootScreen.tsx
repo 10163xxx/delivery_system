@@ -1,7 +1,7 @@
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import AuthScreen from '@/pages/AuthScreen'
 import { DeliveryAppStage } from '@/pages/DeliveryConsole/components/DeliveryAppStage'
-import type { AuthSession, OrderId } from '@/objects/core/SharedObjects'
+import type { OrderId } from '@/objects/core/SharedObjects'
 import { HEADER_ACTION } from '@/pages/DeliveryConsole/objects/DeliveryUiStateObjects'
 import { useDeliveryConsolePageState } from '@/pages/DeliveryConsole/hooks/DeliveryConsolePageState'
 import { useDeliveryConsolePageViewService } from '@/pages/DeliveryConsole/hooks/DeliveryConsolePageView'
@@ -12,11 +12,11 @@ import {
   getAdminRoleProps,
   getCustomerActions,
   getCustomerRoleProps,
-  getDefaultRouteForSession,
   getMerchantActions,
   getMerchantRoleProps,
   getRiderRoleProps,
 } from '@/pages/DeliveryConsole/functions/DeliveryScreenAssembly'
+import { handleDeliveryRootAuthenticated } from '@/pages/DeliveryConsole/functions/DeliveryRootSession'
 import { asDomainText } from '@/pages/DeliveryConsole/functions/shared/DeliveryShared'
 
 export function DeliveryRootScreen() {
@@ -50,14 +50,17 @@ export function DeliveryRootScreen() {
     pageState,
   })
 
-  function handleAuthenticated(session: AuthSession) {
-    resetPageState()
-    navigate(getDefaultRouteForSession(session), { replace: true })
-    setSession(session)
-  }
-
   if (!session) {
-    return <AuthScreen onAuthenticated={handleAuthenticated} />
+    return (
+      <AuthScreen
+        onAuthenticated={(authenticatedSession) => handleDeliveryRootAuthenticated({
+          navigate,
+          resetPageState,
+          session: authenticatedSession,
+          setSession,
+        })}
+      />
+    )
   }
 
   const customerActions = getCustomerActions({

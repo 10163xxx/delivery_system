@@ -3,7 +3,7 @@ import {
   saveCustomerBlockedStoreIds,
   saveCustomerFavoriteStoreIds,
 } from '@/system/api/SharedApi'
-import { persistCustomerStoreSearchHistory } from '@/pages/DeliveryConsole/functions/customer/common/CustomerActionHelpers'
+import { persistCustomerStoreSearchHistory } from '@/pages/CustomerConsole/functions/actions/common/CustomerActionHelpers'
 import type { CustomerSearchParams } from '@/pages/CustomerConsole/objects/CustomerActionObjects'
 import type { DisplayText, StoreId } from '@/objects/core/SharedObjects'
 

@@ -81,13 +81,15 @@ private def buildCustomerProfile(
     registrationCoupons: List[Coupon],
 ): Customer =
     Customer(
-      id = customerId,
-      name = customerAlias(customerId),
-      phone = generatedCustomerPhone(customerId),
-      defaultAddress = pendingAddress,
-      location = None,
-      addresses = List(AddressEntry(defaultAddressLabel, pendingAddress, None)),
-      accountStatus = AccountStatus.Active,
+      identity = CustomerIdentity(
+        id = customerId,
+        name = customerAlias(customerId),
+        phone = generatedCustomerPhone(customerId),
+        defaultAddress = pendingAddress,
+        location = None,
+        addresses = List(AddressEntry(defaultAddressLabel, pendingAddress, None)),
+        accountStatus = AccountStatus.Active,
+      ),
       metrics = CustomerMetrics(
         revokedReviewCount = NumericDefaults.ZeroCount,
         membershipTier = MembershipTier.Standard,

@@ -1,5 +1,5 @@
-import type { createCustomerActions } from '@/pages/DeliveryConsole/functions/customer/CustomerActions'
-import type { createMerchantActions } from '@/pages/DeliveryConsole/functions/merchant/MerchantActions'
+import type { createCustomerActions } from '@/pages/CustomerConsole/functions/actions/CustomerActions'
+import type { createMerchantActions } from '@/pages/MerchantConsole/functions/actions/MerchantActions'
 import type { useDeliveryConsolePageState } from '@/pages/DeliveryConsole/hooks/DeliveryConsolePageState'
 import type { useDeliveryConsolePageViewService } from '@/pages/DeliveryConsole/hooks/DeliveryConsolePageView'
 import type { useDeliveryConsoleSessionService } from '@/pages/AuthScreen/hooks/AuthSessionService'

@@ -19,7 +19,7 @@ import type {
   MerchantWithdrawContext,
   RunAction,
 } from '@/pages/MerchantConsole/objects/MerchantActionObjects'
-import { createMerchantDraftActions } from '@/pages/DeliveryConsole/functions/merchant/draft/MerchantDraftActions'
+import { createMerchantDraftActions } from '@/pages/MerchantConsole/functions/actions/draft/MerchantDraftActions'
 
 function removeKey<K extends string, T>(record: Record<K, T>, key: K) {
   const next = { ...record }

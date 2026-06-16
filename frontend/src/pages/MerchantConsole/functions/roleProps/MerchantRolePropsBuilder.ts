@@ -10,7 +10,7 @@ import {
   getMerchantViewIdentityProps,
   getMerchantViewStoreProps,
   getMerchantViewWorkspaceProps,
-} from '@/pages/DeliveryConsole/functions/roleProps/MerchantRolePropGroups'
+} from '@/pages/MerchantConsole/functions/roleProps/MerchantRolePropGroups'
 
 export function buildMerchantProps({
   pageView,

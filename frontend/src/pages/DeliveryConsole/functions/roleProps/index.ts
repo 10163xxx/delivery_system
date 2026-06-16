@@ -1,17 +1,17 @@
-export { buildAdminProps } from '@/pages/DeliveryConsole/functions/roleProps/AdminRolePropsBuilder'
-export { buildCustomerProps } from '@/pages/DeliveryConsole/functions/roleProps/CustomerRolePropsBuilder'
-export { buildMerchantProps } from '@/pages/DeliveryConsole/functions/roleProps/MerchantRolePropsBuilder'
-export { buildRiderProps } from '@/pages/DeliveryConsole/functions/roleProps/RiderRolePropsBuilder'
+export { buildAdminProps } from '@/pages/AdminConsole/functions/roleProps/AdminRolePropsBuilder'
+export { buildCustomerProps } from '@/pages/CustomerConsole/functions/roleProps/CustomerRolePropsBuilder'
+export { buildMerchantProps } from '@/pages/MerchantConsole/functions/roleProps/MerchantRolePropsBuilder'
+export { buildRiderProps } from '@/pages/RiderConsole/functions/roleProps/RiderRolePropsBuilder'
 export type {
   AdminPropsArgs,
   CustomerPropsArgs,
   MerchantPropsArgs,
   RiderPropsArgs,
 } from '@/pages/DeliveryConsole/objects/AppBuildRolePropsObjects'
-import { buildAdminProps } from '@/pages/DeliveryConsole/functions/roleProps/AdminRolePropsBuilder'
-import { buildCustomerProps } from '@/pages/DeliveryConsole/functions/roleProps/CustomerRolePropsBuilder'
-import { buildMerchantProps } from '@/pages/DeliveryConsole/functions/roleProps/MerchantRolePropsBuilder'
-import { buildRiderProps } from '@/pages/DeliveryConsole/functions/roleProps/RiderRolePropsBuilder'
+import { buildAdminProps } from '@/pages/AdminConsole/functions/roleProps/AdminRolePropsBuilder'
+import { buildCustomerProps } from '@/pages/CustomerConsole/functions/roleProps/CustomerRolePropsBuilder'
+import { buildMerchantProps } from '@/pages/MerchantConsole/functions/roleProps/MerchantRolePropsBuilder'
+import { buildRiderProps } from '@/pages/RiderConsole/functions/roleProps/RiderRolePropsBuilder'
 
 export type CustomerRoleProps = ReturnType<typeof buildCustomerProps>
 export type MerchantRoleProps = ReturnType<typeof buildMerchantProps>

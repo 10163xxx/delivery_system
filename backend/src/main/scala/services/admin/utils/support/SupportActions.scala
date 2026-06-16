@@ -93,6 +93,136 @@ private def reviewPartialRefund(
       ),
     )
 
+private final case class PartialRefundResolutionContext(
+    order: OrderSummary,
+    partialRefund: OrderPartialRefundRequest,
+    item: OrderLineItem,
+    resolutionNote: ResolutionText,
+)
+
+private def validatePartialRefundResolution(
+      current: DeliveryAppState,
+      refundId: RefundRequestId,
+      request: ResolvePartialRefundRequest,
+  ): Either[ErrorMessage, PartialRefundResolutionContext] =
+    for
+      order <- findRefundOrder(current, refundId)
+      partialRefund <- order.partialRefundRequests.find(_.id == refundId).toRight(ValidationMessages.AfterSales.PartialRefundNotFound)
+      _ <- Either.cond(partialRefund.status == PartialRefundStatus.Pending, (), ValidationMessages.AfterSales.PartialRefundAlreadyResolved)
+      _ <- requireResolvableRefundOrder(order)
+      item <- order.items.find(_.menuItemId == partialRefund.menuItemId).toRight(ValidationMessages.AfterSales.PartialRefundItemMissing)
+      resolutionNote <- sanitizeSupportResolutionNote(request.resolutionNote)
+      remainingQuantityAfterApproval =
+        order.items.map(entry => entry.quantity - entry.refundedQuantity).sum -
+          (if request.approved then partialRefund.quantity else NumericDefaults.ZeroQuantity)
+      _ <- Either.cond(
+        !request.approved || remainingQuantityAfterApproval > NumericDefaults.ZeroQuantity,
+        (),
+        ValidationMessages.AfterSales.PartialRefundWouldEmptyOrder,
+      )
+      _ <- Either.cond(!request.approved || item.refundedQuantity + partialRefund.quantity <= item.quantity, (), ValidationMessages.AfterSales.PartialRefundQuantityOutOfRange)
+    yield PartialRefundResolutionContext(
+      order = order,
+      partialRefund = partialRefund,
+      item = item,
+      resolutionNote = resolutionNote,
+    )
+
+private def buildPartialRefundResolutionTimelineEntry(
+      context: PartialRefundResolutionContext,
+      approved: ApprovalFlag,
+      refundAmountCents: CurrencyCents,
+      timestamp: IsoDateTime,
+  ): OrderTimelineEntry =
+    val message =
+      if approved then
+        OrderTimelineMessage.PartialRefundApproved(
+          context.partialRefund.itemName,
+          context.partialRefund.quantity,
+          refundAmountCents,
+          context.resolutionNote,
+        )
+      else
+        OrderTimelineMessage.PartialRefundRejected(
+          context.partialRefund.itemName,
+          context.partialRefund.quantity,
+          context.resolutionNote,
+        )
+
+    OrderTimelineEntry(
+      context.order.status,
+      renderOrderTimelineMessage(message),
+      timestamp,
+    )
+
+private def buildResolvedPartialRefundOrder(
+      entry: OrderSummary,
+      context: PartialRefundResolutionContext,
+      reviewedRefund: OrderPartialRefundRequest,
+      approved: ApprovalFlag,
+      refundAmountCents: CurrencyCents,
+      timestamp: IsoDateTime,
+  ): OrderSummary =
+    val nextItems =
+      if approved then
+        entry.items.map(lineItem =>
+          if lineItem.menuItemId == context.partialRefund.menuItemId then
+            lineItem.copy(refundedQuantity = lineItem.refundedQuantity + context.partialRefund.quantity)
+          else lineItem
+        )
+      else entry.items
+    val nextItemSubtotal: CurrencyCents =
+      if approved then entry.itemSubtotalCents - refundAmountCents else entry.itemSubtotalCents
+    val nextCouponDiscountCents =
+      if approved then calculateCouponDiscount(entry.appliedCoupon, nextItemSubtotal, entry.deliveryFeeCents)
+      else entry.couponDiscountCents
+    val nextTotalPrice: CurrencyCents =
+      if approved then
+        Math.max(
+          NumericDefaults.ZeroCurrencyCents,
+          nextItemSubtotal + entry.deliveryFeeCents - nextCouponDiscountCents,
+        )
+      else entry.totalPriceCents
+
+    entry.copy(
+      fulfillment = entry.fulfillment.copy(items = nextItems),
+      pricing = entry.pricing.copy(
+        itemSubtotalCents = nextItemSubtotal,
+        couponDiscountCents = nextCouponDiscountCents,
+        totalPriceCents = nextTotalPrice,
+      ),
+      lifecycle = entry.lifecycle.copy(updatedAt = timestamp),
+      activity = entry.activity.copy(
+        partialRefundRequests = entry.partialRefundRequests.map(existing =>
+          if existing.id == reviewedRefund.id then reviewedRefund else existing
+        ),
+        timeline = entry.timeline :+ buildPartialRefundResolutionTimelineEntry(
+          context,
+          approved,
+          refundAmountCents,
+          timestamp,
+        ),
+      ),
+    )
+
+private def buildCustomersAfterPartialRefundResolution(
+      current: DeliveryAppState,
+      context: PartialRefundResolutionContext,
+      approved: ApprovalFlag,
+      refundAmountCents: CurrencyCents,
+  ) =
+    if approved then
+      current.customers.map(customer =>
+        if customer.id == context.order.customerId then
+          customer.copy(
+            metrics = customer.metrics.copy(
+              balanceCents = customer.balanceCents + refundAmountCents
+            )
+          )
+        else customer
+      )
+    else current.customers
+
 def addOrderChatMessage(
       orderId: OrderId,
       senderRole: UserRole,
@@ -172,96 +302,34 @@ def resolvePartialRefundRequest(
     IO.blocking {
       updateState { current =>
         for
-          order <- findRefundOrder(current, refundId)
-          partialRefund <- order.partialRefundRequests.find(_.id == refundId).toRight(ValidationMessages.AfterSales.PartialRefundNotFound)
-          _ <- Either.cond(partialRefund.status == PartialRefundStatus.Pending, (), ValidationMessages.AfterSales.PartialRefundAlreadyResolved)
-          _ <- requireResolvableRefundOrder(order)
-          item <- order.items.find(_.menuItemId == partialRefund.menuItemId).toRight(ValidationMessages.AfterSales.PartialRefundItemMissing)
-          resolutionNote <- sanitizeSupportResolutionNote(request.resolutionNote)
-          remainingQuantityAfterApproval =
-            order.items.map(entry => entry.quantity - entry.refundedQuantity).sum -
-              (if request.approved then partialRefund.quantity else NumericDefaults.ZeroQuantity)
-          _ <- Either.cond(
-            !request.approved || remainingQuantityAfterApproval > NumericDefaults.ZeroQuantity,
-            (),
-            ValidationMessages.AfterSales.PartialRefundWouldEmptyOrder,
-          )
-          _ <- Either.cond(!request.approved || item.refundedQuantity + partialRefund.quantity <= item.quantity, (), ValidationMessages.AfterSales.PartialRefundQuantityOutOfRange)
+          context <- validatePartialRefundResolution(current, refundId, request)
         yield
           val timestamp = now()
-          val reviewedRefund = reviewPartialRefund(partialRefund, request.approved, resolutionNote, timestamp)
-          val refundAmountCents = partialRefund.quantity * item.unitPriceCents
+          val reviewedRefund = reviewPartialRefund(
+            context.partialRefund,
+            request.approved,
+            context.resolutionNote,
+            timestamp,
+          )
+          val refundAmountCents = context.partialRefund.quantity * context.item.unitPriceCents
           val nextOrders = current.orders.map(entry =>
-            if entry.id == order.id then
-              val nextItems =
-                if request.approved then
-                  entry.items.map(lineItem =>
-                    if lineItem.menuItemId == partialRefund.menuItemId then
-                      lineItem.copy(refundedQuantity = lineItem.refundedQuantity + partialRefund.quantity)
-                    else lineItem
-                  )
-                else entry.items
-              val nextItemSubtotal: CurrencyCents =
-                if request.approved then entry.itemSubtotalCents - refundAmountCents else entry.itemSubtotalCents
-              val nextTotalPrice: CurrencyCents =
-                if request.approved then
-                  Math.max(
-                    NumericDefaults.ZeroCurrencyCents,
-                    nextItemSubtotal + entry.deliveryFeeCents - calculateCouponDiscount(entry.appliedCoupon, nextItemSubtotal, entry.deliveryFeeCents),
-                  )
-                else entry.totalPriceCents
-              val nextCouponDiscountCents =
-                if request.approved then calculateCouponDiscount(entry.appliedCoupon, nextItemSubtotal, entry.deliveryFeeCents)
-                else entry.couponDiscountCents
-              entry.copy(
-                fulfillment = entry.fulfillment.copy(items = nextItems),
-                pricing = entry.pricing.copy(
-                  itemSubtotalCents = nextItemSubtotal,
-                  couponDiscountCents = nextCouponDiscountCents,
-                  totalPriceCents = nextTotalPrice,
-                ),
-                lifecycle = entry.lifecycle.copy(updatedAt = timestamp),
-                activity = entry.activity.copy(
-                  partialRefundRequests = entry.partialRefundRequests.map(existing =>
-                    if existing.id == reviewedRefund.id then reviewedRefund else existing
-                  ),
-                  timeline = entry.timeline :+ OrderTimelineEntry(
-                    entry.status,
-                    if request.approved then
-                      renderOrderTimelineMessage(
-                        OrderTimelineMessage.PartialRefundApproved(
-                          partialRefund.itemName,
-                          partialRefund.quantity,
-                          refundAmountCents,
-                          resolutionNote,
-                        )
-                      )
-                    else
-                      renderOrderTimelineMessage(
-                        OrderTimelineMessage.PartialRefundRejected(
-                          partialRefund.itemName,
-                          partialRefund.quantity,
-                          resolutionNote,
-                        )
-                      ),
-                    timestamp,
-                  ),
-                ),
+            if entry.id == context.order.id then
+              buildResolvedPartialRefundOrder(
+                entry,
+                context,
+                reviewedRefund,
+                request.approved,
+                refundAmountCents,
+                timestamp,
               )
             else entry
           )
-          val nextCustomers =
-            if request.approved then
-              current.customers.map(customer =>
-                if customer.id == order.customerId then
-                  customer.copy(
-                    metrics = customer.metrics.copy(
-                      balanceCents = customer.balanceCents + refundAmountCents
-                    )
-                  )
-                else customer
-              )
-            else current.customers
+          val nextCustomers = buildCustomersAfterPartialRefundResolution(
+            current,
+            context,
+            request.approved,
+            refundAmountCents,
+          )
           withDerivedData(
             current.copy(
               customers = nextCustomers,

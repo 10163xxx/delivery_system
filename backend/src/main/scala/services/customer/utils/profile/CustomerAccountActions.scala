@@ -54,7 +54,9 @@ def updateCustomerProfile(
           name <- sanitizeRequiredText(request.name, DeliveryValidationDefaults.CustomerNameMaxLength, ValidationMessages.Customer.CustomerNameRequired)
         yield
           withDerivedData(
-            updateCustomerEntry(current, customer.id)(_.copy(name = name)),
+            updateCustomerEntry(current, customer.id)(entry =>
+              entry.copy(identity = entry.identity.copy(name = name))
+            ),
             now(),
           )
       }
@@ -73,7 +75,9 @@ def addCustomerAddress(
           val nextAddresses =
             customer.addresses.filterNot(_.address == addressEntry.address) :+ addressEntry
           withDerivedData(
-            updateCustomerEntry(current, customer.id)(_.copy(addresses = nextAddresses)),
+            updateCustomerEntry(current, customer.id)(entry =>
+              entry.copy(identity = entry.identity.copy(addresses = nextAddresses))
+            ),
             now(),
           )
       }
@@ -98,7 +102,9 @@ def removeCustomerAddress(
         yield
           val nextAddresses = customer.addresses.filterNot(_.address == address)
           withDerivedData(
-            updateCustomerEntry(current, customer.id)(_.copy(addresses = nextAddresses)),
+            updateCustomerEntry(current, customer.id)(entry =>
+              entry.copy(identity = entry.identity.copy(addresses = nextAddresses))
+            ),
             now(),
           )
       }
@@ -117,7 +123,9 @@ def setDefaultCustomerAddress(
           location <- addressEntry.location.toRight(ValidationMessages.Customer.AddressLocationRequired)
         yield
           withDerivedData(
-            updateCustomerEntry(current, customer.id)(_.copy(defaultAddress = address, location = Some(location))),
+            updateCustomerEntry(current, customer.id)(entry =>
+              entry.copy(identity = entry.identity.copy(defaultAddress = address, location = Some(location)))
+            ),
             now(),
           )
       }

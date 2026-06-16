@@ -4,27 +4,8 @@ import { DELIVERY_CONSOLE_COPY } from '@/pages/DeliveryConsole/components/primit
 import { MerchantRoleView } from '@/pages/MerchantConsole/components/workspace/MerchantRoleView'
 import { RiderRoleView } from '@/pages/RiderConsole/components/workspace/RiderRoleView'
 import { ROLE } from '@/objects/core/SharedObjects'
-import { FEEDBACK_PREFIX, FEEDBACK_TONE } from '@/pages/DeliveryConsole/objects/DeliveryUiStateObjects'
+import { getDeliveryAppStageFeedback } from '@/pages/DeliveryConsole/functions/DeliveryAppStageFeedback'
 import type { DeliveryConsoleStageProps } from '@/objects/core/SharedViewObjects'
-
-function getFeedbackState(message: string | null) {
-  if (!message) return null
-
-  if (message.startsWith(FEEDBACK_PREFIX[FEEDBACK_TONE.success])) {
-    return { tone: FEEDBACK_TONE.success, text: message.slice(FEEDBACK_PREFIX[FEEDBACK_TONE.success].length) }
-  }
-  if (message.startsWith(FEEDBACK_PREFIX[FEEDBACK_TONE.info])) {
-    return { tone: FEEDBACK_TONE.info, text: message.slice(FEEDBACK_PREFIX[FEEDBACK_TONE.info].length) }
-  }
-  if (message.startsWith(FEEDBACK_PREFIX[FEEDBACK_TONE.warning])) {
-    return { tone: FEEDBACK_TONE.warning, text: message.slice(FEEDBACK_PREFIX[FEEDBACK_TONE.warning].length) }
-  }
-  if (message.startsWith(FEEDBACK_PREFIX[FEEDBACK_TONE.error])) {
-    return { tone: FEEDBACK_TONE.error, text: message.slice(FEEDBACK_PREFIX[FEEDBACK_TONE.error].length) }
-  }
-
-  return { tone: FEEDBACK_TONE.error, text: message }
-}
 
 export function DeliveryAppStage(props: DeliveryConsoleStageProps) {
   const {
@@ -40,7 +21,7 @@ export function DeliveryAppStage(props: DeliveryConsoleStageProps) {
     roleLabels,
     showLogoutModal,
   } = props
-  const feedbackState = getFeedbackState(error)
+  const feedbackState = getDeliveryAppStageFeedback(error)
 
   return (
     <main className={`delivery-app delivery-app--${role}`}>

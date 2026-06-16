@@ -1,4 +1,4 @@
-import { createMerchantActions } from '@/pages/DeliveryConsole/functions/merchant/MerchantActions'
+import { createMerchantActions } from '@/pages/MerchantConsole/functions/actions/MerchantActions'
 import type {
   DeliveryConsolePageState as PageState,
   DeliveryConsolePageViewState as PageViewState,

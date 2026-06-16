@@ -5,7 +5,7 @@ import {
   getAdminFormattingProps,
   getAdminSetterProps,
   getAdminViewProps,
-} from '@/pages/DeliveryConsole/functions/roleProps/AdminRolePropGroups'
+} from '@/pages/AdminConsole/functions/roleProps/AdminRolePropGroups'
 
 export function buildAdminProps({ pageView, pageState, sessionService }: AdminPropsArgs) {
   return {

@@ -1,3 +1,3 @@
 export * from './DeliveryPayloadCustomer'
 export * from './DeliveryPayloadMerchant'
-export * from './DeliveryPayloadReviewAdmin'
+export * from '@/pages/AdminConsole/functions/payloads/DeliveryPayloadReviewAdmin'

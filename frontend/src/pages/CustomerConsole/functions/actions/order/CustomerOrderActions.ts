@@ -8,13 +8,13 @@ import {
   clearDraftError,
   removeKey,
   setDraftError,
-} from '@/pages/DeliveryConsole/functions/customer/common/CustomerActionHelpers'
+} from '@/pages/CustomerConsole/functions/actions/common/CustomerActionHelpers'
 import {
   buildCustomerOrderChatRequestPayload,
   buildCustomerOrderRequestPayload,
   resetCustomerOrderSubmissionState,
   validateCustomerOrderSubmission,
-} from '@/pages/DeliveryConsole/functions/customer/order/CustomerOrderActionHelpers'
+} from '@/pages/CustomerConsole/functions/actions/order/CustomerOrderActionHelpers'
 import { FEEDBACK_PREFIX, FEEDBACK_TONE } from '@/pages/DeliveryConsole/objects/DeliveryUiStateObjects'
 
 export function createCustomerOrderActions(params: CustomerOrderParams) {

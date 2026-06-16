@@ -1,5 +1,5 @@
 import { buildAfterSalesResolutionPayload } from '@/pages/DeliveryConsole/functions/payloads/DeliveryPayloadMerchant'
-import { buildAppealResolutionPayload, buildEligibilityReviewPayload, buildResolutionPayload, buildReviewApplicationPayload } from '@/pages/DeliveryConsole/functions/payloads/DeliveryPayloadReviewAdmin'
+import { buildAppealResolutionPayload, buildEligibilityReviewPayload, buildResolutionPayload, buildReviewApplicationPayload } from '@/pages/AdminConsole/functions/payloads/DeliveryPayloadReviewAdmin'
 import {
   approveMerchantApplication,
   rejectMerchantApplication,

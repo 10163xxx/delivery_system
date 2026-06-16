@@ -1,5 +1,5 @@
 import { BANK_OPTIONS } from '@/pages/DeliveryConsole/functions/shared/DeliveryConstants'
-import { buildEligibilityReviewPayload, buildReviewAppealPayload } from '@/pages/DeliveryConsole/functions/payloads/DeliveryPayloadReviewAdmin'
+import { buildEligibilityReviewPayload, buildReviewAppealPayload } from '@/pages/AdminConsole/functions/payloads/DeliveryPayloadReviewAdmin'
 import {
   assignRider,
   deliverOrder,

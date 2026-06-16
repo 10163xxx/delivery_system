@@ -14,9 +14,9 @@ import {
   getCustomerNoticeCollections,
   getCustomerOrderCollections,
   getCustomerStoreCollections,
-} from '@/pages/DeliveryConsole/functions/viewData/DeliveryCustomerCollectionViewData'
-import { getMerchantApplicationCollections } from '@/pages/DeliveryConsole/functions/viewData/DeliveryMerchantCollectionViewData'
-import { getReviewAndTicketCollections } from '@/pages/DeliveryConsole/functions/viewData/DeliveryReviewTicketCollectionViewData'
+} from '@/pages/CustomerConsole/functions/viewData/DeliveryCustomerCollectionViewData'
+import { getMerchantApplicationCollections } from '@/pages/MerchantConsole/functions/viewData/DeliveryMerchantCollectionViewData'
+import { getReviewAndTicketCollections } from '@/pages/AdminConsole/functions/viewData/DeliveryReviewTicketCollectionViewData'
 
 export {
   getActiveCustomerId,
@@ -26,13 +26,13 @@ export {
   getCustomerNoticeCollections,
   getCustomerOrderCollections,
   getCustomerStoreCollections,
-} from '@/pages/DeliveryConsole/functions/viewData/DeliveryCustomerCollectionViewData'
+} from '@/pages/CustomerConsole/functions/viewData/DeliveryCustomerCollectionViewData'
 export {
   getMerchantApplicationCollections,
   getMerchantStores,
-} from '@/pages/DeliveryConsole/functions/viewData/DeliveryMerchantCollectionViewData'
-export { getRiderOrders } from '@/pages/DeliveryConsole/functions/viewData/DeliveryRiderCollectionViewData'
-export { getReviewAndTicketCollections } from '@/pages/DeliveryConsole/functions/viewData/DeliveryReviewTicketCollectionViewData'
+} from '@/pages/MerchantConsole/functions/viewData/DeliveryMerchantCollectionViewData'
+export { getRiderOrders } from '@/pages/RiderConsole/functions/viewData/DeliveryRiderCollectionViewData'
+export { getReviewAndTicketCollections } from '@/pages/AdminConsole/functions/viewData/DeliveryReviewTicketCollectionViewData'
 
 export type DerivedCollectionsParams = {
   state: DeliveryPageDerivedState

@@ -11,7 +11,7 @@ import type {
   CustomerOrderIssueParams,
   ReviewSubmissionValidationResult,
 } from '@/pages/CustomerConsole/objects/CustomerActionObjects'
-import { setDraftError } from '@/pages/DeliveryConsole/functions/customer/common/CustomerActionHelpers'
+import { setDraftError } from '@/pages/CustomerConsole/functions/actions/common/CustomerActionHelpers'
 
 export function getRemainingRefundableQuantity(order: OrderSummary, menuItemId: MenuItemId) {
   const orderItem = order.items.find((item) => item.menuItemId === menuItemId)

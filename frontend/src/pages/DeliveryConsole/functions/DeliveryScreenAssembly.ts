@@ -1,6 +1,6 @@
 import type { NavigateFunction } from 'react-router-dom'
-import { createCustomerActions } from '@/pages/DeliveryConsole/functions/customer/CustomerActions'
-import { createMerchantActions } from '@/pages/DeliveryConsole/functions/merchant/MerchantActions'
+import { createCustomerActions } from '@/pages/CustomerConsole/functions/actions/CustomerActions'
+import { createMerchantActions } from '@/pages/MerchantConsole/functions/actions/MerchantActions'
 import {
   createCustomerConsoleActions,
   createMerchantConsoleActions,

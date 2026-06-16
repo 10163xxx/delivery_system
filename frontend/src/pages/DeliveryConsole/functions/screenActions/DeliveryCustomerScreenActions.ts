@@ -1,5 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom'
-import { createCustomerActions } from '@/pages/DeliveryConsole/functions/customer/CustomerActions'
+import { createCustomerActions } from '@/pages/CustomerConsole/functions/actions/CustomerActions'
 import type {
   CustomerActionContexts,
   CustomerOrderIssueParams,

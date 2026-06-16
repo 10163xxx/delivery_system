@@ -201,11 +201,13 @@ def calculateCouponDiscount(
 def createApprovedStore(application: MerchantApplication): Store =
   val storeId = wrapText[StoreId](List("store-", application.id.raw.takeRight(IdentifierDefaults.ApprovedStoreIdSuffixLength)).mkString)
   Store(
-    id = storeId,
-    merchantName = application.merchantName,
-    name = application.storeName,
-    category = application.category,
-    cuisine = wrapText[CuisineLabel](application.category.raw),
+    identity = StoreIdentity(
+      id = storeId,
+      merchantName = application.merchantName,
+      name = application.storeName,
+      category = application.category,
+      cuisine = wrapText[CuisineLabel](application.category.raw),
+    ),
     operations = StoreOperations(
       status = validationStoreOpen,
       storeAddress = application.storeAddress,

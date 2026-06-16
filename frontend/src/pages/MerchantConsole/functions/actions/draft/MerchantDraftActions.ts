@@ -9,7 +9,7 @@ import {
   createMerchantDraftSubmitActions,
   createMerchantDraftUploadActions,
   createMerchantDraftValidators,
-} from '@/pages/DeliveryConsole/functions/merchant/draft/MerchantDraftActionHelpers'
+} from '@/pages/MerchantConsole/functions/actions/draft/MerchantDraftActionHelpers'
 
 export function createMerchantDraftActions(
   draft: MerchantDraftContext,

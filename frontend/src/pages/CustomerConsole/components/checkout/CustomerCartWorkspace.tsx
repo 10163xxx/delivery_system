@@ -25,6 +25,112 @@ function getSelectedCartItems(props: CheckoutPanelProps) {
   )
 }
 
+type SelectedCartItem = ReturnType<typeof getSelectedCartItems>[number]
+
+function CustomerCartPanelHeader({
+  navigate,
+  selectedStore,
+}: Pick<CheckoutPanelProps, 'selectedStore'> & { navigate: NavigateFunction }) {
+  return (
+    <div className="checkout-panel-header">
+      <div>
+        <p className="ticket-kind">{CUSTOMER_CHECKOUT_COPY.panel.checkoutTicketKind}</p>
+        <h3>{CUSTOMER_CHECKOUT_COPY.panel.checkoutTitle}</h3>
+        <p className="meta-line">{CUSTOMER_CHECKOUT_COPY.cart.headerDescription}</p>
+      </div>
+      <button
+        className="secondary-button"
+        onClick={() =>
+          navigate(
+            selectedStore
+              ? buildCustomerOrderStoreRoute(selectedStore.id)
+              : ROUTE_PATH.customerOrder,
+          )}
+        type="button"
+      >
+        {CUSTOMER_CHECKOUT_COPY.cart.backToMenu}
+      </button>
+    </div>
+  )
+}
+
+function CustomerCartItemRow({
+  formatPrice,
+  line,
+  updateCartLineQuantity,
+}: Pick<CheckoutPanelProps, 'formatPrice' | 'updateCartLineQuantity'> & { line: SelectedCartItem }) {
+  return (
+    <div className="customer-cart-item-row">
+      <div>
+        <strong>{line.item.name}</strong>
+        <p className="meta-line">
+          {line.configuration?.summaryText || CUSTOMER_CHECKOUT_COPY.cart.defaultSelectionSummary}
+        </p>
+      </div>
+      <div className="customer-cart-item-actions">
+        <button
+          className="secondary-button"
+          onClick={() => updateCartLineQuantity(line.item, line.lineKey, line.quantity - 1)}
+          type="button"
+        >
+          {CUSTOMER_CHECKOUT_COPY.cart.decreaseQuantityButton}
+        </button>
+        <strong>{line.quantity}</strong>
+        <button
+          className="secondary-button"
+          onClick={() => updateCartLineQuantity(line.item, line.lineKey, line.quantity + 1)}
+          type="button"
+        >
+          {CUSTOMER_CHECKOUT_COPY.cart.increaseQuantityButton}
+        </button>
+        <strong>
+          {formatPrice(
+            getMenuItemConfiguredUnitPriceCents(line.item, line.configuration) * line.quantity,
+          )}
+        </strong>
+      </div>
+    </div>
+  )
+}
+
+function CustomerCartItemsPanel({
+  formatPrice,
+  hasRequiredCategorySelection,
+  requiresRequiredCategory,
+  selectedItems,
+  updateCartLineQuantity,
+}: Pick<CheckoutPanelProps, 'formatPrice' | 'updateCartLineQuantity'> & {
+  hasRequiredCategorySelection: boolean
+  requiresRequiredCategory: boolean
+  selectedItems: SelectedCartItem[]
+}) {
+  return (
+    <div className="summary-bar checkout-summary customer-cart-items">
+      <div className="full customer-cart-items-header">
+        <p>{CUSTOMER_CHECKOUT_COPY.cart.itemListTitle}</p>
+        <strong>{`${selectedItems.length}${CUSTOMER_CHECKOUT_COPY.cart.itemCountSuffix}`}</strong>
+      </div>
+      {requiresRequiredCategory ? (
+        <div className="full">
+          <p className="meta-line">
+            {hasRequiredCategorySelection
+              ? CUSTOMER_CHECKOUT_COPY.cart.requiredCategorySelectedHint
+              : CUSTOMER_CHECKOUT_COPY.cart.requiredCategoryMissingHint}
+          </p>
+        </div>
+      ) : null}
+      {selectedItems.map((line) => (
+        <CustomerCartItemRow
+          key={line.lineKey}
+          formatPrice={formatPrice}
+          line={line}
+          updateCartLineQuantity={updateCartLineQuantity}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function CustomerCartWorkspace(props: CheckoutPanelProps & { navigate: NavigateFunction }) {
   const { formatPrice, navigate, quantities, selectedMenuItemConfigurations, selectedStore, updateCartLineQuantity } = props
   const selectedItems = getSelectedCartItems(props)
@@ -42,74 +148,14 @@ export function CustomerCartWorkspace(props: CheckoutPanelProps & { navigate: Na
       description={CUSTOMER_CHECKOUT_COPY.cart.pageDescription}
     >
       <section className="checkout-panel">
-        <div className="checkout-panel-header">
-          <div>
-            <p className="ticket-kind">{CUSTOMER_CHECKOUT_COPY.panel.checkoutTicketKind}</p>
-            <h3>{CUSTOMER_CHECKOUT_COPY.panel.checkoutTitle}</h3>
-            <p className="meta-line">{CUSTOMER_CHECKOUT_COPY.cart.headerDescription}</p>
-          </div>
-          <button
-            className="secondary-button"
-            onClick={() =>
-              navigate(
-                selectedStore
-                  ? buildCustomerOrderStoreRoute(selectedStore.id)
-                  : ROUTE_PATH.customerOrder,
-              )}
-            type="button"
-          >
-            {CUSTOMER_CHECKOUT_COPY.cart.backToMenu}
-          </button>
-        </div>
-        <div className="summary-bar checkout-summary customer-cart-items">
-          <div className="full customer-cart-items-header">
-            <p>{CUSTOMER_CHECKOUT_COPY.cart.itemListTitle}</p>
-            <strong>{`${selectedItems.length}${CUSTOMER_CHECKOUT_COPY.cart.itemCountSuffix}`}</strong>
-          </div>
-          {requiresRequiredCategory ? (
-            <div className="full">
-              <p className="meta-line">
-                {hasRequiredCategorySelection
-                  ? CUSTOMER_CHECKOUT_COPY.cart.requiredCategorySelectedHint
-                  : CUSTOMER_CHECKOUT_COPY.cart.requiredCategoryMissingHint}
-              </p>
-            </div>
-          ) : null}
-          {selectedItems.map((line) => {
-            return (
-              <div key={line.lineKey} className="customer-cart-item-row">
-                <div>
-                  <strong>{line.item.name}</strong>
-                  <p className="meta-line">
-                    {line.configuration?.summaryText || CUSTOMER_CHECKOUT_COPY.cart.defaultSelectionSummary}
-                  </p>
-                </div>
-                <div className="customer-cart-item-actions">
-                  <button
-                    className="secondary-button"
-                    onClick={() => updateCartLineQuantity(line.item, line.lineKey, line.quantity - 1)}
-                    type="button"
-                  >
-                    {CUSTOMER_CHECKOUT_COPY.cart.decreaseQuantityButton}
-                  </button>
-                  <strong>{line.quantity}</strong>
-                  <button
-                    className="secondary-button"
-                    onClick={() => updateCartLineQuantity(line.item, line.lineKey, line.quantity + 1)}
-                    type="button"
-                  >
-                    {CUSTOMER_CHECKOUT_COPY.cart.increaseQuantityButton}
-                  </button>
-                  <strong>
-                    {formatPrice(
-                      getMenuItemConfiguredUnitPriceCents(line.item, line.configuration) * line.quantity,
-                    )}
-                  </strong>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <CustomerCartPanelHeader navigate={navigate} selectedStore={selectedStore} />
+        <CustomerCartItemsPanel
+          formatPrice={formatPrice}
+          hasRequiredCategorySelection={hasRequiredCategorySelection}
+          requiresRequiredCategory={requiresRequiredCategory}
+          selectedItems={selectedItems}
+          updateCartLineQuantity={updateCartLineQuantity}
+        />
         <CustomerDeliveryRoutePanel {...props} />
         <div className="form-grid">
           <CustomerCheckoutFormFields {...props} />

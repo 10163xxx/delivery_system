@@ -15,97 +15,125 @@ import {
   getCouponHint,
 } from '@/pages/CustomerConsole/components/checkout/CustomerCheckoutCopy'
 
-export function CustomerCheckoutFormFields(props: CheckoutPanelProps) {
+function CustomerDeliveryAddressField(props: CheckoutPanelProps) {
   const {
-    availableCheckoutCoupons,
     deliveryAddress,
     deliveryAddressError,
-    formatPrice,
-    remark,
-    scheduledDeliveryError,
-    scheduledDeliveryTime,
-    selectedCouponId,
     selectedCustomer,
     setDeliveryAddress,
     setDeliveryAddressError,
+  } = props
+
+  return (
+    <label className="full">
+      <span>{CUSTOMER_CHECKOUT_COPY.address.deliveryAddressTitle}</span>
+      <input
+        className={deliveryAddressError ? 'field-error' : undefined}
+        list={CUSTOMER_CHECKOUT_FIELDS.customerAddressOptionsId}
+        value={deliveryAddress}
+        onChange={(event) => {
+          setDeliveryAddress(asDomainText<AddressText>(event.target.value))
+          if (deliveryAddressError) setDeliveryAddressError(null)
+        }}
+      />
+      {deliveryAddressError ? <span className="field-error-text">{deliveryAddressError}</span> : null}
+      <datalist id={CUSTOMER_CHECKOUT_FIELDS.customerAddressOptionsId}>
+        {selectedCustomer?.addresses.map((address: AddressEntry) => (
+          <option key={`${address.label}-${address.address}`} value={address.address}>
+            {address.label}
+          </option>
+        ))}
+      </datalist>
+    </label>
+  )
+}
+
+function CustomerScheduledDeliveryField(props: CheckoutPanelProps) {
+  const {
+    scheduledDeliveryError,
+    scheduledDeliveryTime,
     setError,
-    setRemark,
     setScheduledDeliveryError,
     setScheduledDeliveryTime,
     setScheduledDeliveryTouched,
-    setSelectedCouponId,
     suggestedDeliveryTime,
     todayDeliveryCutoff,
   } = props
 
   return (
+    <label className="full">
+      <span>{CUSTOMER_CHECKOUT_COPY.schedule.deliveryTimeTitle}</span>
+      <input
+        className={scheduledDeliveryError ? 'field-error' : undefined}
+        max={todayDeliveryCutoff}
+        min={suggestedDeliveryTime}
+        type="datetime-local"
+        value={scheduledDeliveryTime}
+        onChange={(event) => {
+          setScheduledDeliveryTime(asDomainText<IsoDateTime>(event.target.value))
+          setScheduledDeliveryTouched(true)
+          if (scheduledDeliveryError) {
+            setScheduledDeliveryError(null)
+            setError(null)
+          }
+        }}
+      />
+      {scheduledDeliveryError ? (
+        <span className="field-error-text">{scheduledDeliveryError}</span>
+      ) : (
+        <p className="meta-line">{CUSTOMER_CHECKOUT_COPY.schedule.scheduleHint}</p>
+      )}
+    </label>
+  )
+}
+
+function CustomerOrderRemarkField({ remark, setRemark }: CheckoutPanelProps) {
+  return (
+    <label className="full">
+      <span>{CUSTOMER_CHECKOUT_COPY.remark.orderRemarkTitle}</span>
+      <input
+        placeholder={CUSTOMER_CHECKOUT_COPY.remark.orderRemarkPlaceholder}
+        value={remark}
+        onChange={(event) => setRemark(asDomainText<DisplayText>(event.target.value))}
+      />
+    </label>
+  )
+}
+
+function CustomerCheckoutCouponField(props: CheckoutPanelProps) {
+  const {
+    availableCheckoutCoupons,
+    formatPrice,
+    selectedCouponId,
+    setSelectedCouponId,
+  } = props
+
+  return (
+    <label className="full">
+      <span>{CUSTOMER_CHECKOUT_COPY.coupon.couponFieldTitle}</span>
+      <select
+        value={selectedCouponId}
+        onChange={(event) => setSelectedCouponId(event.target.value ? asDomainText<CouponId>(event.target.value) : '')}
+      >
+        <option value="">{CUSTOMER_CHECKOUT_COPY.coupon.removeCoupon}</option>
+        {availableCheckoutCoupons.map((coupon: Coupon) => (
+          <option key={coupon.id} value={coupon.id}>
+            {coupon.title} · 满 {formatPrice(coupon.minimumSpendCents)} 可用 · 抵扣 {formatPrice(coupon.discountCents)}
+          </option>
+        ))}
+      </select>
+      <p className="meta-line">{getCouponHint(props)}</p>
+    </label>
+  )
+}
+
+export function CustomerCheckoutFormFields(props: CheckoutPanelProps) {
+  return (
     <>
-      <label className="full">
-        <span>{CUSTOMER_CHECKOUT_COPY.address.deliveryAddressTitle}</span>
-        <input
-          className={deliveryAddressError ? 'field-error' : undefined}
-          list={CUSTOMER_CHECKOUT_FIELDS.customerAddressOptionsId}
-          value={deliveryAddress}
-          onChange={(event) => {
-            setDeliveryAddress(asDomainText<AddressText>(event.target.value))
-            if (deliveryAddressError) setDeliveryAddressError(null)
-          }}
-        />
-        {deliveryAddressError ? <span className="field-error-text">{deliveryAddressError}</span> : null}
-        <datalist id={CUSTOMER_CHECKOUT_FIELDS.customerAddressOptionsId}>
-          {selectedCustomer?.addresses.map((address: AddressEntry) => (
-            <option key={`${address.label}-${address.address}`} value={address.address}>
-              {address.label}
-            </option>
-          ))}
-        </datalist>
-      </label>
-      <label className="full">
-        <span>{CUSTOMER_CHECKOUT_COPY.schedule.deliveryTimeTitle}</span>
-        <input
-          className={scheduledDeliveryError ? 'field-error' : undefined}
-          max={todayDeliveryCutoff}
-          min={suggestedDeliveryTime}
-          type="datetime-local"
-          value={scheduledDeliveryTime}
-          onChange={(event) => {
-            setScheduledDeliveryTime(asDomainText<IsoDateTime>(event.target.value))
-            setScheduledDeliveryTouched(true)
-            if (scheduledDeliveryError) {
-              setScheduledDeliveryError(null)
-              setError(null)
-            }
-          }}
-        />
-        {scheduledDeliveryError ? (
-          <span className="field-error-text">{scheduledDeliveryError}</span>
-        ) : (
-          <p className="meta-line">{CUSTOMER_CHECKOUT_COPY.schedule.scheduleHint}</p>
-        )}
-      </label>
-      <label className="full">
-        <span>{CUSTOMER_CHECKOUT_COPY.remark.orderRemarkTitle}</span>
-        <input
-          placeholder={CUSTOMER_CHECKOUT_COPY.remark.orderRemarkPlaceholder}
-          value={remark}
-          onChange={(event) => setRemark(asDomainText<DisplayText>(event.target.value))}
-        />
-      </label>
-      <label className="full">
-        <span>{CUSTOMER_CHECKOUT_COPY.coupon.couponFieldTitle}</span>
-        <select
-          value={selectedCouponId}
-          onChange={(event) => setSelectedCouponId(event.target.value ? asDomainText<CouponId>(event.target.value) : '')}
-        >
-          <option value="">{CUSTOMER_CHECKOUT_COPY.coupon.removeCoupon}</option>
-          {availableCheckoutCoupons.map((coupon: Coupon) => (
-            <option key={coupon.id} value={coupon.id}>
-              {coupon.title} · 满 {formatPrice(coupon.minimumSpendCents)} 可用 · 抵扣 {formatPrice(coupon.discountCents)}
-            </option>
-          ))}
-        </select>
-        <p className="meta-line">{getCouponHint(props)}</p>
-      </label>
+      <CustomerDeliveryAddressField {...props} />
+      <CustomerScheduledDeliveryField {...props} />
+      <CustomerOrderRemarkField {...props} />
+      <CustomerCheckoutCouponField {...props} />
     </>
   )
 }

@@ -7,18 +7,19 @@ import io.circe.generic.semiauto.*
 import domain.shared.*
 
 final case class Customer(
-    id: CustomerId,
-    name: PersonName,
-    phone: PhoneNumber,
-    defaultAddress: AddressText,
-    location: Option[CustomerLocation],
-    addresses: List[AddressEntry],
-    accountStatus: AccountStatus,
+    identity: CustomerIdentity,
     metrics: CustomerMetrics,
 )
 
 object Customer:
   extension (customer: Customer)
+    def id: CustomerId = customer.identity.id
+    def name: PersonName = customer.identity.name
+    def phone: PhoneNumber = customer.identity.phone
+    def defaultAddress: AddressText = customer.identity.defaultAddress
+    def location: Option[CustomerLocation] = customer.identity.location
+    def addresses: List[AddressEntry] = customer.identity.addresses
+    def accountStatus: AccountStatus = customer.identity.accountStatus
     def revokedReviewCount: EntityCount = customer.metrics.revokedReviewCount
     def membershipTier: MembershipTier = customer.metrics.membershipTier
     def monthlySpendCents: CurrencyCents = customer.metrics.monthlySpendCents
@@ -29,10 +30,14 @@ object Customer:
     deriveEncoder[Customer]
       .apply(customer)
       .deepMerge(
+        deriveEncoder[CustomerIdentity]
+          .apply(customer.identity)
+      )
+      .deepMerge(
         deriveEncoder[CustomerMetrics]
           .apply(customer.metrics)
       )
-      .mapObject(_.remove("metrics"))
+      .mapObject(_.remove("identity").remove("metrics"))
   )
 
   given Decoder[Customer] = Decoder.instance { cursor =>
@@ -50,13 +55,15 @@ object Customer:
       balanceCents <- cursor.get[CurrencyCents]("balanceCents")
       coupons <- cursor.get[List[Coupon]]("coupons")
     yield Customer(
-      id = id,
-      name = name,
-      phone = phone,
-      defaultAddress = defaultAddress,
-      location = location,
-      addresses = addresses,
-      accountStatus = accountStatus,
+      identity = CustomerIdentity(
+        id = id,
+        name = name,
+        phone = phone,
+        defaultAddress = defaultAddress,
+        location = location,
+        addresses = addresses,
+        accountStatus = accountStatus,
+      ),
       metrics = CustomerMetrics(
         revokedReviewCount = revokedReviewCount,
         membershipTier = membershipTier,

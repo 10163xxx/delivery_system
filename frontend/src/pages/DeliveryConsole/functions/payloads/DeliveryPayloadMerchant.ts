@@ -1,16 +1,16 @@
 export {
   buildMerchantRegistrationPayload,
-} from '@/pages/DeliveryConsole/functions/payloads/DeliveryMerchantRegistrationPayload'
+} from '@/pages/MerchantConsole/functions/payloads/DeliveryMerchantRegistrationPayload'
 export {
   buildMenuItemPayload,
   parseMenuItemSelectionGroups,
-} from '@/pages/DeliveryConsole/functions/payloads/DeliveryMenuItemPayload'
+} from '@/pages/MerchantConsole/functions/payloads/DeliveryMenuItemPayload'
 export {
   buildAfterSalesResolutionPayload,
   buildPartialRefundResolutionPayload,
-} from '@/pages/DeliveryConsole/functions/payloads/DeliveryMerchantResolutionPayload'
+} from '@/pages/MerchantConsole/functions/payloads/DeliveryMerchantResolutionPayload'
 export {
   buildMerchantProfilePayload,
   buildMerchantWithdrawPayload,
   parseMerchantWithdrawAmount,
-} from '@/pages/DeliveryConsole/functions/payloads/DeliveryMerchantProfilePayload'
+} from '@/pages/MerchantConsole/functions/payloads/DeliveryMerchantProfilePayload'

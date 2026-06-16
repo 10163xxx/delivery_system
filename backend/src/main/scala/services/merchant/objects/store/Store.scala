@@ -7,16 +7,17 @@ import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
 
 final case class Store(
-    id: StoreId,
-    merchantName: PersonName,
-    name: DisplayText,
-    category: DisplayText,
-    cuisine: CuisineLabel,
+    identity: StoreIdentity,
     operations: StoreOperations,
     metrics: StoreMetrics,
 )
 object Store:
   extension (store: Store)
+    def id: StoreId = store.identity.id
+    def merchantName: PersonName = store.identity.merchantName
+    def name: DisplayText = store.identity.name
+    def category: DisplayText = store.identity.category
+    def cuisine: CuisineLabel = store.identity.cuisine
     def status: DisplayText = store.operations.status
     def storeAddress: AddressText = store.operations.storeAddress
     def location: Option[StoreLocation] = store.operations.location
@@ -32,9 +33,10 @@ object Store:
   given Encoder[Store] = Encoder.instance(store =>
     deriveEncoder[Store]
       .apply(store)
+      .deepMerge(deriveEncoder[StoreIdentity].apply(store.identity))
       .deepMerge(deriveEncoder[StoreOperations].apply(store.operations))
       .deepMerge(deriveEncoder[StoreMetrics].apply(store.metrics))
-      .mapObject(_.remove("operations").remove("metrics"))
+      .mapObject(_.remove("identity").remove("operations").remove("metrics"))
   )
   given Decoder[Store] = Decoder.instance { cursor =>
     for
@@ -55,11 +57,13 @@ object Store:
       oneStarRatingCount <- cursor.getOrElse[EntityCount]("oneStarRatingCount")(NumericDefaults.ZeroCount)
       revenueCents <- cursor.getOrElse[CurrencyCents]("revenueCents")(NumericDefaults.ZeroCurrencyCents)
     yield Store(
-      id = id,
-      merchantName = merchantName,
-      name = name,
-      category = category,
-      cuisine = cuisine,
+      identity = StoreIdentity(
+        id = id,
+        merchantName = merchantName,
+        name = name,
+        category = category,
+        cuisine = cuisine,
+      ),
       operations = StoreOperations(
         status = status,
         storeAddress = storeAddress,
