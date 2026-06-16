@@ -14,7 +14,7 @@ import system.api.*
 
 val submitMerchantApplicationRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(submitMerchantApplicationApi, req) =>
-    val Some(matchedReq) = extractApi0(submitMerchantApplicationApi, req)
+    val matchedReq = requireApi0(submitMerchantApplicationApi, req)
     withRole(matchedReq, UserRole.merchant) { user =>
       matchedReq.as[MerchantRegistrationRequest].flatMap { payload =>
         submitMerchantApplication(payload.copy(merchantName = user.displayName))

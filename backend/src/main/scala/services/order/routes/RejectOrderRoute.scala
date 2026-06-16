@@ -16,7 +16,7 @@ import system.app.*
 
 val rejectOrderRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(rejectOrderApi, req) =>
-    val Some((matchedReq, orderId)) = extractApi1(rejectOrderApi, req)
+    val (matchedReq, orderId) = requireApi1(rejectOrderApi, req)
     withRole(matchedReq, UserRole.merchant) { user =>
       if !ownsOrderAsMerchant(orderId, user.displayName) then Forbidden(RouteMessages.HandleOtherMerchantOrderForbidden)
       else

@@ -15,7 +15,7 @@ import system.app.*
 
 val updateCustomerProfileRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(updateCustomerProfileApi, req) =>
-    val Some((matchedReq, customerId)) = extractApi1(updateCustomerProfileApi, req)
+    val (matchedReq, customerId) = requireApi1(updateCustomerProfileApi, req)
     withRole(matchedReq, UserRole.customer) { user =>
       if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherCustomerProfileForbidden)
       else

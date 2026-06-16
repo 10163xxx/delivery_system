@@ -14,7 +14,7 @@ import system.api.*
 
 val resolveReviewAppealRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(resolveReviewAppealApi, req) =>
-    val Some((matchedReq, appealId)) = extractApi1(resolveReviewAppealApi, req)
+    val (matchedReq, appealId) = requireApi1(resolveReviewAppealApi, req)
     withRole(matchedReq, UserRole.admin) { _ =>
       matchedReq.as[ResolveReviewAppealRequest].flatMap { payload =>
         resolveReviewAppeal(appealId, payload).flatMap(handleStateResult)

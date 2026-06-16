@@ -16,7 +16,7 @@ import system.app.*
 
 val resolvePartialRefundRequestRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(resolvePartialRefundRequestApi, req) =>
-    val Some((matchedReq, refundId)) = extractApi1(resolvePartialRefundRequestApi, req)
+    val (matchedReq, refundId) = requireApi1(resolvePartialRefundRequestApi, req)
     withRole(matchedReq, UserRole.merchant) { user =>
       if !ownsPartialRefundRequestAsMerchant(refundId, user.displayName) then Forbidden(RouteMessages.ResolveOtherMerchantRefundForbidden)
       else

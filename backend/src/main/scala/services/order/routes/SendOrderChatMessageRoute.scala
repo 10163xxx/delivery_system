@@ -16,7 +16,7 @@ import system.app.*
 
 val sendOrderChatMessageRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(sendOrderChatMessageApi, req) =>
-    val Some((matchedReq, orderId)) = extractApi1(sendOrderChatMessageApi, req)
+    val (matchedReq, orderId) = requireApi1(sendOrderChatMessageApi, req)
     withSession(matchedReq) { user =>
       val canChat: ApprovalFlag =
         user.role match

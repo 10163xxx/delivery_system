@@ -16,7 +16,7 @@ import system.app.*
 
 val updateMerchantProfileRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(updateMerchantProfileApi, req) =>
-    val Some(matchedReq) = extractApi0(updateMerchantProfileApi, req)
+    val matchedReq = requireApi0(updateMerchantProfileApi, req)
     withRole(matchedReq, UserRole.merchant) { user =>
       if !ownsMerchantProfile(user.displayName, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherMerchantProfileForbidden)
       else

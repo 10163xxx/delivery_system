@@ -16,7 +16,7 @@ import system.app.*
 
 val updateStoreOperationalInfoRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(updateStoreOperationalInfoApi, req) =>
-    val Some((matchedReq, storeId)) = extractApi1(updateStoreOperationalInfoApi, req)
+    val (matchedReq, storeId) = requireApi1(updateStoreOperationalInfoApi, req)
     withRole(matchedReq, UserRole.merchant) { user =>
       if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantStoreForbidden)
       else

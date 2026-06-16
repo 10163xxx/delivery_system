@@ -14,7 +14,7 @@ import system.api.*
 
 val rejectMerchantApplicationRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(rejectMerchantApplicationApi, req) =>
-    val Some((matchedReq, applicationId)) = extractApi1(rejectMerchantApplicationApi, req)
+    val (matchedReq, applicationId) = requireApi1(rejectMerchantApplicationApi, req)
     withRole(matchedReq, UserRole.admin) { _ =>
       matchedReq.as[ReviewMerchantApplicationRequest].flatMap { payload =>
         rejectMerchantApplication(applicationId, payload).flatMap(handleStateResult)

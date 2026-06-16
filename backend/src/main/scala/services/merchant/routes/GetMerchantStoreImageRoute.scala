@@ -16,7 +16,7 @@ import system.api.*
 
 val getMerchantStoreImageRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(getMerchantStoreImageApi, req) =>
-    val Some((matchedReq, filename)) = extractApi1(getMerchantStoreImageApi, req)
+    val (matchedReq, filename) = requireApi1(getMerchantStoreImageApi, req)
     findMerchantStoreImage(filename).flatMap {
       case Some(image) =>
         val contentType = MediaType.parse(image.mediaType.raw).toOption.map(`Content-Type`(_))

@@ -16,7 +16,7 @@ import system.app.*
 
 val submitPartialRefundRequestRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(submitPartialRefundRequestApi, req) =>
-    val Some((matchedReq, orderId)) = extractApi1(submitPartialRefundRequestApi, req)
+    val (matchedReq, orderId) = requireApi1(submitPartialRefundRequestApi, req)
     withRole(matchedReq, UserRole.customer) { user =>
       if !ownsOrderAsCustomer(orderId, user.linkedProfileId) then Forbidden(RouteMessages.RefundOtherCustomerOrderForbidden)
       else

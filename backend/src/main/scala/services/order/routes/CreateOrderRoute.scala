@@ -16,7 +16,7 @@ import system.app.*
 
 val createOrderRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(createOrderApi, req) =>
-    val Some(matchedReq) = extractApi0(createOrderApi, req)
+    val matchedReq = requireApi0(createOrderApi, req)
     withRole(matchedReq, UserRole.customer) { user =>
       matchedReq.as[CreateOrderRequest].flatMap { payload =>
         if !ownsCustomer(payload.customerId, user.linkedProfileId) then Forbidden(RouteMessages.CreateOtherCustomerOrderForbidden)

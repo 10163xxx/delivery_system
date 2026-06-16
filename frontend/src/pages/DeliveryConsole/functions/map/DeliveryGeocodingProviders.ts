@@ -33,7 +33,7 @@ type AmapGeocodeResult = {
 const AMAP_GEOCODE_URL = 'https://restapi.amap.com/v3/geocode/geo'
 const AMAP_SUCCESS_STATUS = '1'
 const PHOTON_GEOCODE_URL = 'https://photon.komoot.io/api/'
-const amapWebServiceKey = import.meta.env.VITE_AMAP_WEB_SERVICE_KEY as RawTextValue | undefined
+const amapWebServiceKey = import.meta.env['VITE_AMAP_WEB_SERVICE_KEY'] as RawTextValue | undefined
 
 function deliveryCoordinate(latitude: RawNumericValue, longitude: RawNumericValue): DeliveryCoordinate {
   return {

@@ -17,7 +17,7 @@ import system.api.*
 
 val uploadMerchantStoreImageRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(uploadMerchantStoreImageApi, req) =>
-    val Some(matchedReq) = extractApi0(uploadMerchantStoreImageApi, req)
+    val matchedReq = requireApi0(uploadMerchantStoreImageApi, req)
     withRole(matchedReq, UserRole.merchant) { _ =>
       matchedReq.as[Multipart[IO]].flatMap { multipart =>
         multipart.parts.find(_.name.contains(UploadDefaults.MultipartFileField.raw)) match

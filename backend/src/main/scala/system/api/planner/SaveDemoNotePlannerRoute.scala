@@ -17,7 +17,7 @@ private val saveDemoNotePlannerRouteLogger = Slf4jLogger.getLogger[IO]
 
 val saveDemoNotePlannerRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if extractApi1(saveDemoNotePlannerApi, req).exists(_._2 == saveDemoNotePlannerName) =>
-    val (matchedReq, plannerName) = extractApi1(saveDemoNotePlannerApi, req).get
+    val (matchedReq, plannerName) = requireApi1(saveDemoNotePlannerApi, req)
     for
       _ <- saveDemoNotePlannerRouteLogger.info(
         s"SaveDemoNotePlannerRoute received POST ${apiPath1(saveDemoNotePlannerApi, plannerName).raw}"

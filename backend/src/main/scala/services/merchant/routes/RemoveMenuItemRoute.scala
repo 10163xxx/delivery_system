@@ -15,7 +15,7 @@ import system.app.*
 
 val removeMenuItemRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi2(removeMenuItemApi, req) =>
-    val Some((matchedReq, storeId, menuItemId)) = extractApi2(removeMenuItemApi, req)
+    val (matchedReq, storeId, menuItemId) = requireApi2(removeMenuItemApi, req)
     withRole(matchedReq, UserRole.merchant) { user =>
       if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantMenuForbidden)
       else removeMenuItem(storeId, menuItemId).flatMap(handleStateResult)

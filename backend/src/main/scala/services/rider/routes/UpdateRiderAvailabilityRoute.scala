@@ -15,7 +15,7 @@ import system.app.*
 
 val updateRiderAvailabilityRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(updateRiderAvailabilityApi, req) =>
-    val Some((matchedReq, riderId)) = extractApi1(updateRiderAvailabilityApi, req)
+    val (matchedReq, riderId) = requireApi1(updateRiderAvailabilityApi, req)
     withRole(matchedReq, UserRole.rider) { user =>
       if !ownsRiderProfile(riderId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherRiderProfileForbidden)
       else

@@ -16,7 +16,7 @@ import system.app.*
 
 val withdrawMerchantIncomeRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(withdrawMerchantIncomeApi, req) =>
-    val Some(matchedReq) = extractApi0(withdrawMerchantIncomeApi, req)
+    val matchedReq = requireApi0(withdrawMerchantIncomeApi, req)
     withRole(matchedReq, UserRole.merchant) { user =>
       if !ownsMerchantProfile(user.displayName, user.linkedProfileId) then Forbidden(RouteMessages.WithdrawOtherMerchantIncomeForbidden)
       else

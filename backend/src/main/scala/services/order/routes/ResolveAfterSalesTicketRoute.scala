@@ -14,7 +14,7 @@ import system.api.*
 
 val resolveAfterSalesTicketRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(resolveAfterSalesTicketApi, req) =>
-    val Some((matchedReq, ticketId)) = extractApi1(resolveAfterSalesTicketApi, req)
+    val (matchedReq, ticketId) = requireApi1(resolveAfterSalesTicketApi, req)
     withRole(matchedReq, UserRole.admin) { _ =>
       matchedReq.as[ResolveAfterSalesRequest].flatMap { payload =>
         resolveAfterSalesTicket(ticketId, payload).flatMap(handleStateResult)

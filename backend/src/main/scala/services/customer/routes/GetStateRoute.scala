@@ -14,7 +14,7 @@ import system.app.getStateForUser
 
 val getStateRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(getStateApi, req) =>
-    val Some(matchedReq) = extractApi0(getStateApi, req)
+    val matchedReq = requireApi0(getStateApi, req)
     withSession(matchedReq) { user =>
       getStateForUser(user).flatMap(state => Ok(state.asJson))
     }

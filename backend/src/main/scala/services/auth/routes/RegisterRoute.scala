@@ -13,7 +13,7 @@ import system.api.*
 
 val registerRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(registerApi, req) =>
-    val Some(matchedReq) = extractApi0(registerApi, req)
+    val matchedReq = requireApi0(registerApi, req)
     matchedReq.as[RegisterRequest].flatMap { payload =>
       register(payload).flatMap(handleSessionResult)
     }

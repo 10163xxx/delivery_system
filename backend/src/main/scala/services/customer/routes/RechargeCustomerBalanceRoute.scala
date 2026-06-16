@@ -15,7 +15,7 @@ import system.app.*
 
 val rechargeCustomerBalanceRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(rechargeCustomerBalanceApi, req) =>
-    val Some((matchedReq, customerId)) = extractApi1(rechargeCustomerBalanceApi, req)
+    val (matchedReq, customerId) = requireApi1(rechargeCustomerBalanceApi, req)
     withRole(matchedReq, UserRole.customer) { user =>
       if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.RechargeOtherCustomerForbidden)
       else

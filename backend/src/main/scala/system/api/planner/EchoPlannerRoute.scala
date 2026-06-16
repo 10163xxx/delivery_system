@@ -16,7 +16,7 @@ private val echoPlannerRouteLogger = Slf4jLogger.getLogger[IO]
 
 val echoPlannerRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if extractApi1(echoPlannerApi, req).exists(_._2 == echoPlannerName) =>
-    val (matchedReq, plannerName) = extractApi1(echoPlannerApi, req).get
+    val (matchedReq, plannerName) = requireApi1(echoPlannerApi, req)
     for
       _ <- echoPlannerRouteLogger.info(s"EchoPlannerRoute received POST ${apiPath1(echoPlannerApi, plannerName).raw}")
       payload <- matchedReq.as[EchoRequest]

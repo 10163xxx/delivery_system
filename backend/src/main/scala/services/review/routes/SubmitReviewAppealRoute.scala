@@ -15,7 +15,7 @@ import system.app.*
 
 val submitReviewAppealRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(submitReviewAppealApi, req) =>
-    val Some((matchedReq, orderId)) = extractApi1(submitReviewAppealApi, req)
+    val (matchedReq, orderId) = requireApi1(submitReviewAppealApi, req)
     withSession(matchedReq) { user =>
       matchedReq.as[ReviewAppealRequest].flatMap { payload =>
         val allowed =

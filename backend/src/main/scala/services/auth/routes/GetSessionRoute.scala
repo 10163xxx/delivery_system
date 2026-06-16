@@ -14,7 +14,7 @@ import system.api.*
 
 val getSessionRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(getSessionApi, req) =>
-    val Some(matchedReq) = extractApi0(getSessionApi, req)
+    val matchedReq = requireApi0(getSessionApi, req)
     readToken(matchedReq) match
       case Some(token) =>
         getSession(token).flatMap {

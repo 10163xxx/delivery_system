@@ -15,7 +15,7 @@ import system.app.*
 
 val submitEligibilityReviewRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi0(submitEligibilityReviewApi, req) =>
-    val Some(matchedReq) = extractApi0(submitEligibilityReviewApi, req)
+    val matchedReq = requireApi0(submitEligibilityReviewApi, req)
     withSession(matchedReq) { user =>
       matchedReq.as[EligibilityReviewRequest].flatMap { payload =>
         val allowed =

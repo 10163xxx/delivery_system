@@ -15,7 +15,7 @@ import system.app.*
 
 val withdrawRiderIncomeRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(withdrawRiderIncomeApi, req) =>
-    val Some((matchedReq, riderId)) = extractApi1(withdrawRiderIncomeApi, req)
+    val (matchedReq, riderId) = requireApi1(withdrawRiderIncomeApi, req)
     withRole(matchedReq, UserRole.rider) { user =>
       if !ownsRiderProfile(riderId, user.linkedProfileId) then Forbidden(RouteMessages.WithdrawOtherRiderIncomeForbidden)
       else

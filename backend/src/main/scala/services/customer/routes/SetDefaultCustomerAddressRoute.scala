@@ -15,7 +15,7 @@ import system.app.*
 
 val setDefaultCustomerAddressRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(setDefaultCustomerAddressApi, req) =>
-    val Some((matchedReq, customerId)) = extractApi1(setDefaultCustomerAddressApi, req)
+    val (matchedReq, customerId) = requireApi1(setDefaultCustomerAddressApi, req)
     withRole(matchedReq, UserRole.customer) { user =>
       if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherCustomerAddressForbidden)
       else

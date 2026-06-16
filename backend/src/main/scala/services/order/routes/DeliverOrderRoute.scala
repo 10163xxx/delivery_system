@@ -15,7 +15,7 @@ import system.app.*
 
 val deliverOrderRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi1(deliverOrderApi, req) =>
-    val Some((matchedReq, orderId)) = extractApi1(deliverOrderApi, req)
+    val (matchedReq, orderId) = requireApi1(deliverOrderApi, req)
     withRole(matchedReq, UserRole.rider) { user =>
       if !ownsOrderAsRider(orderId, user.linkedProfileId) then Forbidden(RouteMessages.HandleOtherRiderOrderForbidden)
       else deliverOrder(orderId).flatMap(handleStateResult)

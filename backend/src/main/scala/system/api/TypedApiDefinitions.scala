@@ -127,6 +127,24 @@ def extractApi2[FirstParam, SecondParam, Response](
         yield (req, first, second)
       case _ => None
 
+def requireApi0[Response](
+    api: FixedMethodApi0[Response],
+    req: Request[IO],
+): Request[IO] =
+  extractApi0(api, req).get
+
+def requireApi1[Param, Response](
+    api: FixedMethodApi1[Param, Response],
+    req: Request[IO],
+)(using codec: PathParamCodec[Param]): (Request[IO], Param) =
+  extractApi1(api, req).get
+
+def requireApi2[FirstParam, SecondParam, Response](
+    api: FixedMethodApi2[FirstParam, SecondParam, Response],
+    req: Request[IO],
+)(using firstCodec: PathParamCodec[FirstParam], secondCodec: PathParamCodec[SecondParam]): (Request[IO], FirstParam, SecondParam) =
+  extractApi2(api, req).get
+
 def apiPath0[Response](api: FixedMethodApi0[Response]): RoutePath =
   buildRoutePath(staticSegmentValues(api.segments))
 

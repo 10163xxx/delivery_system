@@ -16,7 +16,7 @@ import system.app.*
 
 val updateMenuItemPriceRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req if matchesApi2(updateMenuItemPriceApi, req) =>
-    val Some((matchedReq, storeId, menuItemId)) = extractApi2(updateMenuItemPriceApi, req)
+    val (matchedReq, storeId, menuItemId) = requireApi2(updateMenuItemPriceApi, req)
     withRole(matchedReq, UserRole.merchant) { user =>
       if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantMenuForbidden)
       else
