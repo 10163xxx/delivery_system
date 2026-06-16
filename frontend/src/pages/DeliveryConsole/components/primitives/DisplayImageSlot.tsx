@@ -43,18 +43,15 @@ export function DisplayImageSlot({
   className = '',
 }: DisplayImageSlotProps) {
   const displaySrc = toDisplayImageSrc(useDebouncedImageSrc(src))
-  const [imageFailed, setImageFailed] = useState(false)
-
-  useEffect(() => {
-    setImageFailed(false)
-  }, [displaySrc])
+  const [failedImageSrc, setFailedImageSrc] = useState<string | undefined>()
+  const imageFailed = Boolean(displaySrc && failedImageSrc === displaySrc)
 
   if (displaySrc && !imageFailed) {
     return (
       <img
         alt={alt}
         className={className ? `display-image-slot ${className}` : 'display-image-slot'}
-        onError={() => setImageFailed(true)}
+        onError={() => setFailedImageSrc(displaySrc)}
         src={displaySrc}
       />
     )

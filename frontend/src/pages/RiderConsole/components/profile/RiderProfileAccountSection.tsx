@@ -1,5 +1,5 @@
-import { buildRiderProfileDraft, type RiderProfileDraft, type RiderProfileErrors } from '@/pages/RiderConsole/objects/RiderWorkspaceObjects'
-import type { RiderProfileAccountSectionProps, RiderProfileWorkspaceProps } from '@/pages/RiderConsole/objects/RiderPageObjects'
+import { type RiderProfileDraft, type RiderProfileErrors } from '@/pages/RiderConsole/objects/RiderWorkspaceObjects'
+import type { RiderProfileAccountSectionProps } from '@/pages/RiderConsole/objects/RiderPageObjects'
 import {
   PAYOUT_ACCOUNT_TYPE,
   type AccountHolderName,
@@ -15,10 +15,6 @@ import {
   RiderProfilePayoutFields,
   RiderProfilePayoutTypeField,
 } from '@/pages/RiderConsole/components/profile/RiderProfileAccountFields'
-
-export function createInitialRiderProfileDraft(selectedRider: RiderProfileWorkspaceProps['selectedRider']) {
-  return buildRiderProfileDraft(selectedRider)
-}
 
 function validateProfileDraft(profileDraft: RiderProfileDraft) {
   const accountNumber = profileDraft.accountNumber.trim()

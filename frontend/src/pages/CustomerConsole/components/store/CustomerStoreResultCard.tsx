@@ -1,7 +1,4 @@
-import {
-  STORE_REVIEW_LIST_VARIANT,
-  StoreReviewList,
-} from '@/pages/CustomerConsole/components/store/CustomerSelectedStorePanel'
+import { StoreReviewList } from '@/pages/CustomerConsole/components/store/CustomerSelectedStorePanel'
 import type { CustomerRoleProps } from '@/pages/DeliveryConsole/functions/roleProps'
 import { DisplayImageSlot } from '@/pages/DeliveryConsole/components/primitives/DisplayImageSlot'
 import { STORE_STATUS, type Store } from '@/objects/core/SharedObjects'
@@ -186,7 +183,7 @@ function StoreResultReviewPreview({
         emptyText={CUSTOMER_STORE_RESULT_COPY.reviewEmptyText}
         formatTime={formatTime}
         reviews={reviews}
-        variant={STORE_REVIEW_LIST_VARIANT.compact}
+        variant="compact"
       />
     </div>
   )

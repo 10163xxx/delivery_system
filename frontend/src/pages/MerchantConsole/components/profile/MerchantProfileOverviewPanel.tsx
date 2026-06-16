@@ -11,11 +11,11 @@ import {
 } from '@/objects/core/SharedObjects'
 import { asDomainText } from '@/pages/DeliveryConsole/functions/shared/DeliveryShared'
 import {
-  getCurrentPayoutAccountLabel,
   MerchantProfileOverviewMetrics,
   MerchantProfileOverviewSidebar,
   MerchantProfileWithdrawalSection,
 } from '@/pages/MerchantConsole/components/profile/MerchantProfileOverviewParts'
+import { getCurrentMerchantPayoutAccountLabel } from '@/pages/MerchantConsole/functions/merchantConsole/MerchantProfileFormatters'
 
 function MerchantProfileContactField({
   merchantProfileDraft,
@@ -112,7 +112,7 @@ export function MerchantProfileOverviewPanel(props: MerchantRoleProps) {
             <div className="summary-bar">
               <div>
                 <p>当前到账账户</p>
-                <strong>{getCurrentPayoutAccountLabel(merchantProfile)}</strong>
+                <strong>{getCurrentMerchantPayoutAccountLabel(merchantProfile)}</strong>
               </div>
               <button className="primary-button" onClick={() => void saveMerchantProfile()} type="button">保存资料</button>
             </div>

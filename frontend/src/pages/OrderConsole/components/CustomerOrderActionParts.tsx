@@ -15,7 +15,8 @@ import type {
   CustomerOrderHelpersProps,
   PartialRefundActionRowProps,
 } from '@/pages/OrderConsole/objects/OrderPageObjects'
-import { clearRecordError, renderOrderChat } from '@/pages/OrderConsole/components/CustomerOrderDisplayParts'
+import { CustomerOrderChat } from '@/pages/OrderConsole/components/CustomerOrderDisplayParts'
+import { clearRecordError } from '@/pages/OrderConsole/functions/CustomerOrderDisplayHelpers'
 import { ORDER_PAGE_COPY } from '@/pages/OrderConsole/OrderPageCopy'
 import { asDomainText } from '@/pages/DeliveryConsole/functions/shared/DeliveryShared'
 
@@ -96,10 +97,13 @@ function PartialRefundActionRow({ order, item, props }: PartialRefundActionRowPr
   )
 }
 
-export function renderPartialRefundActions(
-  order: OrderSummary,
-  props: CustomerOrderHelpersProps,
-) {
+function PartialRefundActions({
+  order,
+  props,
+}: {
+  order: OrderSummary
+  props: CustomerOrderHelpersProps
+}) {
   if (!props.canSubmitPartialRefund(order)) return null
 
   return (
@@ -111,10 +115,13 @@ export function renderPartialRefundActions(
   )
 }
 
-export function renderCustomerOrderFooter(
-  order: OrderSummary,
-  props: CustomerOrderHelpersProps,
-) {
+export function CustomerOrderFooter({
+  order,
+  props,
+}: {
+  order: OrderSummary
+  props: CustomerOrderHelpersProps
+}) {
   const reviewAction = props.canReviewOrder(order) ? (
     <div className="inline-form">
       <p className="meta-line">
@@ -132,9 +139,9 @@ export function renderCustomerOrderFooter(
 
   return (
     <>
-      {renderPartialRefundActions(order, props)}
+      <PartialRefundActions order={order} props={props} />
       {reviewAction}
-      {renderOrderChat(order, props)}
+      <CustomerOrderChat order={order} props={props} />
     </>
   )
 }

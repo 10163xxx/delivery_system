@@ -113,7 +113,7 @@ function getDerivedPageView(args: {
   })
 }
 
-function runPageViewEffects(args: {
+function usePageViewEffects(args: {
   params: DeliveryPageViewParams
   sessionBits: ReturnType<typeof getPageViewServiceSession>
   workspaceViews: ReturnType<typeof getWorkspaceViews>
@@ -217,7 +217,7 @@ export function useDeliveryConsolePageViewService(params: DeliveryPageViewParams
     customerStoreSearch: checkoutState.customerStoreSearch,
     merchantWorkspaceView: workspaceViews.merchantWorkspaceView,
   })
-  runPageViewEffects({
+  usePageViewEffects({
     params,
     sessionBits,
     workspaceViews,

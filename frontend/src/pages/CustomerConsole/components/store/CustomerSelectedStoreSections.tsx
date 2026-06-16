@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
+import { useState, type Dispatch, type SetStateAction } from 'react'
 import type { CustomerRoleProps } from '@/pages/DeliveryConsole/functions/roleProps'
 import { CUSTOMER_STORE_TAB, type CustomerStoreTab } from '@/pages/CustomerConsole/objects/CustomerStoreObjects'
 import { getSelectedCartLines } from '@/pages/DeliveryConsole/functions/cart/DeliveryCartLines'
@@ -42,6 +42,8 @@ const STORE_REVIEW_STAR_FILTER_OPTIONS = [
     return { value: rating, label: formatReviewStarOptionLabel(rating) }
   }),
 ] as const
+
+const STORE_REVIEW_FILTER_REFERENCE_TIME = Date.now()
 
 export function SelectedStoreToolbar({ props }: { props: CustomerRoleProps }) {
   const {
@@ -170,23 +172,25 @@ export function SelectedStoreTabs({
 }
 
 export function SelectedStoreReviewSection({ props }: { props: CustomerRoleProps }) {
-  const { selectedStore, formatTime, storeCustomerReviews } = props
+  const { selectedStore } = props
   if (!selectedStore) return null
-  const reviews = storeCustomerReviews[selectedStore.id] ?? []
+
+  return <SelectedStoreReviewSectionContent key={selectedStore.id} props={props} />
+}
+
+function SelectedStoreReviewSectionContent({ props }: { props: CustomerRoleProps }) {
+  const { selectedStore, formatTime, storeCustomerReviews } = props
   const [selectedRating, setSelectedRating] = useState<ReviewRatingFilter>(ALL_REVIEW_RATING_FILTER)
   const [selectedRecentDays, setSelectedRecentDays] = useState<CustomerReviewFilterDay>(CUSTOMER_REVIEW_FILTER_DAYS.all)
 
-  useEffect(() => {
-    setSelectedRating(ALL_REVIEW_RATING_FILTER)
-    setSelectedRecentDays(CUSTOMER_REVIEW_FILTER_DAYS.all)
-  }, [selectedStore.id])
+  if (!selectedStore) return null
+  const reviews = storeCustomerReviews[selectedStore.id] ?? []
 
-  const now = Date.now()
   const filteredReviews = reviews.filter((review) => {
     const matchesRating = selectedRating === ALL_REVIEW_RATING_FILTER || review.rating === selectedRating
     const matchesRecentDays =
       selectedRecentDays === CUSTOMER_REVIEW_FILTER_DAYS.all ||
-      now - new Date(review.completedAt).getTime() <=
+      STORE_REVIEW_FILTER_REFERENCE_TIME - new Date(review.completedAt).getTime() <=
         selectedRecentDays * MILLISECONDS_PER_DAY
 
     return matchesRating && matchesRecentDays

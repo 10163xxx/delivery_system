@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { CheckoutPanelProps } from '@/pages/CustomerConsole/objects/CustomerCheckoutObjects'
 import type { MenuItem } from '@/objects/core/SharedObjects'
 import {
@@ -24,14 +24,34 @@ type MenuItemConfigurationDialogProps = {
 
 export function MenuItemConfigurationDialog(props: MenuItemConfigurationDialogProps) {
   const { item, modalState, onClose, onConfirm } = props
-  const [draftSelections, setDraftSelections] = useState<Record<string, string[]>>({})
-
-  useEffect(() => {
-    if (!modalState) return
-    setDraftSelections(modalState.draftSelections)
-  }, [modalState])
 
   if (!item || !modalState) return null
+
+  return (
+    <MenuItemConfigurationDialogContent
+      key={`${item.id}:${modalState.quantityAfterConfirm}`}
+      item={item}
+      modalState={modalState}
+      onClose={onClose}
+      onConfirm={onConfirm}
+    />
+  )
+}
+
+function MenuItemConfigurationDialogContent({
+  item,
+  modalState,
+  onClose,
+  onConfirm,
+}: {
+  item: MenuItem
+  modalState: NonNullable<MenuItemConfigurationDialogProps['modalState']>
+  onClose: MenuItemConfigurationDialogProps['onClose']
+  onConfirm: MenuItemConfigurationDialogProps['onConfirm']
+}) {
+  const [draftSelections, setDraftSelections] = useState<Record<string, string[]>>(
+    () => modalState.draftSelections,
+  )
 
   function toggleOption(groupName: string, option: string, maxSelections: number) {
     setDraftSelections((current) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { CustomerRoleProps } from '@/pages/DeliveryConsole/functions/roleProps'
 import { Panel } from '@/pages/DeliveryConsole/components/primitives/LayoutPrimitives'
 import { CustomerStoreBrowse } from '@/pages/CustomerConsole/components/store/CustomerStoreBrowse'
@@ -15,14 +15,11 @@ export function CustomerOrderWorkspace(props: CustomerRoleProps) {
     selectedStore,
     selectedStoreCategory,
   } = props
-  const [selectedStoreTab, setSelectedStoreTab] = useState<CustomerStoreTab>(CUSTOMER_STORE_TAB.menu)
-
   useEffect(() => {
-    setSelectedStoreTab(CUSTOMER_STORE_TAB.menu)
     if (!selectedStore) return
     const frameId = window.requestAnimationFrame(scrollSelectedStoreToTop)
     return () => window.cancelAnimationFrame(frameId)
-  }, [selectedStore?.id])
+  }, [selectedStore])
 
   return (
     <Panel
@@ -39,11 +36,23 @@ export function CustomerOrderWorkspace(props: CustomerRoleProps) {
             : ORDER_PAGE_COPY.workspace.orderPanelDescription
       }
     >
-      <CustomerStoreBrowse
-        {...props}
-        selectedStoreTab={selectedStoreTab}
-        setSelectedStoreTab={setSelectedStoreTab}
-      />
+      <CustomerStoreBrowseWithTabs key={selectedStore?.id ?? 'store-list'} props={props} />
     </Panel>
+  )
+}
+
+function CustomerStoreBrowseWithTabs({
+  props,
+}: {
+  props: CustomerRoleProps
+}): ReactNode {
+  const [selectedStoreTab, setSelectedStoreTab] = useState<CustomerStoreTab>(CUSTOMER_STORE_TAB.menu)
+
+  return (
+    <CustomerStoreBrowse
+      {...props}
+      selectedStoreTab={selectedStoreTab}
+      setSelectedStoreTab={setSelectedStoreTab}
+    />
   )
 }

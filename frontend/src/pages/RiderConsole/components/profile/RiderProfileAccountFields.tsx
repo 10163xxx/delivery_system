@@ -8,7 +8,7 @@ import {
 import { DELIVERY_CONSOLE_MESSAGES } from '@/pages/DeliveryConsole/functions/shared/DeliveryMessages'
 import { asDomainText } from '@/pages/DeliveryConsole/functions/shared/DeliveryShared'
 
-export function getCurrentPayoutAccountLabel(selectedRider: RiderProfileAccountSectionProps['selectedRider']) {
+function getCurrentPayoutAccountLabel(selectedRider: RiderProfileAccountSectionProps['selectedRider']) {
   return selectedRider.payoutAccount
     ? selectedRider.payoutAccount.accountType === PAYOUT_ACCOUNT_TYPE.bank
       ? `${selectedRider.payoutAccount.bankName ?? '银行卡'} ${selectedRider.payoutAccount.accountHolder} / ${selectedRider.payoutAccount.accountNumber}`

@@ -13,7 +13,7 @@ import {
 } from '@/pages/OrderConsole/components/CustomerOrderDisplayParts'
 import { MERCHANT_CONSOLE_COPY } from '@/pages/MerchantConsole/components/console/shell/MerchantConsoleCopy'
 import { ORDER_STATUS, type OrderStatus, type OrderSummary, type Store } from '@/objects/core/SharedObjects'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 const MERCHANT_ORDER_PAGE_SIZE = 20
 const ACTIVE_MERCHANT_ORDER_STATUSES: readonly OrderStatus[] = [
@@ -191,15 +191,12 @@ export function MerchantOrdersWorkspacePanel(props: MerchantConsolePanelProps) {
   )
   const newOrderCount = orders.filter((order) => order.status === ORDER_STATUS.pendingMerchantAcceptance).length
   const pageCount = Math.max(1, Math.ceil(orders.length / MERCHANT_ORDER_PAGE_SIZE))
+  const safeCurrentPage = Math.min(currentPage, pageCount - 1)
   const selectedOrder = orders.find((order) => order.id === selectedOrderId)
   const visibleOrders = orders.slice(
-    currentPage * MERCHANT_ORDER_PAGE_SIZE,
-    currentPage * MERCHANT_ORDER_PAGE_SIZE + MERCHANT_ORDER_PAGE_SIZE,
+    safeCurrentPage * MERCHANT_ORDER_PAGE_SIZE,
+    safeCurrentPage * MERCHANT_ORDER_PAGE_SIZE + MERCHANT_ORDER_PAGE_SIZE,
   )
-
-  useEffect(() => {
-    setCurrentPage((page) => Math.min(page, pageCount - 1))
-  }, [pageCount])
 
   if (!state) return <div className="empty-card">{MERCHANT_CONSOLE_COPY.panel.orderEmpty}</div>
 
@@ -251,7 +248,7 @@ export function MerchantOrdersWorkspacePanel(props: MerchantConsolePanelProps) {
             <div className="empty-card">{MERCHANT_CONSOLE_COPY.panel.orderEmpty}</div>
           )}
           <MerchantOrderPagination
-            currentPage={currentPage}
+            currentPage={safeCurrentPage}
             onChangePage={setCurrentPage}
             pageCount={pageCount}
           />

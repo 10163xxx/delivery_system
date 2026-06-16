@@ -20,6 +20,14 @@ import {
 } from '@/pages/DeliveryConsole/functions/map/DeliveryStoreLocation'
 import { ZERO_COUNT } from '@/pages/DeliveryConsole/functions/shared/DeliveryConstants'
 
+const STORE_REVIEW_LIST_VARIANT = {
+  compact: 'compact',
+  full: 'full',
+} as const
+
+type StoreReviewListVariant =
+  (typeof STORE_REVIEW_LIST_VARIANT)[keyof typeof STORE_REVIEW_LIST_VARIANT]
+
 export function StoreReviewList({
   emptyText,
   formatTime,
@@ -77,14 +85,6 @@ export function StoreReviewList({
     </div>
   )
 }
-
-export const STORE_REVIEW_LIST_VARIANT = {
-  compact: 'compact',
-  full: 'full',
-} as const
-
-export type StoreReviewListVariant =
-  (typeof STORE_REVIEW_LIST_VARIANT)[keyof typeof STORE_REVIEW_LIST_VARIANT]
 
 export function SelectedStoreBanner({
   props,

@@ -2,16 +2,18 @@ import { createInitialAfterSalesDraft } from '@/pages/DeliveryConsole/functions/
 import type { CustomerOrderDetailSectionProps } from '@/pages/OrderConsole/objects/OrderPageObjects'
 import {
   AfterSalesActionPanel,
-  renderCustomerOrderFooter,
+  CustomerOrderFooter,
 } from '@/pages/OrderConsole/components/CustomerOrderActionParts'
 import {
-  getAfterSalesSummary,
-  isDeliveryIssueTicket,
   OrderItemsList,
   OrderTimeline,
   PartialRefundHistory,
   ReviewNotes,
 } from '@/pages/OrderConsole/components/CustomerOrderDisplayParts'
+import {
+  getAfterSalesSummary,
+  isDeliveryIssueTicket,
+} from '@/pages/OrderConsole/functions/CustomerOrderDisplayHelpers'
 import {
   CustomerOrderDetailHeader,
   CustomerOrderPriceBreakdown,
@@ -72,7 +74,7 @@ export function CustomerOrderDetailSection({
         setAfterSalesErrors={setAfterSalesErrors}
         submitAfterSalesRequest={submitAfterSalesRequest}
       />
-      {renderCustomerOrderFooter(order, props)}
+      <CustomerOrderFooter order={order} props={props} />
     </section>
   )
 }

@@ -6,7 +6,6 @@ import type {
 import { DELIVERY_CONSOLE_MESSAGES } from '@/pages/DeliveryConsole/functions/shared/DeliveryMessages'
 import { asDomainText } from '@/pages/DeliveryConsole/functions/shared/DeliveryShared'
 import {
-  PAYOUT_ACCOUNT_TYPE,
   ROUTE_PATH,
   type DisplayText,
   type MerchantWithdrawal,
@@ -17,14 +16,6 @@ function getMerchantTrendSummary(merchantMonthlyTrend: MerchantProfileOverviewSi
     monthlyOrderCount: merchantMonthlyTrend.reduce((sum, entry) => sum + entry.orderCount, 0),
     monthlyIncomeCents: merchantMonthlyTrend.reduce((sum, entry) => sum + entry.incomeCents, 0),
   }
-}
-
-export function getCurrentPayoutAccountLabel(merchantProfile: MerchantProfileOverviewSidebarProps['merchantProfile']) {
-  if (!merchantProfile?.payoutAccount) return '尚未设置'
-  if (merchantProfile.payoutAccount.accountType === PAYOUT_ACCOUNT_TYPE.bank) {
-    return `${merchantProfile.payoutAccount.bankName ?? '银行卡'} ${merchantProfile.payoutAccount.accountHolder} / ${merchantProfile.payoutAccount.accountNumber}`
-  }
-  return `支付宝 ${merchantProfile.payoutAccount.accountHolder} / ${merchantProfile.payoutAccount.accountNumber}`
 }
 
 function MerchantWithdrawalRecords({

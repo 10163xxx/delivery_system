@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { type RiderProfileDraft, type RiderProfileErrors } from '@/pages/RiderConsole/objects/RiderWorkspaceObjects'
+import { buildRiderProfileDraft, type RiderProfileDraft, type RiderProfileErrors } from '@/pages/RiderConsole/objects/RiderWorkspaceObjects'
 import type { RiderProfileWorkspaceProps } from '@/pages/RiderConsole/objects/RiderPageObjects'
-import { RiderProfileAccountSection, createInitialRiderProfileDraft } from '@/pages/RiderConsole/components/profile/RiderProfileAccountSection'
+import { RiderProfileAccountSection } from '@/pages/RiderConsole/components/profile/RiderProfileAccountSection'
 import { RiderProfileWithdrawSection } from '@/pages/RiderConsole/components/profile/RiderProfileWithdrawSection'
 
 export function RiderProfileWorkspace({
@@ -13,7 +13,7 @@ export function RiderProfileWorkspace({
   updateRiderProfile,
   withdrawRiderIncome,
 }: RiderProfileWorkspaceProps) {
-  const [profileDraft, setProfileDraft] = useState<RiderProfileDraft>(() => createInitialRiderProfileDraft(selectedRider))
+  const [profileDraft, setProfileDraft] = useState<RiderProfileDraft>(() => buildRiderProfileDraft(selectedRider))
   const [profileErrors, setProfileErrors] = useState<RiderProfileErrors>({})
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [withdrawError, setWithdrawError] = useState<string | null>(null)

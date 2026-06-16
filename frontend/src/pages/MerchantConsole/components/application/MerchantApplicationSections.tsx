@@ -35,7 +35,7 @@ type MerchantApplicationFormProps = Pick<
   | 'uploadMerchantImage'
 >
 
-export function getMerchantApplicationPath(view: MerchantApplicationView) {
+function getMerchantApplicationPath(view: MerchantApplicationView) {
   if (view === MERCHANT_APPLICATION_VIEW.submit) return buildMerchantApplicationSubmitRoute()
   return `/merchant/application?merchantView=${view}` as MerchantRoutePath
 }

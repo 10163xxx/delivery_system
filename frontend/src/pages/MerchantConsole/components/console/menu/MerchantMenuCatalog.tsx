@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { MerchantConsolePanelProps } from '@/pages/MerchantConsole/hooks/MerchantConsoleState'
 import { MerchantMenuItemCard } from '@/pages/MerchantConsole/components/console/menu/MerchantMenuItemCard'
 import type { Store } from '@/objects/core/SharedObjects'
@@ -54,22 +54,17 @@ function useMerchantMenuSections(menu: Store['menu']) {
 }
 
 function useActiveMerchantMenuCategory(sectionSummaries: MerchantMenuCategorySection[]) {
-  const [activeCategoryId, setActiveCategoryId] = useState<string>('')
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
-
-  useEffect(() => {
-    setActiveCategoryId((current) =>
-      current && sectionSummaries.some((section) => section.id === current)
-        ? current
-        : (sectionSummaries[0]?.id ?? ''),
-    )
-  }, [sectionSummaries])
+  const [requestedCategoryId, setRequestedCategoryId] = useState<string>('')
+  const activeCategoryId =
+    requestedCategoryId && sectionSummaries.some((section) => section.id === requestedCategoryId)
+      ? requestedCategoryId
+      : (sectionSummaries[0]?.id ?? '')
 
   useEffect(() => {
     const observers: IntersectionObserver[] = []
 
     sectionSummaries.forEach((section) => {
-      const element = sectionRefs.current[section.id]
+      const element = document.getElementById(section.id)
       if (!element) return
 
       const observer = new IntersectionObserver(
@@ -78,7 +73,7 @@ function useActiveMerchantMenuCategory(sectionSummaries: MerchantMenuCategorySec
             .filter((entry) => entry.isIntersecting)
             .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0]
           if (visibleEntry) {
-            setActiveCategoryId(section.id)
+            setRequestedCategoryId(section.id)
           }
         },
         {
@@ -97,11 +92,11 @@ function useActiveMerchantMenuCategory(sectionSummaries: MerchantMenuCategorySec
   }, [sectionSummaries])
 
   function scrollToCategory(categoryId: string) {
-    setActiveCategoryId(categoryId)
-    sectionRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setRequestedCategoryId(categoryId)
+    document.getElementById(categoryId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  return { activeCategoryId, scrollToCategory, sectionRefs }
+  return { activeCategoryId, scrollToCategory }
 }
 
 function MerchantMenuCategoryNav({
@@ -133,20 +128,15 @@ function MerchantMenuCategoryNav({
 function MerchantMenuCategoryPanel({
   props,
   section,
-  sectionRefs,
   store,
 }: {
   props: MerchantConsolePanelProps
   section: MerchantMenuSection
-  sectionRefs: MutableRefObject<Record<string, HTMLElement | null>>
   store: Store
 }) {
   return (
     <section
       key={section.id}
-      ref={(element) => {
-        sectionRefs.current[section.id] = element
-      }}
       className="menu-category-section merchant-menu-category-section"
       id={section.id}
     >
@@ -169,12 +159,10 @@ function MerchantMenuCategoryPanel({
 
 function MerchantMenuCategorySections({
   props,
-  sectionRefs,
   sections,
   store,
 }: {
   props: MerchantConsolePanelProps
-  sectionRefs: MutableRefObject<Record<string, HTMLElement | null>>
   sections: MerchantMenuSection[]
   store: Store
 }) {
@@ -185,7 +173,6 @@ function MerchantMenuCategorySections({
           key={section.id}
           props={props}
           section={section}
-          sectionRefs={sectionRefs}
           store={store}
         />
       ))}
@@ -201,7 +188,7 @@ export function MerchantMenuCatalog({
   props: MerchantConsolePanelProps
 }) {
   const { sectionSummaries, sections } = useMerchantMenuSections(store.menu)
-  const { activeCategoryId, scrollToCategory, sectionRefs } =
+  const { activeCategoryId, scrollToCategory } =
     useActiveMerchantMenuCategory(sectionSummaries)
 
   return (
@@ -213,7 +200,6 @@ export function MerchantMenuCatalog({
       />
       <MerchantMenuCategorySections
         props={props}
-        sectionRefs={sectionRefs}
         sections={sections}
         store={store}
       />
