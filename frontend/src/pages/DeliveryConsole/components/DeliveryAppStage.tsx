@@ -1,11 +1,29 @@
-import { AdminRoleView } from '@/pages/AdminConsole/components/workspace/AdminRoleView'
-import { CustomerRoleView } from '@/pages/CustomerConsole/components/workspace/CustomerRoleView'
+import { lazy, Suspense } from 'react'
 import { DELIVERY_CONSOLE_COPY } from '@/pages/DeliveryConsole/components/primitives/DeliveryConsoleCopy'
-import { MerchantRoleView } from '@/pages/MerchantConsole/components/workspace/MerchantRoleView'
-import { RiderRoleView } from '@/pages/RiderConsole/components/workspace/RiderRoleView'
 import { ROLE } from '@/objects/core/SharedObjects'
 import { getDeliveryAppStageFeedback } from '@/pages/DeliveryConsole/functions/DeliveryAppStageFeedback'
 import type { DeliveryConsoleStageProps } from '@/objects/core/SharedViewObjects'
+
+const AdminRoleView = lazy(() =>
+  import('@/pages/AdminConsole/components/workspace/AdminRoleView').then((module) => ({
+    default: module.AdminRoleView,
+  })),
+)
+const CustomerRoleView = lazy(() =>
+  import('@/pages/CustomerConsole/components/workspace/CustomerRoleView').then((module) => ({
+    default: module.CustomerRoleView,
+  })),
+)
+const MerchantRoleView = lazy(() =>
+  import('@/pages/MerchantConsole/components/workspace/MerchantRoleView').then((module) => ({
+    default: module.MerchantRoleView,
+  })),
+)
+const RiderRoleView = lazy(() =>
+  import('@/pages/RiderConsole/components/workspace/RiderRoleView').then((module) => ({
+    default: module.RiderRoleView,
+  })),
+)
 
 export function DeliveryAppStage(props: DeliveryConsoleStageProps) {
   const {
@@ -60,10 +78,12 @@ export function DeliveryAppStage(props: DeliveryConsoleStageProps) {
           {feedbackState ? <div className={`banner ${feedbackState.tone}`}>{feedbackState.text}</div> : null}
           {busy ? <div className="banner info">{DELIVERY_CONSOLE_COPY.banners.syncing}</div> : null}
 
-          {role === ROLE.customer && state ? <CustomerRoleView {...props.customerProps} /> : null}
-          {role === ROLE.merchant && state ? <MerchantRoleView {...props.merchantProps} /> : null}
-          {role === ROLE.rider && state ? <RiderRoleView {...props.riderProps} /> : null}
-          {role === ROLE.admin && state ? <AdminRoleView {...props.adminProps} /> : null}
+          <Suspense fallback={<div className="banner info">{DELIVERY_CONSOLE_COPY.banners.syncing}</div>}>
+            {role === ROLE.customer && state ? <CustomerRoleView {...props.customerProps} /> : null}
+            {role === ROLE.merchant && state ? <MerchantRoleView {...props.merchantProps} /> : null}
+            {role === ROLE.rider && state ? <RiderRoleView {...props.riderProps} /> : null}
+            {role === ROLE.admin && state ? <AdminRoleView {...props.adminProps} /> : null}
+          </Suspense>
         </section>
       </section>
 
