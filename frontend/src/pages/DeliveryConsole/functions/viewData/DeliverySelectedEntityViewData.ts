@@ -16,7 +16,7 @@ export function getActiveCustomerId(
   selectedCustomerId: CustomerId | '',
 ) {
   return session?.user.role === ROLE.customer && session.user.linkedProfileId
-    ? (session.user.linkedProfileId as unknown as CustomerId)
+    ? session.user.linkedProfileId
     : selectedCustomerId
 }
 

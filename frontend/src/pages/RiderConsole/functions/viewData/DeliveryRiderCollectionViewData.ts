@@ -15,7 +15,7 @@ export function getRiderOrders(
 ) {
   const activeRiderId =
     session?.user.role === ROLE.rider && session.user.linkedProfileId
-      ? (session.user.linkedProfileId as unknown as RiderId)
+      ? session.user.linkedProfileId
       : selectedRiderId
 
   const isActiveRiderOrder = (order: OrderSummary) =>

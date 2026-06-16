@@ -1,17 +1,47 @@
 import type {
+  AdminId,
   AuthUserId,
-  EntityId,
+  CustomerId,
   IsoDateTime,
+  MerchantId,
   PersonName,
+  RiderId,
   UserRole,
   Username,
 } from '@/objects/core/SharedObjects'
+import { ROLE } from '@/objects/core/SharedObjects'
 
-export type AuthAccount = {
+type BaseAuthAccount = {
   id: AuthUserId
   username: Username
-  role: UserRole
   displayName: PersonName
-  linkedProfileId?: EntityId
   createdAt: IsoDateTime
 }
+
+export type CustomerAuthAccount = BaseAuthAccount & {
+  role: typeof ROLE.customer
+  linkedProfileId: CustomerId
+}
+
+export type MerchantAuthAccount = BaseAuthAccount & {
+  role: typeof ROLE.merchant
+  linkedProfileId?: MerchantId
+}
+
+export type RiderAuthAccount = BaseAuthAccount & {
+  role: typeof ROLE.rider
+  linkedProfileId: RiderId
+}
+
+export type AdminAuthAccount = BaseAuthAccount & {
+  role: typeof ROLE.admin
+  linkedProfileId?: AdminId
+}
+
+export type AuthAccount =
+  | CustomerAuthAccount
+  | MerchantAuthAccount
+  | RiderAuthAccount
+  | AdminAuthAccount
+
+export type AuthAccountRole = UserRole

@@ -18,7 +18,6 @@ import {
   type DisplayText,
   type PersonName,
   type PhoneNumber,
-  type RiderId,
   type Store,
   type StoreId,
 } from '@/objects/core/SharedObjects'
@@ -59,7 +58,7 @@ export function syncSessionBoundPageState(args: SyncPageStateArgs) {
   } = args
 
   if (session.user.role === ROLE.customer && session.user.linkedProfileId) {
-    const linkedCustomerId = session.user.linkedProfileId as unknown as Customer['id']
+    const linkedCustomerId = session.user.linkedProfileId
     const customer = state.customers.find((entry: Customer) => entry.id === linkedCustomerId)
     if (customer) {
       setSelectedCustomerId(customer.id)
@@ -95,7 +94,7 @@ export function syncSessionBoundPageState(args: SyncPageStateArgs) {
   }
 
   if (session.user.role === ROLE.rider && session.user.linkedProfileId) {
-      setSelectedRiderId(session.user.linkedProfileId as unknown as RiderId)
+    setSelectedRiderId(session.user.linkedProfileId)
   } else if (!selectedRiderId && state.riders.length > 0) {
     const rider = state.riders[0]
     if (rider) {

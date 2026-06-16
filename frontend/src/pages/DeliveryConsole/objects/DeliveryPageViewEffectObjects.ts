@@ -6,14 +6,13 @@ import type {
   CustomerId,
   AddressText,
   DisplayText,
-  EntityId,
   MenuItemId,
   MerchantPayoutAccountType,
-  PersonName,
   RiderId,
   Store,
   StoreId,
 } from '@/objects/core/SharedObjects'
+import type { AuthSession } from '@/objects/auth/AuthSession'
 
 type SyncPageStateDataArgs = {
   state: {
@@ -21,13 +20,7 @@ type SyncPageStateDataArgs = {
     stores: Store[]
     riders: { id: RiderId }[]
   }
-  session: {
-    user: {
-      role: string
-      linkedProfileId?: EntityId
-      displayName: PersonName
-    }
-  }
+  session: AuthSession
   selectedCustomerId: CustomerId | ''
   selectedRiderId: RiderId | ''
   selectedStoreId: StoreId | ''

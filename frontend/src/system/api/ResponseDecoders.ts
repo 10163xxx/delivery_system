@@ -57,6 +57,7 @@ import type {
   EchoResponse,
   HealthResponse,
 } from '@/objects/core/SharedObjects'
+import { ROLE } from '@/objects/core/SharedObjects'
 import {
   decodeAfterSalesRequestType,
   decodeAfterSalesResolutionMode,
@@ -158,7 +159,56 @@ const decodeAdminTicket: Decoder<AdminTicket> = (value, path = '$') => {
 }
 const decodeSystemMetrics: Decoder<SystemMetrics> = (value, path = '$') => ({ totalOrders: decodeField(value, path, 'totalOrders', decodeNumber), activeOrders: decodeField(value, path, 'activeOrders', decodeNumber), resolvedTickets: decodeField(value, path, 'resolvedTickets', decodeNumber), averageRating: decodeField(value, path, 'averageRating', decodeNumber) })
 
-export const decodeAuthAccount: Decoder<AuthAccount> = (value, path = '$') => ({ id: decodeField(value, path, 'id', decodeString), username: decodeField(value, path, 'username', decodeString), role: decodeField(value, path, 'role', decodeRole), displayName: decodeField(value, path, 'displayName', decodeString), linkedProfileId: decodeOptionalField(value, path, 'linkedProfileId', decodeString), createdAt: decodeField(value, path, 'createdAt', decodeString) })
+export const decodeAuthAccount: Decoder<AuthAccount> = (value, path = '$') => {
+  const id = decodeField<AuthAccount['id']>(value, path, 'id', decodeString)
+  const username = decodeField<AuthAccount['username']>(value, path, 'username', decodeString)
+  const role = decodeField<AuthAccount['role']>(value, path, 'role', decodeRole)
+  const displayName = decodeField<AuthAccount['displayName']>(value, path, 'displayName', decodeString)
+  const createdAt = decodeField<AuthAccount['createdAt']>(value, path, 'createdAt', decodeString)
+
+  if (role === ROLE.customer) {
+    return {
+      id,
+      username,
+      role,
+      displayName,
+      linkedProfileId: decodeField(value, path, 'linkedProfileId', decodeString),
+      createdAt,
+    }
+  }
+  if (role === ROLE.rider) {
+    return {
+      id,
+      username,
+      role,
+      displayName,
+      linkedProfileId: decodeField(value, path, 'linkedProfileId', decodeString),
+      createdAt,
+    }
+  }
+  if (role === ROLE.merchant) {
+    return {
+      id,
+      username,
+      role,
+      displayName,
+      linkedProfileId: decodeOptionalField(value, path, 'linkedProfileId', decodeString),
+      createdAt,
+    }
+  }
+  if (role === ROLE.admin) {
+    return {
+      id,
+      username,
+      role,
+      displayName,
+      linkedProfileId: decodeOptionalField(value, path, 'linkedProfileId', decodeString),
+      createdAt,
+    }
+  }
+
+  fail(`${path}.role`, 'expected supported role')
+}
 export const decodeAuthSession: Decoder<AuthSession> = (value, path = '$') => ({ token: decodeField(value, path, 'token', decodeString), user: decodeField(value, path, 'user', decodeAuthAccount) })
 export const decodeHealthResponse: Decoder<HealthResponse> = (value, path = '$') => ({ status: decodeField(value, path, 'status', decodeString), service: decodeField(value, path, 'service', decodeString) })
 export const decodeEchoResponse: Decoder<EchoResponse> = (value, path = '$') => ({ message: decodeField(value, path, 'message', decodeString), transformed: decodeField(value, path, 'transformed', decodeBoolean) })
