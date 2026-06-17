@@ -5,8 +5,8 @@ import domain.shared.given
 import system.objects.HealthResponse
 import system.api.*
 
-val healthApi: FixedMethodApi0[HealthResponse] =
-  jsonGetApi0[HealthResponse](
+val healthApi: FixedMethodApi[NoPathParams, HealthResponse] =
+  jsonGetApi[HealthResponse](
     routeSegment("api"),
     routeSegment("health"),
   )

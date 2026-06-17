@@ -11,10 +11,8 @@ import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import system.api.*
 
-val loginRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(loginApi, req) =>
-    val matchedReq = requireApi0(loginApi, req)
-    matchedReq.as[LoginRequest].flatMap { payload =>
-      login(payload).flatMap(handleSessionResult)
-    }
+val loginRoute: HttpRoutes[IO] = apiRoute(loginApi) { matchedReq =>
+  matchedReq.as[LoginRequest].flatMap { payload =>
+    login(payload).flatMap(handleSessionResult)
+  }
 }

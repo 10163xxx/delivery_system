@@ -13,14 +13,12 @@ import org.http4s.circe.CirceEntityCodec.*
 import system.api.*
 import system.app.*
 
-val removeCustomerAddressRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(removeCustomerAddressApi, req) =>
-    val (matchedReq, customerId) = requireApi1(removeCustomerAddressApi, req)
-    withRole(matchedReq, UserRole.customer) { user =>
-      if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherCustomerAddressForbidden)
-      else
-        matchedReq.as[RemoveCustomerAddressRequest].flatMap { payload =>
-          removeCustomerAddress(customerId, payload).flatMap(handleStateResult)
-        }
-    }
+val removeCustomerAddressRoute: HttpRoutes[IO] = apiRoute(removeCustomerAddressApi) { case (matchedReq, customerId) =>
+  withRole(matchedReq, UserRole.customer) { user =>
+    if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherCustomerAddressForbidden)
+    else
+      matchedReq.as[RemoveCustomerAddressRequest].flatMap { payload =>
+        removeCustomerAddress(customerId, payload).flatMap(handleStateResult)
+      }
+  }
 }

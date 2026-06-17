@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val addMenuItemRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(addMenuItemApi, req) =>
-    val (matchedReq, storeId) = requireApi1(addMenuItemApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantMenuForbidden)
-      else
-        matchedReq.as[AddMenuItemRequest].flatMap { payload =>
-          addMenuItem(storeId, payload).flatMap(handleStateResult)
-        }
-    }
+val addMenuItemRoute: HttpRoutes[IO] = apiRoute(addMenuItemApi) { case (matchedReq, storeId) =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantMenuForbidden)
+    else
+      matchedReq.as[AddMenuItemRequest].flatMap { payload =>
+        addMenuItem(storeId, payload).flatMap(handleStateResult)
+      }
+  }
 }

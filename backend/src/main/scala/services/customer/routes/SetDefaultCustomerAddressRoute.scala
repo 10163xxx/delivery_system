@@ -13,14 +13,12 @@ import org.http4s.circe.CirceEntityCodec.*
 import system.api.*
 import system.app.*
 
-val setDefaultCustomerAddressRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(setDefaultCustomerAddressApi, req) =>
-    val (matchedReq, customerId) = requireApi1(setDefaultCustomerAddressApi, req)
-    withRole(matchedReq, UserRole.customer) { user =>
-      if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherCustomerAddressForbidden)
-      else
-        matchedReq.as[SetDefaultCustomerAddressRequest].flatMap { payload =>
-          setDefaultCustomerAddress(customerId, payload).flatMap(handleStateResult)
-        }
-    }
+val setDefaultCustomerAddressRoute: HttpRoutes[IO] = apiRoute(setDefaultCustomerAddressApi) { case (matchedReq, customerId) =>
+  withRole(matchedReq, UserRole.customer) { user =>
+    if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherCustomerAddressForbidden)
+    else
+      matchedReq.as[SetDefaultCustomerAddressRequest].flatMap { payload =>
+        setDefaultCustomerAddress(customerId, payload).flatMap(handleStateResult)
+      }
+  }
 }

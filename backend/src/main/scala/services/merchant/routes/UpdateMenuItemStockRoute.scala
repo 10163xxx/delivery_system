@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val updateMenuItemStockRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi2(updateMenuItemStockApi, req) =>
-    val (matchedReq, storeId, menuItemId) = requireApi2(updateMenuItemStockApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantMenuForbidden)
-      else
-        matchedReq.as[UpdateMenuItemStockRequest].flatMap { payload =>
-          updateMenuItemStock(storeId, menuItemId, payload).flatMap(handleStateResult)
-        }
-    }
+val updateMenuItemStockRoute: HttpRoutes[IO] = apiRoute(updateMenuItemStockApi) { case (matchedReq, storeId, menuItemId) =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantMenuForbidden)
+    else
+      matchedReq.as[UpdateMenuItemStockRequest].flatMap { payload =>
+        updateMenuItemStock(storeId, menuItemId, payload).flatMap(handleStateResult)
+      }
+  }
 }

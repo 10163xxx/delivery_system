@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val updateMerchantProfileRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(updateMerchantProfileApi, req) =>
-    val matchedReq = requireApi0(updateMerchantProfileApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsMerchantProfile(user.displayName, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherMerchantProfileForbidden)
-      else
-        matchedReq.as[UpdateMerchantProfileRequest].flatMap { payload =>
-          updateMerchantProfile(user.displayName, payload).flatMap(handleStateResult)
-        }
-    }
+val updateMerchantProfileRoute: HttpRoutes[IO] = apiRoute(updateMerchantProfileApi) { matchedReq =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsMerchantProfile(user.displayName, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherMerchantProfileForbidden)
+    else
+      matchedReq.as[UpdateMerchantProfileRequest].flatMap { payload =>
+        updateMerchantProfile(user.displayName, payload).flatMap(handleStateResult)
+      }
+  }
 }

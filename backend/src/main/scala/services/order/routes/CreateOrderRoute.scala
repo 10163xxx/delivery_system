@@ -14,13 +14,11 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val createOrderRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(createOrderApi, req) =>
-    val matchedReq = requireApi0(createOrderApi, req)
-    withRole(matchedReq, UserRole.customer) { user =>
-      matchedReq.as[CreateOrderRequest].flatMap { payload =>
-        if !ownsCustomer(payload.customerId, user.linkedProfileId) then Forbidden(RouteMessages.CreateOtherCustomerOrderForbidden)
-        else createOrder(payload).flatMap(handleStateResult)
-      }
+val createOrderRoute: HttpRoutes[IO] = apiRoute(createOrderApi) { matchedReq =>
+  withRole(matchedReq, UserRole.customer) { user =>
+    matchedReq.as[CreateOrderRequest].flatMap { payload =>
+      if !ownsCustomer(payload.customerId, user.linkedProfileId) then Forbidden(RouteMessages.CreateOtherCustomerOrderForbidden)
+      else createOrder(payload).flatMap(handleStateResult)
     }
+  }
 }

@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val submitPartialRefundRequestRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(submitPartialRefundRequestApi, req) =>
-    val (matchedReq, orderId) = requireApi1(submitPartialRefundRequestApi, req)
-    withRole(matchedReq, UserRole.customer) { user =>
-      if !ownsOrderAsCustomer(orderId, user.linkedProfileId) then Forbidden(RouteMessages.RefundOtherCustomerOrderForbidden)
-      else
-        matchedReq.as[SubmitPartialRefundRequest].flatMap { payload =>
-          submitPartialRefundRequest(orderId, payload).flatMap(handleStateResult)
-        }
-    }
+val submitPartialRefundRequestRoute: HttpRoutes[IO] = apiRoute(submitPartialRefundRequestApi) { case (matchedReq, orderId) =>
+  withRole(matchedReq, UserRole.customer) { user =>
+    if !ownsOrderAsCustomer(orderId, user.linkedProfileId) then Forbidden(RouteMessages.RefundOtherCustomerOrderForbidden)
+    else
+      matchedReq.as[SubmitPartialRefundRequest].flatMap { payload =>
+        submitPartialRefundRequest(orderId, payload).flatMap(handleStateResult)
+      }
+  }
 }

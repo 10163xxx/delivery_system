@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val submitAfterSalesRequestRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(submitAfterSalesRequestApi, req) =>
-    val (matchedReq, orderId) = requireApi1(submitAfterSalesRequestApi, req)
-    withRole(matchedReq, UserRole.customer) { user =>
-      if !ownsOrderAsCustomer(orderId, user.linkedProfileId) then Forbidden(RouteMessages.SubmitOtherCustomerAfterSalesForbidden)
-      else
-        matchedReq.as[SubmitAfterSalesRequest].flatMap { payload =>
-          submitAfterSalesRequest(orderId, payload).flatMap(handleStateResult)
-        }
-    }
+val submitAfterSalesRequestRoute: HttpRoutes[IO] = apiRoute(submitAfterSalesRequestApi) { case (matchedReq, orderId) =>
+  withRole(matchedReq, UserRole.customer) { user =>
+    if !ownsOrderAsCustomer(orderId, user.linkedProfileId) then Forbidden(RouteMessages.SubmitOtherCustomerAfterSalesForbidden)
+    else
+      matchedReq.as[SubmitAfterSalesRequest].flatMap { payload =>
+        submitAfterSalesRequest(orderId, payload).flatMap(handleStateResult)
+      }
+  }
 }

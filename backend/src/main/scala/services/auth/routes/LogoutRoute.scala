@@ -9,10 +9,8 @@ import cats.effect.IO
 import org.http4s.HttpRoutes
 import system.api.*
 
-val logoutRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(logoutApi, req) =>
-    val matchedReq = requireApi0(logoutApi, req)
-    readToken(matchedReq) match
-      case Some(token) => logout(token) *> Ok()
-      case None => unauthorized(RouteMessages.LoginRequired)
+val logoutRoute: HttpRoutes[IO] = apiRoute(logoutApi) { matchedReq =>
+  readToken(matchedReq) match
+    case Some(token) => logout(token) *> Ok()
+    case None => unauthorized(RouteMessages.LoginRequired)
 }

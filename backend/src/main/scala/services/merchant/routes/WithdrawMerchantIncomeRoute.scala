@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val withdrawMerchantIncomeRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(withdrawMerchantIncomeApi, req) =>
-    val matchedReq = requireApi0(withdrawMerchantIncomeApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsMerchantProfile(user.displayName, user.linkedProfileId) then Forbidden(RouteMessages.WithdrawOtherMerchantIncomeForbidden)
-      else
-        matchedReq.as[WithdrawMerchantIncomeRequest].flatMap { payload =>
-          withdrawMerchantIncome(user.displayName, payload).flatMap(handleStateResult)
-        }
-    }
+val withdrawMerchantIncomeRoute: HttpRoutes[IO] = apiRoute(withdrawMerchantIncomeApi) { matchedReq =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsMerchantProfile(user.displayName, user.linkedProfileId) then Forbidden(RouteMessages.WithdrawOtherMerchantIncomeForbidden)
+    else
+      matchedReq.as[WithdrawMerchantIncomeRequest].flatMap { payload =>
+        withdrawMerchantIncome(user.displayName, payload).flatMap(handleStateResult)
+      }
+  }
 }

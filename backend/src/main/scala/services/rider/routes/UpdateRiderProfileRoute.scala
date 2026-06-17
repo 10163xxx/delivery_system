@@ -13,14 +13,12 @@ import services.rider.utils.updateRiderProfile
 import system.api.*
 import system.app.*
 
-val updateRiderProfileRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(updateRiderProfileApi, req) =>
-    val (matchedReq, riderId) = requireApi1(updateRiderProfileApi, req)
-    withRole(matchedReq, UserRole.rider) { user =>
-      if !ownsRiderProfile(riderId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherRiderProfileForbidden)
-      else
-        matchedReq.as[UpdateRiderProfileRequest].flatMap { payload =>
-          updateRiderProfile(riderId, payload).flatMap(handleStateResult)
-        }
-    }
+val updateRiderProfileRoute: HttpRoutes[IO] = apiRoute(updateRiderProfileApi) { case (matchedReq, riderId) =>
+  withRole(matchedReq, UserRole.rider) { user =>
+    if !ownsRiderProfile(riderId, user.linkedProfileId) then Forbidden(RouteMessages.ModifyOtherRiderProfileForbidden)
+    else
+      matchedReq.as[UpdateRiderProfileRequest].flatMap { payload =>
+        updateRiderProfile(riderId, payload).flatMap(handleStateResult)
+      }
+  }
 }

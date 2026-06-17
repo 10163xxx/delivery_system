@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val reviewOrderRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(reviewOrderApi, req) =>
-    val (matchedReq, orderId) = requireApi1(reviewOrderApi, req)
-    withRole(matchedReq, UserRole.customer) { user =>
-      if !ownsOrderAsCustomer(orderId, user.linkedProfileId) then Forbidden(RouteMessages.ReviewOtherCustomerOrderForbidden)
-      else
-        matchedReq.as[ReviewOrderRequest].flatMap { payload =>
-          reviewOrder(orderId, payload).flatMap(handleStateResult)
-        }
-    }
+val reviewOrderRoute: HttpRoutes[IO] = apiRoute(reviewOrderApi) { case (matchedReq, orderId) =>
+  withRole(matchedReq, UserRole.customer) { user =>
+    if !ownsOrderAsCustomer(orderId, user.linkedProfileId) then Forbidden(RouteMessages.ReviewOtherCustomerOrderForbidden)
+    else
+      matchedReq.as[ReviewOrderRequest].flatMap { payload =>
+        reviewOrder(orderId, payload).flatMap(handleStateResult)
+      }
+  }
 }

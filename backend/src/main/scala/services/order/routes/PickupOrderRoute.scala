@@ -13,11 +13,9 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val pickupOrderRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(pickupOrderApi, req) =>
-    val (matchedReq, orderId) = requireApi1(pickupOrderApi, req)
-    withRole(matchedReq, UserRole.rider) { user =>
-      if !ownsOrderAsRider(orderId, user.linkedProfileId) then Forbidden(RouteMessages.HandleOtherRiderOrderForbidden)
-      else pickupOrder(orderId).flatMap(handleStateResult)
-    }
+val pickupOrderRoute: HttpRoutes[IO] = apiRoute(pickupOrderApi) { case (matchedReq, orderId) =>
+  withRole(matchedReq, UserRole.rider) { user =>
+    if !ownsOrderAsRider(orderId, user.linkedProfileId) then Forbidden(RouteMessages.HandleOtherRiderOrderForbidden)
+    else pickupOrder(orderId).flatMap(handleStateResult)
+  }
 }

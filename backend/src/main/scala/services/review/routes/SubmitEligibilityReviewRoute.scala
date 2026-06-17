@@ -13,19 +13,17 @@ import services.review.utils.submitEligibilityReview
 import system.api.*
 import system.app.*
 
-val submitEligibilityReviewRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(submitEligibilityReviewApi, req) =>
-    val matchedReq = requireApi0(submitEligibilityReviewApi, req)
-    withSession(matchedReq) { user =>
-      matchedReq.as[EligibilityReviewRequest].flatMap { payload =>
-        val allowed =
-          payload.target match
-            case EligibilityReviewTarget.Store =>
-              user.role == UserRole.merchant && ownsStore(new StoreId(payload.targetId.raw), user.displayName)
-            case EligibilityReviewTarget.Rider =>
-              user.role == UserRole.rider && ownsRiderProfile(new RiderId(payload.targetId.raw), user.linkedProfileId)
-        if !allowed then Forbidden(RouteMessages.SubmitEligibilityReviewForbidden)
-        else submitEligibilityReview(payload).flatMap(handleStateResult)
-      }
+val submitEligibilityReviewRoute: HttpRoutes[IO] = apiRoute(submitEligibilityReviewApi) { matchedReq =>
+  withSession(matchedReq) { user =>
+    matchedReq.as[EligibilityReviewRequest].flatMap { payload =>
+      val allowed =
+        payload.target match
+          case EligibilityReviewTarget.Store =>
+            user.role == UserRole.merchant && ownsStore(new StoreId(payload.targetId.raw), user.displayName)
+          case EligibilityReviewTarget.Rider =>
+            user.role == UserRole.rider && ownsRiderProfile(new RiderId(payload.targetId.raw), user.linkedProfileId)
+      if !allowed then Forbidden(RouteMessages.SubmitEligibilityReviewForbidden)
+      else submitEligibilityReview(payload).flatMap(handleStateResult)
     }
+  }
 }

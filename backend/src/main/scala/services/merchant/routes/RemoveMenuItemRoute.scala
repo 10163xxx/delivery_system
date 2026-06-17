@@ -13,11 +13,9 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val removeMenuItemRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi2(removeMenuItemApi, req) =>
-    val (matchedReq, storeId, menuItemId) = requireApi2(removeMenuItemApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantMenuForbidden)
-      else removeMenuItem(storeId, menuItemId).flatMap(handleStateResult)
-    }
+val removeMenuItemRoute: HttpRoutes[IO] = apiRoute(removeMenuItemApi) { case (matchedReq, storeId, menuItemId) =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantMenuForbidden)
+    else removeMenuItem(storeId, menuItemId).flatMap(handleStateResult)
+  }
 }

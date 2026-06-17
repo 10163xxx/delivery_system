@@ -13,15 +13,14 @@ import system.objects.HealthResponse
 
 private val healthRouteLogger = Slf4jLogger.getLogger[IO]
 
-val healthRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(healthApi, req) =>
-    for
-      _ <- healthRouteLogger.info("HealthRoute received GET /api/health")
-      response <- Ok(
-        HealthResponse(
-          status = serviceStatus("ok"),
-          service = serviceName("backend-sample"),
-        ).asJson
-      )
-    yield response
+val healthRoute: HttpRoutes[IO] = apiRoute(healthApi) { _ =>
+  for
+    _ <- healthRouteLogger.info("HealthRoute received GET /api/health")
+    response <- Ok(
+      HealthResponse(
+        status = serviceStatus("ok"),
+        service = serviceName("backend-sample"),
+      ).asJson
+    )
+  yield response
 }

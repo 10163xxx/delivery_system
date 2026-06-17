@@ -12,12 +12,10 @@ import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import system.api.*
 
-val rejectMerchantApplicationRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(rejectMerchantApplicationApi, req) =>
-    val (matchedReq, applicationId) = requireApi1(rejectMerchantApplicationApi, req)
-    withRole(matchedReq, UserRole.admin) { _ =>
-      matchedReq.as[ReviewMerchantApplicationRequest].flatMap { payload =>
-        rejectMerchantApplication(applicationId, payload).flatMap(handleStateResult)
-      }
+val rejectMerchantApplicationRoute: HttpRoutes[IO] = apiRoute(rejectMerchantApplicationApi) { case (matchedReq, applicationId) =>
+  withRole(matchedReq, UserRole.admin) { _ =>
+    matchedReq.as[ReviewMerchantApplicationRequest].flatMap { payload =>
+      rejectMerchantApplication(applicationId, payload).flatMap(handleStateResult)
     }
+  }
 }

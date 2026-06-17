@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val resolvePartialRefundRequestRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(resolvePartialRefundRequestApi, req) =>
-    val (matchedReq, refundId) = requireApi1(resolvePartialRefundRequestApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsPartialRefundRequestAsMerchant(refundId, user.displayName) then Forbidden(RouteMessages.ResolveOtherMerchantRefundForbidden)
-      else
-        matchedReq.as[ResolvePartialRefundRequest].flatMap { payload =>
-          resolvePartialRefundRequest(refundId, payload).flatMap(handleStateResult)
-        }
-    }
+val resolvePartialRefundRequestRoute: HttpRoutes[IO] = apiRoute(resolvePartialRefundRequestApi) { case (matchedReq, refundId) =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsPartialRefundRequestAsMerchant(refundId, user.displayName) then Forbidden(RouteMessages.ResolveOtherMerchantRefundForbidden)
+    else
+      matchedReq.as[ResolvePartialRefundRequest].flatMap { payload =>
+        resolvePartialRefundRequest(refundId, payload).flatMap(handleStateResult)
+      }
+  }
 }

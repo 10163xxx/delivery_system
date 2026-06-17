@@ -12,12 +12,10 @@ import org.http4s.circe.CirceEntityCodec.*
 import services.review.utils.*
 import system.api.*
 
-val resolveReviewAppealRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(resolveReviewAppealApi, req) =>
-    val (matchedReq, appealId) = requireApi1(resolveReviewAppealApi, req)
-    withRole(matchedReq, UserRole.admin) { _ =>
-      matchedReq.as[ResolveReviewAppealRequest].flatMap { payload =>
-        resolveReviewAppeal(appealId, payload).flatMap(handleStateResult)
-      }
+val resolveReviewAppealRoute: HttpRoutes[IO] = apiRoute(resolveReviewAppealApi) { case (matchedReq, appealId) =>
+  withRole(matchedReq, UserRole.admin) { _ =>
+    matchedReq.as[ResolveReviewAppealRequest].flatMap { payload =>
+      resolveReviewAppeal(appealId, payload).flatMap(handleStateResult)
     }
+  }
 }

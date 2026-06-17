@@ -5,7 +5,7 @@ import domain.shared.given
 import domain.shared.{DemoNote, PlannerName, SaveDemoNoteRequest}
 import system.api.*
 
-val saveDemoNotePlannerApi: FixedMethodApi1[PlannerName, DemoNote] =
-  jsonPostApi1[PlannerName, SaveDemoNoteRequest, DemoNote](
+val saveDemoNotePlannerApi: FixedMethodApi[PathParam[PlannerName], DemoNote] =
+  jsonPostApi[PlannerName, SaveDemoNoteRequest, DemoNote](
     List(routeSegment("api")),
   )

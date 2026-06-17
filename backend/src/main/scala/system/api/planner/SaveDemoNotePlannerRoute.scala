@@ -15,12 +15,11 @@ import system.withTransactionConnection
 
 private val saveDemoNotePlannerRouteLogger = Slf4jLogger.getLogger[IO]
 
-val saveDemoNotePlannerRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if extractApi1(saveDemoNotePlannerApi, req).exists(_._2 == saveDemoNotePlannerName) =>
-    val (matchedReq, plannerName) = requireApi1(saveDemoNotePlannerApi, req)
+val saveDemoNotePlannerRoute: HttpRoutes[IO] = apiRouteWhere(saveDemoNotePlannerApi)(_._2 == saveDemoNotePlannerName) {
+  case (matchedReq, plannerName) =>
     for
       _ <- saveDemoNotePlannerRouteLogger.info(
-        s"SaveDemoNotePlannerRoute received POST ${apiPath1(saveDemoNotePlannerApi, plannerName).raw}"
+        s"SaveDemoNotePlannerRoute received POST ${apiPath(saveDemoNotePlannerApi, plannerName).raw}"
       )
       payload <- matchedReq.as[SaveDemoNoteRequest]
       result <- withTransactionConnection(connection => runSaveDemoNotePlanner(payload, connection))

@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val appendStoreReviewReplyRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(appendStoreReviewReplyApi, req) =>
-    val (matchedReq, orderId) = requireApi1(appendStoreReviewReplyApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsOrderAsMerchant(orderId, user.displayName) then Forbidden(RouteMessages.HandleOtherMerchantOrderForbidden)
-      else
-        matchedReq.as[AppendStoreReviewReplyRequest].flatMap { payload =>
-          appendStoreReviewReply(orderId, payload).flatMap(handleStateResult)
-        }
-    }
+val appendStoreReviewReplyRoute: HttpRoutes[IO] = apiRoute(appendStoreReviewReplyApi) { case (matchedReq, orderId) =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsOrderAsMerchant(orderId, user.displayName) then Forbidden(RouteMessages.HandleOtherMerchantOrderForbidden)
+    else
+      matchedReq.as[AppendStoreReviewReplyRequest].flatMap { payload =>
+        appendStoreReviewReply(orderId, payload).flatMap(handleStateResult)
+      }
+  }
 }

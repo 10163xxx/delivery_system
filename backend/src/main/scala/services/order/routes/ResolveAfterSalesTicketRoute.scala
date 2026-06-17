@@ -12,12 +12,10 @@ import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import system.api.*
 
-val resolveAfterSalesTicketRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(resolveAfterSalesTicketApi, req) =>
-    val (matchedReq, ticketId) = requireApi1(resolveAfterSalesTicketApi, req)
-    withRole(matchedReq, UserRole.admin) { _ =>
-      matchedReq.as[ResolveAfterSalesRequest].flatMap { payload =>
-        resolveAfterSalesTicket(ticketId, payload).flatMap(handleStateResult)
-      }
+val resolveAfterSalesTicketRoute: HttpRoutes[IO] = apiRoute(resolveAfterSalesTicketApi) { case (matchedReq, ticketId) =>
+  withRole(matchedReq, UserRole.admin) { _ =>
+    matchedReq.as[ResolveAfterSalesRequest].flatMap { payload =>
+      resolveAfterSalesTicket(ticketId, payload).flatMap(handleStateResult)
     }
+  }
 }

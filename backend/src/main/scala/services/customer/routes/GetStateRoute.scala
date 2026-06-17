@@ -12,10 +12,8 @@ import org.http4s.circe.CirceEntityEncoder.*
 import system.api.*
 import system.app.getStateForUser
 
-val getStateRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(getStateApi, req) =>
-    val matchedReq = requireApi0(getStateApi, req)
-    withSession(matchedReq) { user =>
-      getStateForUser(user).flatMap(state => Ok(state.asJson))
-    }
+val getStateRoute: HttpRoutes[IO] = apiRoute(getStateApi) { matchedReq =>
+  withSession(matchedReq) { user =>
+    getStateForUser(user).flatMap(state => Ok(state.asJson))
+  }
 }

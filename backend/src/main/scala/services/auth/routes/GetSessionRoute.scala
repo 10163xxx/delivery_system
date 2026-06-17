@@ -12,14 +12,12 @@ import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder.*
 import system.api.*
 
-val getSessionRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi0(getSessionApi, req) =>
-    val matchedReq = requireApi0(getSessionApi, req)
-    readToken(matchedReq) match
-      case Some(token) =>
-        getSession(token).flatMap {
-          case Some(session) => Ok(session.asJson)
-          case None => unauthorized(RouteMessages.LoginExpired)
-        }
-      case None => unauthorized(RouteMessages.LoginRequired)
+val getSessionRoute: HttpRoutes[IO] = apiRoute(getSessionApi) { matchedReq =>
+  readToken(matchedReq) match
+    case Some(token) =>
+      getSession(token).flatMap {
+        case Some(session) => Ok(session.asJson)
+        case None => unauthorized(RouteMessages.LoginExpired)
+      }
+    case None => unauthorized(RouteMessages.LoginRequired)
 }

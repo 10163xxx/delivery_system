@@ -13,11 +13,9 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val acceptOrderRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(acceptOrderApi, req) =>
-    val (matchedReq, orderId) = requireApi1(acceptOrderApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsOrderAsMerchant(orderId, user.displayName) then Forbidden(RouteMessages.HandleOtherMerchantOrderForbidden)
-      else acceptOrder(orderId).flatMap(handleStateResult)
-    }
+val acceptOrderRoute: HttpRoutes[IO] = apiRoute(acceptOrderApi) { case (matchedReq, orderId) =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsOrderAsMerchant(orderId, user.displayName) then Forbidden(RouteMessages.HandleOtherMerchantOrderForbidden)
+    else acceptOrder(orderId).flatMap(handleStateResult)
+  }
 }

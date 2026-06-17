@@ -1,8 +1,9 @@
 package system.api
 
+import cats.data.OptionT
 import cats.effect.IO
 import domain.shared.{RoutePath, RouteSegmentText, WrappedTextType, wrapText}
-import org.http4s.{Method, Request}
+import org.http4s.{HttpRoutes, Method, Request, Response}
 
 final case class StaticRouteSegment(value: RouteSegmentText)
 
@@ -18,45 +19,59 @@ object PathParamCodec:
     def parse(raw: RouteSegmentText): Option[T] = Some(wrapText[T](raw.raw))
     def render(value: T): RouteSegmentText = new RouteSegmentText(wrapped.toRaw(value))
 
-final case class FixedMethodApi0[Response](method: Method, segments: List[StaticRouteSegment])
+type NoPathParams = EmptyTuple.type
+type PathParam[Param] = Param *: EmptyTuple
+type PathParams[FirstParam, SecondParam] = FirstParam *: SecondParam *: EmptyTuple
+type ExtractedApiRequest[Params <: Tuple] = Params match
+  case NoPathParams => Request[IO]
+  case param *: EmptyTuple => (Request[IO], param)
+  case firstParam *: secondParam *: EmptyTuple => (Request[IO], firstParam, secondParam)
 
-final case class FixedMethodApi1[Param, Response](
+sealed trait FixedMethodApi[Params <: Tuple, Response]:
+  def method: Method
+
+private final case class StaticFixedMethodApi[Response](
+    method: Method,
+    segments: List[StaticRouteSegment],
+) extends FixedMethodApi[NoPathParams, Response]
+
+private final case class SingleParamFixedMethodApi[Param, Response](
     method: Method,
     prefixSegments: List[StaticRouteSegment],
-    suffixSegments: List[StaticRouteSegment],
-)
+    suffixSegments: List[StaticRouteSegment] = Nil,
+) extends FixedMethodApi[PathParam[Param], Response]
 
-final case class FixedMethodApi2[FirstParam, SecondParam, Response](
+private final case class DoubleParamFixedMethodApi[FirstParam, SecondParam, Response](
     method: Method,
     prefixSegments: List[StaticRouteSegment],
     middleSegments: List[StaticRouteSegment],
     suffixSegments: List[StaticRouteSegment],
-)
+) extends FixedMethodApi[PathParams[FirstParam, SecondParam], Response]
 
-def jsonGetApi0[Response](segments: StaticRouteSegment*): FixedMethodApi0[Response] =
-  FixedMethodApi0(Method.GET, segments.toList)
+def jsonGetApi[Response](segments: StaticRouteSegment*): FixedMethodApi[NoPathParams, Response] =
+  StaticFixedMethodApi(Method.GET, segments.toList)
 
-def jsonGetApi1[Param, Response](
+def jsonGetApi[Param, Response](
     prefixSegments: List[StaticRouteSegment],
     suffixSegments: List[StaticRouteSegment] = Nil,
-): FixedMethodApi1[Param, Response] =
-  FixedMethodApi1(Method.GET, prefixSegments, suffixSegments)
+): FixedMethodApi[PathParam[Param], Response] =
+  SingleParamFixedMethodApi(Method.GET, prefixSegments, suffixSegments)
 
-def jsonPostApi0[Body, Response](segments: StaticRouteSegment*): FixedMethodApi0[Response] =
-  FixedMethodApi0(Method.POST, segments.toList)
+def jsonPostApi[Body, Response](segments: StaticRouteSegment*): FixedMethodApi[NoPathParams, Response] =
+  StaticFixedMethodApi(Method.POST, segments.toList)
 
-def jsonPostApi1[Param, Body, Response](
+def jsonPostApi[Param, Body, Response](
     prefixSegments: List[StaticRouteSegment],
     suffixSegments: List[StaticRouteSegment] = Nil,
-): FixedMethodApi1[Param, Response] =
-  FixedMethodApi1(Method.POST, prefixSegments, suffixSegments)
+): FixedMethodApi[PathParam[Param], Response] =
+  SingleParamFixedMethodApi(Method.POST, prefixSegments, suffixSegments)
 
-def jsonPostApi2[FirstParam, SecondParam, Body, Response](
+def jsonPostApi[FirstParam, SecondParam, Body, Response](
     prefixSegments: List[StaticRouteSegment],
     middleSegments: List[StaticRouteSegment],
-    suffixSegments: List[StaticRouteSegment] = Nil,
-): FixedMethodApi2[FirstParam, SecondParam, Response] =
-  FixedMethodApi2(Method.POST, prefixSegments, middleSegments, suffixSegments)
+    suffixSegments: List[StaticRouteSegment],
+): FixedMethodApi[PathParams[FirstParam, SecondParam], Response] =
+  DoubleParamFixedMethodApi(Method.POST, prefixSegments, middleSegments, suffixSegments)
 
 private def requestSegments(req: Request[IO]): List[RouteSegmentText] =
   req.uri.path.renderString.split('/').filter(_.nonEmpty).toList.map(segment => new RouteSegmentText(segment))
@@ -67,29 +82,11 @@ private def staticSegmentValues(segments: List[StaticRouteSegment]): List[RouteS
 private def buildRoutePath(segments: List[RouteSegmentText]): RoutePath =
   new RoutePath(s"/${segments.map(_.raw).mkString("/")}")
 
-def matchesApi0[Response](api: FixedMethodApi0[Response], req: Request[IO]): Boolean =
+private def matchesStaticApi[Response](api: StaticFixedMethodApi[Response], req: Request[IO]): Boolean =
   req.method == api.method && requestSegments(req) == staticSegmentValues(api.segments)
 
-def matchesApi1[Param, Response](
-    api: FixedMethodApi1[Param, Response],
-    req: Request[IO],
-)(using codec: PathParamCodec[Param]): Boolean =
-  extractApi1(api, req).nonEmpty
-
-def matchesApi2[FirstParam, SecondParam, Response](
-    api: FixedMethodApi2[FirstParam, SecondParam, Response],
-    req: Request[IO],
-)(using firstCodec: PathParamCodec[FirstParam], secondCodec: PathParamCodec[SecondParam]): Boolean =
-  extractApi2(api, req).nonEmpty
-
-def extractApi0[Response](
-    api: FixedMethodApi0[Response],
-    req: Request[IO],
-): Option[Request[IO]] =
-  Option.when(matchesApi0(api, req))(req)
-
-def extractApi1[Param, Response](
-    api: FixedMethodApi1[Param, Response],
+private def extractSingleParamApi[Param, Response](
+    api: SingleParamFixedMethodApi[Param, Response],
     req: Request[IO],
 )(using codec: PathParamCodec[Param]): Option[(Request[IO], Param)] =
   if req.method != api.method then None
@@ -104,8 +101,8 @@ def extractApi1[Param, Response](
         codec.parse(segments(expectedPrefix.length)).map(value => (req, value))
       case _ => None
 
-def extractApi2[FirstParam, SecondParam, Response](
-    api: FixedMethodApi2[FirstParam, SecondParam, Response],
+private def extractDoubleParamApi[FirstParam, SecondParam, Response](
+    api: DoubleParamFixedMethodApi[FirstParam, SecondParam, Response],
     req: Request[IO],
 )(using firstCodec: PathParamCodec[FirstParam], secondCodec: PathParamCodec[SecondParam]): Option[(Request[IO], FirstParam, SecondParam)] =
   if req.method != api.method then None
@@ -127,29 +124,78 @@ def extractApi2[FirstParam, SecondParam, Response](
         yield (req, first, second)
       case _ => None
 
-def requireApi0[Response](
-    api: FixedMethodApi0[Response],
-    req: Request[IO],
-): Request[IO] =
-  extractApi0(api, req).get
+trait ApiRequestExtractor[Params <: Tuple]:
+  def extract[Response](api: FixedMethodApi[Params, Response], req: Request[IO]): Option[ExtractedApiRequest[Params]]
 
-def requireApi1[Param, Response](
-    api: FixedMethodApi1[Param, Response],
-    req: Request[IO],
-)(using codec: PathParamCodec[Param]): (Request[IO], Param) =
-  extractApi1(api, req).get
+object ApiRequestExtractor:
+  given staticApiRequestExtractor: ApiRequestExtractor[NoPathParams] with
+    def extract[Response](api: FixedMethodApi[NoPathParams, Response], req: Request[IO]): Option[ExtractedApiRequest[NoPathParams]] =
+      api match
+        case staticApi: StaticFixedMethodApi[Response] => Option.when(matchesStaticApi(staticApi, req))(req)
 
-def requireApi2[FirstParam, SecondParam, Response](
-    api: FixedMethodApi2[FirstParam, SecondParam, Response],
-    req: Request[IO],
-)(using firstCodec: PathParamCodec[FirstParam], secondCodec: PathParamCodec[SecondParam]): (Request[IO], FirstParam, SecondParam) =
-  extractApi2(api, req).get
+  given singleParamApiRequestExtractor[Param](using codec: PathParamCodec[Param]): ApiRequestExtractor[PathParam[Param]] with
+    def extract[Response](api: FixedMethodApi[PathParam[Param], Response], req: Request[IO]): Option[ExtractedApiRequest[PathParam[Param]]] =
+      api match
+        case singleParamApi: SingleParamFixedMethodApi[Param, Response] => extractSingleParamApi(singleParamApi, req)
 
-def apiPath0[Response](api: FixedMethodApi0[Response]): RoutePath =
+  given doubleParamApiRequestExtractor[FirstParam, SecondParam](using
+      firstCodec: PathParamCodec[FirstParam],
+      secondCodec: PathParamCodec[SecondParam],
+  ): ApiRequestExtractor[PathParams[FirstParam, SecondParam]] with
+    def extract[Response](
+        api: FixedMethodApi[PathParams[FirstParam, SecondParam], Response],
+        req: Request[IO],
+    ): Option[ExtractedApiRequest[PathParams[FirstParam, SecondParam]]] =
+      api match
+        case doubleParamApi: DoubleParamFixedMethodApi[FirstParam, SecondParam, Response] => extractDoubleParamApi(doubleParamApi, req)
+
+def extractApi[Params <: Tuple, Response](
+    api: FixedMethodApi[Params, Response],
+    req: Request[IO],
+)(using extractor: ApiRequestExtractor[Params]): Option[ExtractedApiRequest[Params]] =
+  extractor.extract(api, req)
+
+def matchesApi[Params <: Tuple, Response](
+    api: FixedMethodApi[Params, Response],
+    req: Request[IO],
+)(using extractor: ApiRequestExtractor[Params]): Boolean =
+  extractApi(api, req).nonEmpty
+
+def requireApi[Params <: Tuple, Response](
+    api: FixedMethodApi[Params, Response],
+    req: Request[IO],
+)(using extractor: ApiRequestExtractor[Params]): ExtractedApiRequest[Params] =
+  extractApi(api, req).get
+
+def apiRoute[Params <: Tuple, ApiResponse](
+    api: FixedMethodApi[Params, ApiResponse]
+)(
+    handle: ExtractedApiRequest[Params] => IO[Response[IO]]
+)(using extractor: ApiRequestExtractor[Params]): HttpRoutes[IO] =
+  HttpRoutes[IO] { req =>
+    OptionT
+      .fromOption[IO](extractor.extract(api, req))
+      .semiflatMap(handle)
+  }
+
+def apiRouteWhere[Params <: Tuple, ApiResponse](
+    api: FixedMethodApi[Params, ApiResponse]
+)(
+    accept: ExtractedApiRequest[Params] => Boolean
+)(
+    handle: ExtractedApiRequest[Params] => IO[Response[IO]]
+)(using extractor: ApiRequestExtractor[Params]): HttpRoutes[IO] =
+  HttpRoutes[IO] { req =>
+    OptionT
+      .fromOption[IO](extractor.extract(api, req).filter(accept))
+      .semiflatMap(handle)
+  }
+
+private def staticApiPath[Response](api: StaticFixedMethodApi[Response]): RoutePath =
   buildRoutePath(staticSegmentValues(api.segments))
 
-def apiPath1[Param, Response](
-    api: FixedMethodApi1[Param, Response],
+private def singleParamApiPath[Param, Response](
+    api: SingleParamFixedMethodApi[Param, Response],
     param: Param,
 )(using codec: PathParamCodec[Param]): RoutePath =
   buildRoutePath(
@@ -158,8 +204,8 @@ def apiPath1[Param, Response](
       staticSegmentValues(api.suffixSegments)
   )
 
-def apiPath2[FirstParam, SecondParam, Response](
-    api: FixedMethodApi2[FirstParam, SecondParam, Response],
+private def doubleParamApiPath[FirstParam, SecondParam, Response](
+    api: DoubleParamFixedMethodApi[FirstParam, SecondParam, Response],
     first: FirstParam,
     second: SecondParam,
 )(using firstCodec: PathParamCodec[FirstParam], secondCodec: PathParamCodec[SecondParam]): RoutePath =
@@ -170,3 +216,22 @@ def apiPath2[FirstParam, SecondParam, Response](
       List(secondCodec.render(second)) ++
       staticSegmentValues(api.suffixSegments)
   )
+
+def apiPath[Response](api: FixedMethodApi[NoPathParams, Response]): RoutePath =
+  api match
+    case staticApi: StaticFixedMethodApi[Response] => staticApiPath(staticApi)
+
+def apiPath[Param, Response](
+    api: FixedMethodApi[PathParam[Param], Response],
+    param: Param,
+)(using codec: PathParamCodec[Param]): RoutePath =
+  api match
+    case singleParamApi: SingleParamFixedMethodApi[Param, Response] => singleParamApiPath(singleParamApi, param)
+
+def apiPath[FirstParam, SecondParam, Response](
+    api: FixedMethodApi[PathParams[FirstParam, SecondParam], Response],
+    first: FirstParam,
+    second: SecondParam,
+)(using firstCodec: PathParamCodec[FirstParam], secondCodec: PathParamCodec[SecondParam]): RoutePath =
+  api match
+    case doubleParamApi: DoubleParamFixedMethodApi[FirstParam, SecondParam, Response] => doubleParamApiPath(doubleParamApi, first, second)

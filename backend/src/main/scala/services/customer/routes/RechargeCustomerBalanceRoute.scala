@@ -13,14 +13,12 @@ import org.http4s.circe.CirceEntityCodec.*
 import system.api.*
 import system.app.*
 
-val rechargeCustomerBalanceRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(rechargeCustomerBalanceApi, req) =>
-    val (matchedReq, customerId) = requireApi1(rechargeCustomerBalanceApi, req)
-    withRole(matchedReq, UserRole.customer) { user =>
-      if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.RechargeOtherCustomerForbidden)
-      else
-        matchedReq.as[RechargeBalanceRequest].flatMap { payload =>
-          rechargeCustomerBalance(customerId, payload).flatMap(handleStateResult)
-        }
-    }
+val rechargeCustomerBalanceRoute: HttpRoutes[IO] = apiRoute(rechargeCustomerBalanceApi) { case (matchedReq, customerId) =>
+  withRole(matchedReq, UserRole.customer) { user =>
+    if !ownsCustomer(customerId, user.linkedProfileId) then Forbidden(RouteMessages.RechargeOtherCustomerForbidden)
+    else
+      matchedReq.as[RechargeBalanceRequest].flatMap { payload =>
+        rechargeCustomerBalance(customerId, payload).flatMap(handleStateResult)
+      }
+  }
 }

@@ -14,14 +14,12 @@ import org.http4s.dsl.io.*
 import system.api.*
 import system.app.*
 
-val updateStoreOperationalInfoRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(updateStoreOperationalInfoApi, req) =>
-    val (matchedReq, storeId) = requireApi1(updateStoreOperationalInfoApi, req)
-    withRole(matchedReq, UserRole.merchant) { user =>
-      if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantStoreForbidden)
-      else
-        matchedReq.as[UpdateStoreOperationalRequest].flatMap { payload =>
-          updateStoreOperationalInfo(storeId, payload).flatMap(handleStateResult)
-        }
-    }
+val updateStoreOperationalInfoRoute: HttpRoutes[IO] = apiRoute(updateStoreOperationalInfoApi) { case (matchedReq, storeId) =>
+  withRole(matchedReq, UserRole.merchant) { user =>
+    if !ownsStore(storeId, user.displayName) then Forbidden(RouteMessages.ModifyOtherMerchantStoreForbidden)
+    else
+      matchedReq.as[UpdateStoreOperationalRequest].flatMap { payload =>
+        updateStoreOperationalInfo(storeId, payload).flatMap(handleStateResult)
+      }
+  }
 }

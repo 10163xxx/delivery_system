@@ -13,19 +13,17 @@ import services.review.utils.submitReviewAppeal
 import system.api.*
 import system.app.*
 
-val submitReviewAppealRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(submitReviewAppealApi, req) =>
-    val (matchedReq, orderId) = requireApi1(submitReviewAppealApi, req)
-    withSession(matchedReq) { user =>
-      matchedReq.as[ReviewAppealRequest].flatMap { payload =>
-        val allowed =
-          payload.appellantRole match
-            case AppealRole.Merchant =>
-              user.role == UserRole.merchant && ownsOrderAsMerchant(orderId, user.displayName)
-            case AppealRole.Rider =>
-              user.role == UserRole.rider && ownsOrderAsRider(orderId, user.linkedProfileId)
-        if !allowed then Forbidden(RouteMessages.SubmitReviewAppealForbidden)
-        else submitReviewAppeal(orderId, payload).flatMap(handleStateResult)
-      }
+val submitReviewAppealRoute: HttpRoutes[IO] = apiRoute(submitReviewAppealApi) { case (matchedReq, orderId) =>
+  withSession(matchedReq) { user =>
+    matchedReq.as[ReviewAppealRequest].flatMap { payload =>
+      val allowed =
+        payload.appellantRole match
+          case AppealRole.Merchant =>
+            user.role == UserRole.merchant && ownsOrderAsMerchant(orderId, user.displayName)
+          case AppealRole.Rider =>
+            user.role == UserRole.rider && ownsOrderAsRider(orderId, user.linkedProfileId)
+      if !allowed then Forbidden(RouteMessages.SubmitReviewAppealForbidden)
+      else submitReviewAppeal(orderId, payload).flatMap(handleStateResult)
     }
+  }
 }

@@ -13,14 +13,12 @@ import services.rider.utils.withdrawRiderIncome
 import system.api.*
 import system.app.*
 
-val withdrawRiderIncomeRoute: HttpRoutes[IO] = HttpRoutes.of[IO] {
-  case req if matchesApi1(withdrawRiderIncomeApi, req) =>
-    val (matchedReq, riderId) = requireApi1(withdrawRiderIncomeApi, req)
-    withRole(matchedReq, UserRole.rider) { user =>
-      if !ownsRiderProfile(riderId, user.linkedProfileId) then Forbidden(RouteMessages.WithdrawOtherRiderIncomeForbidden)
-      else
-        matchedReq.as[WithdrawRiderIncomeRequest].flatMap { payload =>
-          withdrawRiderIncome(riderId, payload).flatMap(handleStateResult)
-        }
-    }
+val withdrawRiderIncomeRoute: HttpRoutes[IO] = apiRoute(withdrawRiderIncomeApi) { case (matchedReq, riderId) =>
+  withRole(matchedReq, UserRole.rider) { user =>
+    if !ownsRiderProfile(riderId, user.linkedProfileId) then Forbidden(RouteMessages.WithdrawOtherRiderIncomeForbidden)
+    else
+      matchedReq.as[WithdrawRiderIncomeRequest].flatMap { payload =>
+        withdrawRiderIncome(riderId, payload).flatMap(handleStateResult)
+      }
+  }
 }
