@@ -1,12 +1,15 @@
 package services.admin.routes
 
+// Business note: route adapter for a typed API message; delegate business decisions to service actions instead of embedding them here.
 import services.admin.api.*
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
-import domain.admin.ResolveTicketRequest
-import domain.shared.{DeliveryAppState, OrderId, UserRole}
+import services.admin.objects.apiTypes.ResolveTicketRequest
+import system.app.objects.{DeliveryAppState}
+import services.auth.objects.{UserRole}
+import services.order.objects.{OrderId}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import services.review.utils.*

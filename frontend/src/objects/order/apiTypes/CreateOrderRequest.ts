@@ -1,3 +1,4 @@
+// Business note: service protocol DTO shared with backend apiTypes; keep field names and value object types aligned.
 import type {
   AddressText,
   CouponId,
@@ -6,7 +7,7 @@ import type {
   NoteText,
   StoreId,
 } from '@/objects/core/SharedObjects'
-import type { OrderItemInput } from '@/objects/order/core/OrderItemInput'
+import type { OrderItemInput } from '@/objects/order/apiTypes/OrderItemInput'
 
 export type CreateOrderRequest = {
   customerId: CustomerId

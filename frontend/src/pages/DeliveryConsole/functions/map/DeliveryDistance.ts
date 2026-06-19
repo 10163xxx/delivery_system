@@ -9,7 +9,7 @@ import {
   DELIVERY_DISTANCE_LIMIT_KM,
   DELIVERY_EARTH_RADIUS_KM,
 } from '@/pages/DeliveryConsole/functions/map/DeliveryMapConstants'
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 
 export type StoreDeliveryDistanceCategory =
   | '3公里内'

@@ -1,8 +1,8 @@
 package system
 
-import domain.shared.given
+import system.objects.given
 
-import domain.shared.DatabaseName
+import system.objects.DatabaseName
 
 object DatabaseDefaults:
-  val DefaultDatabaseName: DatabaseName = domain.shared.DatabaseRuntimeDefaults.DefaultDatabaseName
+  val DefaultDatabaseName: DatabaseName = system.objects.DatabaseRuntimeDefaults.DefaultDatabaseName

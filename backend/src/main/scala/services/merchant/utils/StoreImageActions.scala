@@ -1,10 +1,11 @@
 package services.merchant.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
 
 import cats.effect.IO
-import domain.merchant.ImageUploadResponse
-import domain.shared.{ErrorMessage, FileNameText, MediaTypeText}
+import services.merchant.objects.apiTypes.ImageUploadResponse
+import system.objects.{ErrorMessage, FileNameText, MediaTypeText}
 import system.uploads.{StoredStoreImage, findStoreImage, saveStoreImage}
 
 def saveMerchantStoreImage(

@@ -1,6 +1,9 @@
 package services.auth.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
+import services.auth.objects.apiTypes.*
+import services.customer.objects.*
 
 import services.auth.tables.{
   createPersistedAuthAccountWithSession,
@@ -11,8 +14,8 @@ import services.auth.tables.{
   initializeAuthPersistenceData,
 }
 import cats.effect.IO
-import domain.auth.*
-import domain.shared.*
+import services.auth.objects.*
+import system.objects.*
 import system.app.{customerAlias, registerUserProfile}
 
 import java.time.Instant
@@ -164,10 +167,10 @@ private def sanitizeAuthText[T](value: T, maxLength: EntityCount)(using wrapped:
   )
 
 private def nextAuthId(prefix: DisplayText): AuthUserId =
-  s"${prefix.raw}-${UUID.randomUUID().toString.take(AuthDefaults.GeneratedIdSuffixLength)}"
+  new AuthUserId(s"${prefix.raw}-${UUID.randomUUID().toString.take(AuthDefaults.GeneratedIdSuffixLength)}")
 
 private def nextAuthToken(): SessionToken =
-  UUID.randomUUID().toString.replace("-", "")
+  new SessionToken(UUID.randomUUID().toString.replace("-", ""))
 
 private def authNow(): IsoDateTime =
   currentIsoDateTime()

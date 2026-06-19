@@ -1,6 +1,6 @@
 // Address geocoding with cache and provider fallbacks for customer and store delivery locations.
 import type { AddressText } from '@/objects/core/SharedObjects'
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 import type { RawTextValue } from '@/objects/core/SharedObjects'
 import { DELIVERY_MAP_GEOCODE_TIMEOUT_MS } from '@/pages/DeliveryConsole/functions/map/DeliveryMapConstants'
 import {

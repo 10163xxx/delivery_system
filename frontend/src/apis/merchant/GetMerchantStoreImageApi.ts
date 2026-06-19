@@ -1,3 +1,4 @@
+// Business note: frontend API client for the matching backend APIMessage; keep operation names and payload DTOs aligned.
 import type { FileNameText } from '@/objects/core/SharedObjects'
 import { API_CLIENT_DEFAULTS } from '@/system/api/ApiConstants'
 import { buildApiPath1, defineJsonGetApi1, routeSegment } from '@/system/api/TypedApiDefinitions'

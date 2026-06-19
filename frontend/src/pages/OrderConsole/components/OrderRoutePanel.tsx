@@ -1,6 +1,6 @@
 import { AddressDetailsCard } from '@/pages/DeliveryConsole/components/address/AddressDetailsCard'
 import type { AddressDetailsCardData } from '@/objects/view/address/AddressDetailsObjects'
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 import { ORDER_STATUS } from '@/objects/core/SharedObjects'
 import type { OrderSummary } from '@/objects/core/SharedObjects'
 import { CURRENCY_CENTS_SCALE, DEFAULT_MERCHANT_PREP_MINUTES } from '@/pages/DeliveryConsole/functions/shared/DeliveryConstants'

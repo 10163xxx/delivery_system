@@ -1,6 +1,6 @@
 package routes
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
 import cats.syntax.semigroupk.*

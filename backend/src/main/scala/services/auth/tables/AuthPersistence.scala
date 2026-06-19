@@ -1,9 +1,13 @@
 package services.auth.tables
 
+// Business note: database boundary for this service; keep JDBC row mapping separate from protocol DTOs and action logic.
 import cats.effect.IO
 import system.withTransactionConnection
-import domain.auth.PersistedAuthAccount
-import domain.shared.{AuthUserId, IsoDateTime, SessionToken, Username}
+import services.auth.objects.PersistedAuthAccount
+import services.auth.tables.accounts.*
+import services.auth.tables.sessions.*
+import system.objects.{IsoDateTime}
+import services.auth.objects.{AuthUserId, SessionToken, Username}
 
 def initializeAuthPersistenceData: IO[Unit] =
   withTransactionConnection { connection =>

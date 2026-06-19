@@ -1,3 +1,4 @@
+// Business note: frontend API client for the matching backend APIMessage; keep operation names and payload DTOs aligned.
 import type { DeliveryAppState } from '@/objects/core/SharedObjects'
 import { getNormalizedDeliveryState } from '@/system/api/DeliveryStateClient'
 import { defineJsonGetApi0, routeSegment } from '@/system/api/TypedApiDefinitions'

@@ -1,5 +1,5 @@
+// Business note: frontend API client for the matching backend APIMessage; keep operation names and payload DTOs aligned.
 import type { HealthResponse } from '@/objects/core/SharedObjects'
-import { decodeHealthResponse } from '@/system/api/ResponseDecoders'
 import { getJson } from '@/system/api/SharedHttpClient'
 import { defineJsonGetApi0, routeSegment } from '@/system/api/TypedApiDefinitions'
 
@@ -9,5 +9,5 @@ export const healthApiDefinition = defineJsonGetApi0<HealthResponse>([
 ])
 
 export function getHealth() {
-  return getJson(healthApiDefinition, decodeHealthResponse)
+  return getJson(healthApiDefinition)
 }

@@ -1,9 +1,9 @@
 package system.jdbc
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
-import domain.shared.*
+import system.objects.*
 import io.circe.{Decoder, Encoder, Printer}
 import io.circe.parser.decode
 import io.circe.syntax.*
@@ -33,14 +33,16 @@ def loadEntityRows[A: Decoder](
     try
       val resultSet = statement.executeQuery()
       try
-        Iterator
+        sequenceDecodedRows(
+          Iterator
           .continually(resultSet.next())
           .takeWhile(identity)
           .map(_ => decodeJsonRow[A](readJsonPayload(resultSet, 1), table.tableName))
           .toList
+        )
       finally resultSet.close()
     finally statement.close()
-  }
+  }.flatMap(IO.fromEither)
 
 def replaceEntityRows[A: Encoder](
     connection: Connection,
@@ -115,12 +117,20 @@ def readJsonPayload(resultSet: ResultSet, columnIndex: Int): JsonPayload =
 def renderJsonPayload[A: Encoder](value: A): JsonPayload =
   new JsonPayload(deliveryStateJsonPrinter.print(value.asJson))
 
-def decodeJsonRow[A: Decoder](rawJson: JsonPayload, tableName: TableName): A =
-  decode[A](rawJson.raw).fold(
-    error =>
-      throw IllegalStateException(
+private def sequenceDecodedRows[A](
+    rows: List[Either[IllegalStateException, A]]
+): Either[IllegalStateException, List[A]] =
+  rows.foldRight(Right(List.empty[A]): Either[IllegalStateException, List[A]]) { (row, accumulated) =>
+    for
+      value <- row
+      values <- accumulated
+    yield value :: values
+  }
+
+def decodeJsonRow[A: Decoder](rawJson: JsonPayload, tableName: TableName): Either[IllegalStateException, A] =
+  decode[A](rawJson.raw).left.map(error =>
+    IllegalStateException(
         s"无法解析数据库中的业务状态 ${tableName.raw}: ${error.getMessage}",
         error,
-      ),
-    identity,
+      )
   )

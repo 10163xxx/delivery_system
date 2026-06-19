@@ -1,6 +1,9 @@
+// Business note: frontend typed transport boundary; keep request and response type contracts aligned with backend route messages.
 type HttpMethod = 'GET' | 'POST'
 
 type ApiKind = 'json' | 'upload'
+
+type PathParamValue = string | number
 
 export type StaticApiSegment = {
   readonly value: string
@@ -72,7 +75,7 @@ function joinRouteSegments(segments: string[]) {
   return `/${segments.join('/')}`
 }
 
-function renderParam(value: unknown) {
+function renderParam(value: PathParamValue) {
   return String(value)
 }
 
@@ -80,7 +83,10 @@ function renderStaticPath(segments: StaticApiSegment[]) {
   return joinRouteSegments(segments.map((segment) => segment.value))
 }
 
-export function buildApiPath1(endpoint: ParameterizedSegments1, param: unknown) {
+export function buildApiPath1<Param extends PathParamValue>(
+  endpoint: ParameterizedSegments1 & { readonly __param?: Param },
+  param: Param,
+) {
   return joinRouteSegments([
     ...endpoint.prefixSegments.map((segment) => segment.value),
     renderParam(param),
@@ -88,7 +94,14 @@ export function buildApiPath1(endpoint: ParameterizedSegments1, param: unknown) 
   ])
 }
 
-export function buildApiPath2(endpoint: ParameterizedSegments2, firstParam: unknown, secondParam: unknown) {
+export function buildApiPath2<FirstParam extends PathParamValue, SecondParam extends PathParamValue>(
+  endpoint: ParameterizedSegments2 & {
+    readonly __firstParam?: FirstParam
+    readonly __secondParam?: SecondParam
+  },
+  firstParam: FirstParam,
+  secondParam: SecondParam,
+) {
   return joinRouteSegments([
     ...endpoint.prefixSegments.map((segment) => segment.value),
     renderParam(firstParam),

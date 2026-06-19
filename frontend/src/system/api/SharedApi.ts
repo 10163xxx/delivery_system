@@ -1,3 +1,4 @@
+// Business note: frontend typed transport boundary; keep shared API result shapes aligned with backend route messages.
 export {
   delay,
   requestNextPaint,

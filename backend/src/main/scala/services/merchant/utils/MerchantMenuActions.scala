@@ -1,11 +1,14 @@
 package services.merchant.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
+import services.merchant.objects.apiTypes.*
+import system.app.objects.*
 
 import cats.effect.IO
-import domain.merchant.*
-import domain.order.*
-import domain.shared.*
+import services.merchant.objects.*
+import services.order.objects.*
+import system.objects.*
 import system.app.*
 
 private def addMenuItemToStore(store: Store, menuItem: MenuItem): Store =

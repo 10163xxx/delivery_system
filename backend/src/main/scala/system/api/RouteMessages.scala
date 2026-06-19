@@ -1,8 +1,9 @@
 package system.api
 
-import domain.shared.given
+import system.objects.given
+import services.auth.objects.*
 
-import domain.shared.*
+import system.objects.*
 
 object RouteMessages:
   val LoginExpired: ErrorMessage = errorMessage("登录已失效")

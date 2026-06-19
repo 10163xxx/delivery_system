@@ -1,4 +1,11 @@
-import { CUSTOMER_BLOCKED_STORE_IDS_KEY_PREFIX, CUSTOMER_FAVORITE_STORE_IDS_KEY_PREFIX, CUSTOMER_PROFILE_NOTICE_SEEN_KEY_PREFIX, CUSTOMER_STORE_SEARCH_HISTORY_KEY, MAX_CUSTOMER_STORE_SEARCH_HISTORY } from '@/pages/DeliveryConsole/functions/shared/DeliveryConstants'
+// Business note: frontend browser storage boundary for session token and customer-local state.
+import {
+  CUSTOMER_BLOCKED_STORE_IDS_KEY_PREFIX,
+  CUSTOMER_FAVORITE_STORE_IDS_KEY_PREFIX,
+  CUSTOMER_PROFILE_NOTICE_SEEN_KEY_PREFIX,
+  CUSTOMER_STORE_SEARCH_HISTORY_KEY,
+  MAX_CUSTOMER_STORE_SEARCH_HISTORY,
+} from '@/system/api/BrowserStorageConstants'
 
 const memoryStorage = new Map<string, string[]>()
 let memorySessionToken: string | null = null

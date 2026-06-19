@@ -1,9 +1,11 @@
 package services.order.api
 
-import domain.shared.given
+// Business note: typed HTTP contract for this service operation; keep the matching frontend API client aligned by operation name.
+import system.objects.given
 
-import domain.order.ResolvePartialRefundRequest
-import domain.shared.{DeliveryAppState, RefundRequestId}
+import services.order.objects.apiTypes.ResolvePartialRefundRequest
+import system.app.objects.{DeliveryAppState}
+import services.order.objects.{RefundRequestId}
 import system.api.*
 
 val resolvePartialRefundRequestApi: FixedMethodApi[PathParam[RefundRequestId], DeliveryAppState] =

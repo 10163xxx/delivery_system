@@ -1,9 +1,9 @@
 package system.api.planner
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
-import domain.shared.SaveDemoNoteRequest
+import system.app.planner.objects.SaveDemoNoteRequest
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.circe.CirceEntityEncoder.*

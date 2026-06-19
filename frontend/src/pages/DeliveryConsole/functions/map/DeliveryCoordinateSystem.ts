@@ -1,4 +1,4 @@
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 import type { Latitude, Longitude } from '@/objects/core/SharedObjects'
 import { asDomainNumber } from '@/pages/DeliveryConsole/functions/shared/DeliveryShared'
 

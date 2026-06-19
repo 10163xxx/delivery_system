@@ -1,6 +1,6 @@
 package routes
 
-import domain.shared.given
+import system.objects.given
 
 import services.admin.routes.adminRoutes
 import cats.effect.IO

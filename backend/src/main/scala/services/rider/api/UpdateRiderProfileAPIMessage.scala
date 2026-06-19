@@ -1,9 +1,11 @@
 package services.rider.api
 
-import domain.shared.given
+// Business note: typed HTTP contract for this service operation; keep the matching frontend API client aligned by operation name.
+import system.objects.given
 
-import domain.rider.UpdateRiderProfileRequest
-import domain.shared.{DeliveryAppState, RiderId}
+import services.rider.objects.apiTypes.UpdateRiderProfileRequest
+import system.app.objects.{DeliveryAppState}
+import services.rider.objects.{RiderId}
 import system.api.*
 
 val updateRiderProfileApi: FixedMethodApi[PathParam[RiderId], DeliveryAppState] =

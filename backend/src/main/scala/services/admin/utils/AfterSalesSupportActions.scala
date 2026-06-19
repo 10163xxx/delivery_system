@@ -1,13 +1,16 @@
 package services.admin.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
+import services.order.objects.apiTypes.*
+import system.app.objects.*
 
 import cats.effect.IO
-import domain.admin.*
-import domain.auth.*
-import domain.customer.*
-import domain.order.*
-import domain.shared.*
+import services.admin.objects.*
+import services.auth.objects.*
+import services.customer.objects.*
+import services.order.objects.*
+import system.objects.*
 import system.app.*
 
 def resolveAfterSalesTicket(
@@ -23,17 +26,17 @@ def resolveAfterSalesTicket(
           order <- findAfterSalesOrderByTicket(current, ticket)
           customer <- findRelatedCustomer(current, order)
           requestType <- ticket.requestType.toRight(ValidationMessages.AfterSales.MissingAfterSalesRequestType)
-          resolutionNote <- sanitizeSupportResolutionNote(request.resolutionNote)
+          resolutionNote <- sanitizeCaseResolutionNote(request.resolutionNote)
           resolutionMode = resolveAfterSalesMode(request)
           creditedAmount <- resolveCreditedAmount(
             AfterSalesResolutionContext(request, ticket, order, requestType, resolutionMode)
           )
-        yield
-          val timestamp = now()
-          val issuedCoupon =
+          timestamp = now()
+          issuedCoupon <-
             if request.approved && resolutionMode == AfterSalesResolutionMode.Coupon then
-              Some(buildAfterSalesCoupon(customer.id, requestType, creditedAmount, timestamp))
-            else None
+              buildAfterSalesCoupon(customer.id, requestType, creditedAmount, timestamp).map(Some(_))
+            else Right(None)
+        yield
           val outcomeNote =
             buildAfterSalesOutcomeNote(
               requestType,

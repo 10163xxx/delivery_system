@@ -1,5 +1,5 @@
 import L, { type LatLngExpression } from 'leaflet'
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 
 export function getCoordinateQuery(address?: string, query?: string) {
   return (address?.trim() || query?.trim() || '')

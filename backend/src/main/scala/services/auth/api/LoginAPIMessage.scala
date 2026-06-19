@@ -1,8 +1,10 @@
 package services.auth.api
 
-import domain.shared.given
+// Business note: typed HTTP contract for this service operation; keep the matching frontend API client aligned by operation name.
+import system.objects.given
 
-import domain.auth.{AuthSession, LoginRequest}
+import services.auth.objects.{AuthSession}
+import services.auth.objects.apiTypes.{LoginRequest}
 import system.api.*
 
 val loginApi: FixedMethodApi[NoPathParams, AuthSession] =

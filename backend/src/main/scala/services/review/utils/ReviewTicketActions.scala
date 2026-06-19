@@ -1,11 +1,15 @@
 package services.review.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
+import services.admin.objects.apiTypes.*
+import system.app.objects.*
+import services.order.objects.*
 
 import cats.effect.IO
-import domain.admin.*
-import domain.auth.*
-import domain.shared.*
+import services.admin.objects.*
+import services.auth.objects.*
+import system.objects.*
 import system.app.*
 
 def resolveTicket(

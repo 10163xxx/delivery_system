@@ -1,14 +1,17 @@
 package services.admin.tables
 
+// Business note: database boundary for this service; keep JDBC row mapping separate from protocol DTOs and action logic.
 import cats.effect.IO
-import domain.admin.{AdminProfile, AdminTicket, PersistedAdminState}
+import services.admin.objects.{AdminProfile, AdminTicket, PersistedAdminState}
+import services.admin.tables.admins.*
+import services.admin.tables.tickets.*
 
 import java.sql.{Connection, Timestamp}
 
 def initializeAdminTables(connection: Connection): IO[Unit] =
   List(
-    initializeDeliveryAdminsTable(connection),
-    initializeDeliveryTicketsTable(connection),
+    initializeAdminTable(connection),
+    initializeTicketTable(connection),
   ).foldLeft(IO.unit)(_ *> _)
 
 def loadPersistedAdminState(connection: Connection): IO[PersistedAdminState] =

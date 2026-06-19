@@ -1,6 +1,6 @@
 package system.api.health
 
-import domain.shared.given
+import system.objects.given
 
 import system.objects.HealthResponse
 import system.api.*

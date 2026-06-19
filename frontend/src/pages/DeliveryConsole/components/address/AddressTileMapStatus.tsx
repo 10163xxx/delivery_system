@@ -1,4 +1,4 @@
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 
 export function AddressTileMapStatus({
   isLocating,

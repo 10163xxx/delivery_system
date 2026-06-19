@@ -2,7 +2,7 @@ package system.api
 
 import cats.data.OptionT
 import cats.effect.IO
-import domain.shared.{RoutePath, RouteSegmentText, WrappedTextType, wrapText}
+import system.objects.{RoutePath, RouteSegmentText, WrappedTextType, wrapText}
 import org.http4s.{HttpRoutes, Method, Request, Response}
 
 final case class StaticRouteSegment(value: RouteSegmentText)
@@ -154,18 +154,6 @@ def extractApi[Params <: Tuple, Response](
     req: Request[IO],
 )(using extractor: ApiRequestExtractor[Params]): Option[ExtractedApiRequest[Params]] =
   extractor.extract(api, req)
-
-def matchesApi[Params <: Tuple, Response](
-    api: FixedMethodApi[Params, Response],
-    req: Request[IO],
-)(using extractor: ApiRequestExtractor[Params]): Boolean =
-  extractApi(api, req).nonEmpty
-
-def requireApi[Params <: Tuple, Response](
-    api: FixedMethodApi[Params, Response],
-    req: Request[IO],
-)(using extractor: ApiRequestExtractor[Params]): ExtractedApiRequest[Params] =
-  extractApi(api, req).get
 
 def apiRoute[Params <: Tuple, ApiResponse](
     api: FixedMethodApi[Params, ApiResponse]

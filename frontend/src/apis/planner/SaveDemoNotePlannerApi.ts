@@ -1,9 +1,9 @@
+// Business note: frontend API client for the matching backend APIMessage; keep operation names and payload DTOs aligned.
 import type {
   DemoNote,
   PlannerName,
   SaveDemoNoteRequest,
 } from '@/objects/core/SharedObjects'
-import { decodeDemoNote } from '@/system/api/ResponseDecoders'
 import { defineJsonPostEndpoint, postJson } from '@/system/api/SharedHttpClient'
 import { buildApiPath1, defineJsonPostApi1, routeSegment } from '@/system/api/TypedApiDefinitions'
 
@@ -20,7 +20,6 @@ export function runSaveDemoNotePlanner(
     defineJsonPostEndpoint<SaveDemoNoteRequest, DemoNote>(
       buildApiPath1(saveDemoNotePlannerApiDefinition, plannerName),
     ),
-    payload,
-    decodeDemoNote,
+    payload
   )
 }

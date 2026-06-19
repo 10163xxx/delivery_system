@@ -1,13 +1,16 @@
 package system.app
 
-import domain.shared.given
+// Business note: application-level business orchestration and derived state shared by service actions.
+import system.objects.given
+import system.app.objects.*
 
-import domain.customer.*
-import domain.merchant.*
-import domain.order.*
-import domain.review.*
-import domain.rider.*
-import domain.shared.*
+import services.customer.objects.*
+import services.merchant.objects.*
+import services.merchant.utils.*
+import services.order.objects.*
+import services.review.objects.*
+import services.rider.objects.*
+import system.objects.*
 
 def refreshState(state: DeliveryAppState, currentTime: IsoDateTime): DeliveryAppState =
     withDerivedData(applyAutomaticDispatch(state, currentTime), currentTime)

@@ -1,9 +1,9 @@
+// Business note: frontend API client for the matching backend APIMessage; keep operation names and payload DTOs aligned.
 import type {
   EchoRequest,
   EchoResponse,
   PlannerName,
 } from '@/objects/core/SharedObjects'
-import { decodeEchoResponse } from '@/system/api/ResponseDecoders'
 import { defineJsonPostEndpoint, postJson } from '@/system/api/SharedHttpClient'
 import { buildApiPath1, defineJsonPostApi1, routeSegment } from '@/system/api/TypedApiDefinitions'
 
@@ -17,7 +17,6 @@ export function runEchoPlanner(plannerName: PlannerName, payload: EchoRequest) {
     defineJsonPostEndpoint<EchoRequest, EchoResponse>(
       buildApiPath1(echoPlannerApiDefinition, plannerName),
     ),
-    payload,
-    decodeEchoResponse,
+    payload
   )
 }

@@ -1,9 +1,9 @@
 package system.api.planner
 
-import domain.shared.given
+import system.objects.given
 
-import domain.shared.{EchoRequest, EchoResponse, PlannerName}
 import system.api.*
+import system.app.planner.objects.{EchoRequest, EchoResponse, PlannerName}
 
 val echoPlannerApi: FixedMethodApi[PathParam[PlannerName], EchoResponse] =
   jsonPostApi[PlannerName, EchoRequest, EchoResponse](

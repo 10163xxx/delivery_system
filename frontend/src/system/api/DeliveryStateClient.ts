@@ -1,9 +1,9 @@
+// Business note: frontend typed transport boundary for delivery-state endpoints; keep request and response types aligned with backend routes.
 import type { DeliveryAppState } from '@/objects/core/SharedObjects'
 import type {
   JsonGetEndpoint,
   JsonPostEndpoint,
 } from '@/system/api/TypedApiDefinitions'
-import { decodeDeliveryAppState } from '@/system/api/ResponseDecoders'
 import {
   defineJsonGetEndpoint,
   defineJsonPostEndpoint,
@@ -23,18 +23,18 @@ function toJsonPostEndpoint<Body, Response>(endpoint: string | JsonPostEndpoint<
 export function getNormalizedDeliveryState(
   endpoint: string | JsonGetEndpoint<DeliveryAppState>,
 ) {
-  return getJson(toJsonGetEndpoint(endpoint), decodeDeliveryAppState)
+  return getJson(toJsonGetEndpoint(endpoint))
 }
 
 export function postNormalizedDeliveryState<Body>(
   endpoint: string | JsonPostEndpoint<Body, DeliveryAppState>,
   payload: Body,
 ) {
-  return postJson(toJsonPostEndpoint(endpoint), payload, decodeDeliveryAppState)
+  return postJson(toJsonPostEndpoint(endpoint), payload)
 }
 
 export function postNormalizedDeliveryStateWithoutBody(
   endpoint: string | JsonPostEndpoint<void, DeliveryAppState>,
 ) {
-  return postWithoutBody(toJsonPostEndpoint(endpoint), decodeDeliveryAppState)
+  return postWithoutBody(toJsonPostEndpoint(endpoint))
 }

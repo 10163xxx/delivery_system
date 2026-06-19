@@ -1,15 +1,19 @@
 package services.merchant.tables
 
+// Business note: database boundary for this service; keep JDBC row mapping separate from protocol DTOs and action logic.
 import cats.effect.IO
-import domain.merchant.{MerchantApplication, MerchantProfile, PersistedMerchantState, Store}
+import services.merchant.objects.{MerchantApplication, MerchantProfile, PersistedMerchantState, Store}
+import services.merchant.tables.merchantapplications.*
+import services.merchant.tables.merchantprofiles.*
+import services.merchant.tables.stores.*
 
 import java.sql.{Connection, Timestamp}
 
 def initializeMerchantTables(connection: Connection): IO[Unit] =
   List(
-    initializeDeliveryStoresTable(connection),
-    initializeDeliveryMerchantProfilesTable(connection),
-    initializeDeliveryMerchantApplicationsTable(connection),
+    initializeStoreTable(connection),
+    initializeMerchantProfileTable(connection),
+    initializeMerchantApplicationTable(connection),
   ).foldLeft(IO.unit)(_ *> _)
 
 def loadPersistedMerchantState(connection: Connection): IO[PersistedMerchantState] =

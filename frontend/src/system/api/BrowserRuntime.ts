@@ -1,3 +1,4 @@
+// Business note: frontend browser runtime boundary for environment-dependent API behavior.
 export function delay(delayMs: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, delayMs))
 }

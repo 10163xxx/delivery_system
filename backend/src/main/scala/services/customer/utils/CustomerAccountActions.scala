@@ -1,11 +1,14 @@
 package services.customer.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
+import services.customer.objects.apiTypes.*
+import system.app.objects.*
 
 import cats.effect.IO
-import domain.auth.*
-import domain.customer.*
-import domain.shared.*
+import services.auth.objects.*
+import services.customer.objects.*
+import system.objects.*
 import system.app.*
 
 private def findAccountCustomer(

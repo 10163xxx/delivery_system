@@ -1,10 +1,11 @@
 package system.app.planner
 
-import domain.shared.given
+// Business note: demo planner workflow code; keep planner API DTOs separate from application state objects.
+import system.objects.given
 
 import cats.effect.IO
-import domain.shared.{DemoNote, PlannerName, SaveDemoNoteRequest}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+import system.app.planner.objects.{DemoNote, PlannerName, SaveDemoNoteRequest}
 import system.app.planner.table.insertNote
 
 import java.sql.Connection

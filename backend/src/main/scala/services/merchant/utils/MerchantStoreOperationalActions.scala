@@ -1,8 +1,11 @@
 package services.merchant.utils
 
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
 import cats.effect.IO
-import domain.merchant.*
-import domain.shared.*
+import services.merchant.objects.apiTypes.*
+import system.app.objects.*
+import services.merchant.objects.*
+import system.objects.*
 import system.app.*
 
 private def validatePrepMinutes(value: Minutes): Either[ErrorMessage, Minutes] =

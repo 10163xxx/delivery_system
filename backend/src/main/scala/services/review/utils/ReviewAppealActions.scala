@@ -1,12 +1,15 @@
 package services.review.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
+import services.review.objects.apiTypes.*
+import system.app.objects.*
 
 import cats.effect.IO
-import domain.admin.*
-import domain.order.*
-import domain.review.*
-import domain.shared.*
+import services.admin.objects.*
+import services.order.objects.*
+import services.review.objects.*
+import system.objects.*
 import system.app.*
 
 private def hasPendingReviewAppeal(
@@ -14,10 +17,12 @@ private def hasPendingReviewAppeal(
       orderId: OrderId,
       appellantRole: AppealRole,
   ): ApprovalFlag =
-    current.reviewAppeals.exists(appeal =>
-      appeal.orderId == orderId &&
-        appeal.appellantRole == appellantRole &&
-        appeal.status == AppealStatus.Pending
+    new ApprovalFlag(
+      current.reviewAppeals.exists(appeal =>
+        appeal.orderId == orderId &&
+          appeal.appellantRole == appellantRole &&
+          appeal.status == AppealStatus.Pending
+      )
     )
 
 private def resolveReviewAppealOrders(

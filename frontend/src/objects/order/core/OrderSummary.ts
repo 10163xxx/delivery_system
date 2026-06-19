@@ -1,3 +1,4 @@
+// Business note: frontend mirror of a backend service object; keep names and fields aligned unless this file is explicitly frontend-only.
 import type { OrderSummaryActivity } from '@/objects/order/core/OrderSummaryActivity'
 import type { OrderSummaryFulfillment } from '@/objects/order/core/OrderSummaryFulfillment'
 import type { OrderSummaryIdentity } from '@/objects/order/core/OrderSummaryIdentity'

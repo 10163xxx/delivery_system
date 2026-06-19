@@ -1,9 +1,11 @@
 package services.admin.api
 
-import domain.shared.given
+// Business note: typed HTTP contract for this service operation; keep the matching frontend API client aligned by operation name.
+import system.objects.given
 
-import domain.merchant.ReviewMerchantApplicationRequest
-import domain.shared.{DeliveryAppState, MerchantApplicationId}
+import services.merchant.objects.apiTypes.ReviewMerchantApplicationRequest
+import system.app.objects.{DeliveryAppState}
+import services.merchant.objects.{MerchantApplicationId}
 import system.api.*
 
 val rejectMerchantApplicationApi: FixedMethodApi[PathParam[MerchantApplicationId], DeliveryAppState] =

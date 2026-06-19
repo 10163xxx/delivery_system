@@ -1,3 +1,5 @@
+// Business note: frontend-only shared view props for console screens; keep
+// backend protocol objects out of this file unless the UI passes them through.
 import type { AdminRoleProps, CustomerRoleProps, MerchantRoleProps, RiderRoleProps } from '@/pages/DeliveryConsole/functions/roleProps'
 import type { AuthSession, DeliveryAppState, Role } from '@/objects/core/SharedObjects'
 

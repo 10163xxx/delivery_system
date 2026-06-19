@@ -1,4 +1,4 @@
-import { MAX_CUSTOMER_STORE_SEARCH_HISTORY } from '@/pages/DeliveryConsole/functions/shared/DeliveryConstants'
+import { MAX_CUSTOMER_STORE_SEARCH_HISTORY } from '@/system/api/BrowserStorageConstants'
 import { getInitialQuantities } from '@/pages/DeliveryConsole/functions/drafts/DeliveryDrafts'
 import {
   readCustomerBlockedStoreIds as readCustomerBlockedStoreIdsFromStorage,

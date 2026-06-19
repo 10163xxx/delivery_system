@@ -1,8 +1,10 @@
 package system.app
 
-import domain.shared.given
+// Business note: application-level business orchestration and derived state shared by service actions.
+import system.objects.given
+import system.app.objects.*
 
-import domain.shared.*
+import system.objects.*
 
 private val blankText = wrapText[DisplayText]("")
 private val reviewReasonPrefix = wrapText[DisplayText]("，理由：")

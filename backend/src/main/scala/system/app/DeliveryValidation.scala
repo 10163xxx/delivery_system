@@ -1,13 +1,18 @@
 package system.app
 
-import domain.shared.given
+// Business note: application-level business orchestration and derived state shared by service actions.
+import system.objects.given
+import services.review.objects.apiTypes.*
+import services.merchant.objects.apiTypes.*
+import system.app.objects.*
 
-import domain.admin.*
-import domain.customer.*
-import domain.merchant.*
-import domain.order.*
-import domain.review.*
-import domain.shared.*
+import services.admin.objects.*
+import services.customer.objects.*
+import services.merchant.objects.*
+import services.merchant.utils.*
+import services.order.objects.*
+import services.review.objects.*
+import system.objects.*
 
 private def normalizeMenuItemRemainingQuantity(
       quantity: Option[Quantity]

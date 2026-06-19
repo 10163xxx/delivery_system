@@ -1,6 +1,7 @@
 package system.app
 
-import domain.shared.*
+// Business note: application-level business orchestration and derived state shared by service actions.
+import system.objects.*
 
 import java.time.ZoneId
 

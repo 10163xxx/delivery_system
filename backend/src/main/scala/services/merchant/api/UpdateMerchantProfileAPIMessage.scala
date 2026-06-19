@@ -1,9 +1,10 @@
 package services.merchant.api
 
-import domain.shared.given
+// Business note: typed HTTP contract for this service operation; keep the matching frontend API client aligned by operation name.
+import system.objects.given
 
-import domain.merchant.UpdateMerchantProfileRequest
-import domain.shared.{DeliveryAppState}
+import services.merchant.objects.apiTypes.UpdateMerchantProfileRequest
+import system.app.objects.{DeliveryAppState}
 import system.api.*
 
 val updateMerchantProfileApi: FixedMethodApi[NoPathParams, DeliveryAppState] =

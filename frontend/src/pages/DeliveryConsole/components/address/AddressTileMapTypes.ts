@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
 import type L from 'leaflet'
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 import type { DeliveryWeatherTone } from '@/pages/DeliveryConsole/functions/map/DeliveryRouteEstimates'
 
 export type AddressTileMapProps = {

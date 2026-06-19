@@ -1,13 +1,16 @@
 package services.order.routes
 
+// Business note: route adapter for a typed API message; delegate business decisions to service actions instead of embedding them here.
 import services.order.api.*
 
-import domain.shared.given
+import system.objects.given
 
 import services.admin.utils.*
 import cats.effect.IO
-import domain.order.SubmitPartialRefundRequest
-import domain.shared.{DeliveryAppState, OrderId, UserRole}
+import services.order.objects.apiTypes.SubmitPartialRefundRequest
+import system.app.objects.{DeliveryAppState}
+import services.auth.objects.{UserRole}
+import services.order.objects.{OrderId}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.io.*

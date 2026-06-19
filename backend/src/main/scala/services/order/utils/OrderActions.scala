@@ -1,14 +1,18 @@
 package services.order.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
+import services.review.objects.apiTypes.*
+import services.order.objects.apiTypes.*
+import system.app.objects.*
 
 import cats.effect.IO
-import domain.customer.*
-import domain.merchant.*
-import domain.order.*
-import domain.review.*
-import domain.rider.*
-import domain.shared.*
+import services.customer.objects.*
+import services.merchant.objects.*
+import services.order.objects.*
+import services.review.objects.*
+import services.rider.objects.*
+import system.objects.*
 import system.app.*
 
 def createOrder(request: CreateOrderRequest): IO[Either[ErrorMessage, DeliveryAppState]] =

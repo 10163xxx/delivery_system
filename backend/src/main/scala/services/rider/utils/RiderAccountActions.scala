@@ -1,11 +1,15 @@
 package services.rider.utils
 
-import domain.shared.given
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import system.objects.given
+import services.rider.objects.apiTypes.*
+import system.app.objects.*
 
 import cats.effect.IO
-import domain.merchant.{MerchantPayoutAccount, MerchantWithdrawal}
-import domain.rider.*
-import domain.shared.*
+import services.merchant.objects.{MerchantPayoutAccount, MerchantWithdrawal}
+import services.merchant.utils.*
+import services.rider.objects.*
+import system.objects.*
 import system.app.*
 
 private def validateWithdrawalAmount(

@@ -1,9 +1,11 @@
 package services.order.api
 
-import domain.shared.given
+// Business note: typed HTTP contract for this service operation; keep the matching frontend API client aligned by operation name.
+import system.objects.given
 
-import domain.order.ResolveAfterSalesRequest
-import domain.shared.{DeliveryAppState, TicketId}
+import services.order.objects.apiTypes.ResolveAfterSalesRequest
+import system.app.objects.{DeliveryAppState}
+import services.admin.objects.{TicketId}
 import system.api.*
 
 val resolveAfterSalesTicketApi: FixedMethodApi[PathParam[TicketId], DeliveryAppState] =

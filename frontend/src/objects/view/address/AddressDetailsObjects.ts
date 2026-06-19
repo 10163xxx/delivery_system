@@ -1,7 +1,8 @@
+// Business note: frontend-only view object; do not mirror this shape in backend service objects unless it becomes protocol data.
 // Cross-page address UI view models. These types are frontend-only and do not
 // mirror backend protocol objects; they shape data for shared address components.
 import type { DeliveryWeatherTone } from '@/pages/DeliveryConsole/functions/map/DeliveryRouteEstimates'
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 
 export type AddressDetailsMetric = {
   label: string

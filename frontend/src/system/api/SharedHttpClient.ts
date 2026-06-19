@@ -1,7 +1,7 @@
+// Business note: frontend typed transport boundary; keep request contracts aligned with backend route messages.
 // Typed HTTP helpers shared by all frontend API modules.
 import { readSessionToken } from '@/system/api/BrowserStorage'
 import { API_CLIENT_DEFAULTS, API_HEADER } from '@/system/api/ApiConstants'
-import type { Decoder } from '@/system/api/ResponseDecoders'
 import type {
   JsonGetEndpoint,
   JsonPostEndpoint,
@@ -65,41 +65,36 @@ async function performRequest(input: string, init: RequestInit, timeoutMessage: 
   return response
 }
 
-async function parseJsonResponse(response: Response): Promise<unknown> {
+async function parseJsonResponse<ResponseBody>(response: Response): Promise<ResponseBody> {
   if (!response.ok) {
     const message = await response.text()
     throw new Error(message || `Request failed with status ${response.status}`)
   }
 
   if (response.status === HTTP_CLIENT_DEFAULTS.noContentStatus) {
-    return undefined
+    return undefined as ResponseBody
   }
 
   const text = await response.text()
   if (!text) {
-    return undefined
+    return undefined as ResponseBody
   }
 
   try {
-    return JSON.parse(text)
+    return JSON.parse(text) as ResponseBody
   } catch {
     throw new Error('后端返回了无效的 JSON 响应')
   }
 }
 
-export function getJson<Response>(
-  endpoint: JsonGetEndpoint<Response>,
-  decodeResponse: Decoder<Response>,
-) {
+export function getJson<Response>(endpoint: JsonGetEndpoint<Response>) {
   return performRequest(endpoint.path, { method: endpoint.method }, HTTP_CLIENT_MESSAGES.requestTimeout)
-    .then((response) => parseJsonResponse(response))
-    .then((value) => decodeResponse(value))
+    .then((response) => parseJsonResponse<Response>(response))
 }
 
 export function postJson<Body, Response>(
   endpoint: JsonPostEndpoint<Body, Response>,
   body: Body,
-  decodeResponse: Decoder<Response>,
 ) {
   return performRequest(
     endpoint.path,
@@ -109,14 +104,10 @@ export function postJson<Body, Response>(
       body: JSON.stringify(body),
     },
     HTTP_CLIENT_MESSAGES.requestTimeout,
-  ).then((response) => parseJsonResponse(response))
-    .then((value) => decodeResponse(value))
+  ).then((response) => parseJsonResponse<Response>(response))
 }
 
-export function postWithoutBody<Response>(
-  endpoint: JsonPostEndpoint<void, Response>,
-  decodeResponse: Decoder<Response>,
-) {
+export function postWithoutBody<Response>(endpoint: JsonPostEndpoint<void, Response>) {
   return performRequest(
     endpoint.path,
     {
@@ -124,14 +115,12 @@ export function postWithoutBody<Response>(
       headers: { [API_HEADER.contentType]: API_HEADER.jsonContentType },
     },
     HTTP_CLIENT_MESSAGES.requestTimeout,
-  ).then((response) => parseJsonResponse(response))
-    .then((value) => decodeResponse(value))
+  ).then((response) => parseJsonResponse<Response>(response))
 }
 
 export function postFormData<Response>(
   endpoint: UploadPostEndpoint<Response>,
   body: FormData,
-  decodeResponse: Decoder<Response>,
 ) {
   return performRequest(
     endpoint.path,
@@ -140,6 +129,5 @@ export function postFormData<Response>(
       body,
     },
     HTTP_CLIENT_MESSAGES.uploadTimeout,
-  ).then((response) => parseJsonResponse(response))
-    .then((value) => decodeResponse(value))
+  ).then((response) => parseJsonResponse<Response>(response))
 }

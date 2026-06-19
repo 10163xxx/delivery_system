@@ -1,11 +1,13 @@
 package system.app.core.table
 
-import domain.shared.given
+// Business note: application-level business orchestration and derived state shared by service actions.
+import system.objects.given
+import system.app.objects.*
 
 import cats.effect.IO
 import services.admin.tables.*
 import services.customer.tables.*
-import domain.shared.*
+import system.objects.*
 import services.merchant.tables.*
 import services.order.tables.*
 import services.review.tables.*
@@ -101,9 +103,11 @@ private def loadSnapshotPersistedDeliveryState(connection: Connection): IO[Optio
         statement.setString(1, primaryStateKey.raw)
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then Some(decodeJsonRow[DeliveryAppState](readJsonPayload(resultSet, 1), DeliveryPersistenceDefaults.SnapshotTableName))
-          else None
+          if resultSet.next() then
+            decodeJsonRow[DeliveryAppState](readJsonPayload(resultSet, 1), DeliveryPersistenceDefaults.SnapshotTableName)
+              .map(Some(_))
+          else Right(None)
         finally resultSet.close()
       finally statement.close()
-    }
+    }.flatMap(IO.fromEither)
   else IO.pure(None)

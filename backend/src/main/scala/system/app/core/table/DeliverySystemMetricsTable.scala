@@ -1,9 +1,11 @@
 package system.app.core.table
 
-import domain.shared.given
+// Business note: application-level business orchestration and derived state shared by service actions.
+import system.objects.given
+import system.app.objects.*
 
 import cats.effect.IO
-import domain.shared.*
+import system.objects.*
 import system.jdbc.*
 
 import java.sql.{Connection, Timestamp}
@@ -47,11 +49,13 @@ def loadPersistedSystemMetrics(connection: Connection): IO[Option[SystemMetrics]
       statement.setString(1, primaryStateKey.raw)
       val resultSet = statement.executeQuery()
       try
-        if resultSet.next() then Some(decodeJsonRow[SystemMetrics](readJsonPayload(resultSet, 1), DeliveryPersistenceDefaults.MetricsTableName))
-        else None
+        if resultSet.next() then
+          decodeJsonRow[SystemMetrics](readJsonPayload(resultSet, 1), DeliveryPersistenceDefaults.MetricsTableName)
+            .map(Some(_))
+        else Right(None)
       finally resultSet.close()
     finally statement.close()
-  }
+  }.flatMap(IO.fromEither)
 
 def upsertPersistedSystemMetrics(
     connection: Connection,

@@ -1,12 +1,16 @@
 package services.review.routes
 
+// Business note: route adapter for a typed API message; delegate business decisions to service actions instead of embedding them here.
 import services.review.api.*
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
-import domain.review.ReviewAppealRequest
-import domain.shared.{AppealRole, DeliveryAppState, OrderId, UserRole}
+import services.review.objects.apiTypes.ReviewAppealRequest
+import system.app.objects.{DeliveryAppState}
+import services.auth.objects.{UserRole}
+import services.order.objects.{OrderId}
+import services.review.objects.{AppealRole}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import services.review.utils.submitReviewAppeal

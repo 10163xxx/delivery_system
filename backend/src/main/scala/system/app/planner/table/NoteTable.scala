@@ -1,10 +1,12 @@
 package system.app.planner.table
 
-import domain.shared.given
+// Business note: demo planner workflow code; keep planner API DTOs separate from application state objects.
+import system.objects.given
 
 import cats.effect.IO
-import domain.shared.{DemoNote, DisplayText, NoteBody, NoteId, NoteStatus, NoteTableDefaults, NoteText, NoteTitle, ParameterIndex, SaveDemoNoteRequest, SqlStatement, noteStatusDatabaseValues, noteStatusFromDatabaseUnsafe, noteStatusToDatabase, randomNoteId}
+import system.objects.{DisplayText, NoteTableDefaults, NoteText, ParameterIndex, SqlStatement}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+import system.app.planner.objects.{DemoNote, NoteBody, NoteId, NoteStatus, NoteTitle, SaveDemoNoteRequest, noteStatusDatabaseValues, noteStatusFromDatabase, noteStatusToDatabase, randomNoteId}
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Timestamp}
 
@@ -59,7 +61,7 @@ def initializeNoteTable(connection: Connection): IO[Unit] =
 
 def insertNote(connection: Connection, request: SaveDemoNoteRequest): IO[DemoNote] =
   for
-    note <- IO.blocking {
+    insertedNote <- IO.blocking {
       val noteId = randomNoteId()
       val createdAt = java.time.Instant.now()
       val statement = connection.prepareStatement(insertSql.raw)
@@ -73,11 +75,12 @@ def insertNote(connection: Connection, request: SaveDemoNoteRequest): IO[DemoNot
 
         val resultSet = statement.executeQuery()
         try
-          if resultSet.next() then readDemoNote(resultSet)
-          else throw new IllegalStateException("Insert succeeded but returned no row")
+          if resultSet.next() then readDemoNote(resultSet).map(Some(_))
+          else Right(None)
         finally resultSet.close()
       finally statement.close()
-    }
+    }.flatMap(IO.fromEither)
+    note <- IO.fromOption(insertedNote)(IllegalStateException("Insert succeeded but returned no row"))
     _ <- noteTableLogger.info(s"Inserted demo note into PostgreSQL, noteId=${note.id.value}")
   yield note
 
@@ -90,11 +93,11 @@ def findNoteById(connection: Connection, noteId: NoteId): IO[Option[DemoNote]] =
 
       val resultSet = statement.executeQuery()
       try
-        if resultSet.next() then Some(readDemoNote(resultSet))
-        else None
+        if resultSet.next() then readDemoNote(resultSet).map(Some(_))
+        else Right(None)
       finally resultSet.close()
     finally statement.close()
-  }
+  }.flatMap(IO.fromEither)
 
 private def setNoteId(statement: PreparedStatement, index: ParameterIndex, noteId: NoteId): Unit =
   statement.setObject(index, noteId.value)
@@ -111,11 +114,16 @@ private def setNoteStatus(statement: PreparedStatement, index: ParameterIndex, s
 private def setInstant(statement: PreparedStatement, index: ParameterIndex, instant: java.time.Instant): Unit =
   statement.setTimestamp(index, Timestamp.from(instant))
 
-private def readDemoNote(resultSet: ResultSet): DemoNote =
-  DemoNote(
-    id = NoteId(resultSet.getObject("id", classOf[java.util.UUID])),
-    title = NoteTitle(new DisplayText(resultSet.getString("title"))),
-    body = NoteBody(new NoteText(resultSet.getString("body"))),
-    status = noteStatusFromDatabaseUnsafe(new DisplayText(resultSet.getString("status"))),
-    createdAt = resultSet.getTimestamp("created_at").toInstant
+private def readDemoNote(resultSet: ResultSet): Either[IllegalStateException, DemoNote] =
+  noteStatusFromDatabase(new DisplayText(resultSet.getString("status")))
+    .left
+    .map(message => IllegalStateException(message.raw))
+    .map(status =>
+      DemoNote(
+        id = NoteId(resultSet.getObject("id", classOf[java.util.UUID])),
+        title = NoteTitle(new DisplayText(resultSet.getString("title"))),
+        body = NoteBody(new NoteText(resultSet.getString("body"))),
+        status = status,
+        createdAt = resultSet.getTimestamp("created_at").toInstant
+      )
   )

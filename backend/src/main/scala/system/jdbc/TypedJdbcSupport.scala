@@ -1,8 +1,9 @@
 package system.jdbc
 
-import domain.shared.given
+import system.objects.given
+import services.auth.objects.*
 
-import domain.shared.*
+import system.objects.*
 
 import java.sql.{PreparedStatement, ResultSet, Timestamp}
 import java.time.Instant
@@ -32,7 +33,7 @@ def readIsoDateTime(resultSet: ResultSet, column: ColumnName): IsoDateTime =
 def setUserRole(statement: PreparedStatement, index: ParameterIndex, role: UserRole): Unit =
   statement.setString(index.raw, UserRole.render(role).raw)
 
-def readUserRole(resultSet: ResultSet, column: ColumnName): UserRole =
+def readUserRole(resultSet: ResultSet, column: ColumnName): Either[IllegalStateException, UserRole] =
   UserRole
     .parse(readWrappedText[DisplayText](resultSet, column))
-    .getOrElse(throw IllegalStateException(s"Invalid UserRole in column ${column.raw}"))
+    .toRight(IllegalStateException(s"Invalid UserRole in column ${column.raw}"))

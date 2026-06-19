@@ -1,11 +1,12 @@
 package services.auth.routes
 
-import domain.shared.given
+// Business note: route adapter for a typed API message; delegate business decisions to service actions instead of embedding them here.
+import system.objects.given
 
 import cats.effect.IO
 import cats.syntax.semigroupk.*
-import domain.auth.AuthSession
-import domain.shared.ErrorMessage
+import services.auth.objects.AuthSession
+import system.objects.ErrorMessage
 import io.circe.syntax.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder.*

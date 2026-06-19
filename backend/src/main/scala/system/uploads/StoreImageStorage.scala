@@ -1,11 +1,11 @@
 package system.uploads
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
 import system.withTransactionConnection
-import domain.merchant.ImageUploadResponse
-import domain.shared.*
+import services.merchant.objects.apiTypes.ImageUploadResponse
+import system.objects.*
 
 import java.sql.{ResultSet, Timestamp}
 import java.time.Instant
@@ -33,7 +33,7 @@ private val gif89aSignature: Vector[Byte] = Vector(0x47.toByte, 0x49.toByte, 0x4
 private val webpHeaderSignature: Vector[Byte] = Vector(0x52.toByte, 0x49.toByte, 0x46.toByte, 0x46.toByte)
 private val webpFormatSignature: Vector[Byte] = Vector(0x57.toByte, 0x45.toByte, 0x42.toByte, 0x50.toByte)
 private val webpFormatOffset: EntityCount = UploadNumericDefaults.WebpFormatOffset
-private val noExtensionIndex: EntityCount = -1
+private val noExtensionIndex: EntityCount = new EntityCount(-1)
 
 final case class StoredStoreImage(
     filename: FileNameText,
@@ -189,7 +189,7 @@ private def extensionFromFilename(originalFilename: Option[FileNameText]): Optio
     }
 
 private def isAllowedExtension(extension: FileExtension): ApprovalFlag =
-  UploadDefaults.AllowedExtensions.contains(extension)
+  new ApprovalFlag(UploadDefaults.AllowedExtensions.contains(extension))
 
 private def isJpeg(bytes: Array[Byte]): ApprovalFlag =
   hasSignature(bytes, jpegSignature)
@@ -198,17 +198,19 @@ private def isPng(bytes: Array[Byte]): ApprovalFlag =
   hasSignature(bytes, pngSignature)
 
 private def isGif(bytes: Array[Byte]): ApprovalFlag =
-  hasSignature(bytes, gif87aSignature) || hasSignature(bytes, gif89aSignature)
+  new ApprovalFlag(hasSignature(bytes, gif87aSignature) || hasSignature(bytes, gif89aSignature))
 
 private def isWebp(bytes: Array[Byte]): ApprovalFlag =
-  hasSignature(bytes, webpHeaderSignature) && hasSignature(bytes, webpFormatSignature, webpFormatOffset)
+  new ApprovalFlag(hasSignature(bytes, webpHeaderSignature) && hasSignature(bytes, webpFormatSignature, webpFormatOffset))
 
 private def hasSignature(
     bytes: Array[Byte],
     signature: Vector[Byte],
     offset: EntityCount = NumericDefaults.ZeroCount,
 ): ApprovalFlag =
-  bytes.length >= offset + signature.length &&
-    signature.zipWithIndex.forall { case (expectedByte, signatureIndex) =>
-      bytes(offset + signatureIndex) == expectedByte
-    }
+  new ApprovalFlag(
+    bytes.length >= offset + signature.length &&
+      signature.zipWithIndex.forall { case (expectedByte, signatureIndex) =>
+        bytes(offset + signatureIndex) == expectedByte
+      }
+  )

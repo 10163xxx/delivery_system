@@ -1,4 +1,4 @@
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 import type { Latitude, Longitude, RawNumericValue, RawTextValue } from '@/objects/core/SharedObjects'
 import { asDomainNumber } from '@/pages/DeliveryConsole/functions/shared/DeliveryShared'
 import { toMapCoordinate } from '@/pages/DeliveryConsole/functions/map/DeliveryCoordinateSystem'
@@ -39,6 +39,56 @@ function deliveryCoordinate(latitude: RawNumericValue, longitude: RawNumericValu
   return {
     latitude: asDomainNumber<Latitude>(latitude),
     longitude: asDomainNumber<Longitude>(longitude),
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isNominatimGeocodeResult(value: unknown): value is NominatimGeocodeResult {
+  if (!isRecord(value)) return false
+  return (
+    (typeof value['lat'] === 'string' || value['lat'] === undefined) &&
+    (typeof value['lon'] === 'string' || value['lon'] === undefined)
+  )
+}
+
+function decodeNominatimGeocodeResults(value: unknown): NominatimGeocodeResult[] {
+  return Array.isArray(value) ? value.filter(isNominatimGeocodeResult) : []
+}
+
+function isPhotonFeature(value: unknown): value is PhotonFeature {
+  if (!isRecord(value)) return false
+  const geometry = value['geometry']
+  if (!isRecord(geometry)) return false
+  const coordinates = geometry['coordinates']
+  return (
+    Array.isArray(coordinates) &&
+    coordinates.length >= 2 &&
+    typeof coordinates[0] === 'number' &&
+    typeof coordinates[1] === 'number'
+  )
+}
+
+function decodePhotonGeocodeResult(value: unknown): PhotonGeocodeResult {
+  if (!isRecord(value)) return {}
+  const features = value['features']
+  return {
+    features: Array.isArray(features) ? features.filter(isPhotonFeature) : [],
+  }
+}
+
+function isAmapGeocodeEntry(value: unknown): value is { location?: RawTextValue } {
+  return isRecord(value) && (typeof value['location'] === 'string' || value['location'] === undefined)
+}
+
+function decodeAmapGeocodeResult(value: unknown): AmapGeocodeResult {
+  if (!isRecord(value)) return {}
+  const geocodes = value['geocodes']
+  return {
+    status: typeof value['status'] === 'string' ? value['status'] : undefined,
+    geocodes: Array.isArray(geocodes) ? geocodes.filter(isAmapGeocodeEntry) : [],
   }
 }
 
@@ -111,7 +161,7 @@ function parseAmapCoordinate(location: RawTextValue | undefined): DeliveryCoordi
 export async function fetchNominatimCoordinate(query: RawTextValue, signal: AbortSignal) {
   const response = await fetch(buildNominatimGeocodeUrl(query), { signal })
   if (!response.ok) return null
-  const results = (await response.json()) as NominatimGeocodeResult[]
+  const results = decodeNominatimGeocodeResults(await response.json())
   return results.map(parseNominatimCoordinate).find(Boolean) ?? null
 }
 
@@ -119,7 +169,7 @@ export async function fetchAmapCoordinate(query: RawTextValue, signal: AbortSign
   if (!amapWebServiceKey) return null
   const response = await fetch(buildAmapGeocodeUrl(query, amapWebServiceKey), { signal })
   if (!response.ok) return null
-  const result = (await response.json()) as AmapGeocodeResult
+  const result = decodeAmapGeocodeResult(await response.json())
   if (result.status !== AMAP_SUCCESS_STATUS) return null
   const coordinate = parseAmapCoordinate(result.geocodes?.[0]?.location)
   return coordinate ? toMapCoordinate(coordinate, 'gcj02') : null
@@ -130,6 +180,6 @@ export async function fetchAmapCoordinate(query: RawTextValue, signal: AbortSign
 export async function fetchPhotonCoordinate(query: RawTextValue, signal: AbortSignal) {
   const response = await fetch(buildPhotonGeocodeUrl(query), { signal })
   if (!response.ok) return null
-  const result = (await response.json()) as PhotonGeocodeResult
+  const result = decodePhotonGeocodeResult(await response.json())
   return result.features?.map(parsePhotonCoordinate).find(Boolean) ?? null
 }

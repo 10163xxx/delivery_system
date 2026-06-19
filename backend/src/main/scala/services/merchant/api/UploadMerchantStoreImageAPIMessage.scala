@@ -1,9 +1,10 @@
 package services.merchant.api
 
-import domain.shared.given
+// Business note: typed HTTP contract for this service operation; keep the matching frontend API client aligned by operation name.
+import system.objects.given
 
-import domain.merchant.ImageUploadResponse
-import domain.shared.{FileNameText, MediaTypeText, UploadDefaults}
+import services.merchant.objects.apiTypes.ImageUploadResponse
+import system.objects.{FileNameText, MediaTypeText, UploadDefaults}
 import system.api.*
 
 val uploadMerchantStoreImageApi: FixedMethodApi[NoPathParams, ImageUploadResponse] =

@@ -1,9 +1,9 @@
 package system.api.planner
 
-import domain.shared.given
+import system.objects.given
 
-import domain.shared.{DemoNote, PlannerName, SaveDemoNoteRequest}
 import system.api.*
+import system.app.planner.objects.{DemoNote, PlannerName, SaveDemoNoteRequest}
 
 val saveDemoNotePlannerApi: FixedMethodApi[PathParam[PlannerName], DemoNote] =
   jsonPostApi[PlannerName, SaveDemoNoteRequest, DemoNote](

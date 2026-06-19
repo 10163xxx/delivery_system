@@ -1,8 +1,8 @@
 package system.objects
 
-import domain.shared.given
+import system.objects.given
 
-import domain.shared.*
+import system.objects.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 

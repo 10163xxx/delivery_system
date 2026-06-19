@@ -1,9 +1,9 @@
 package system.api.health
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
-import domain.shared.*
+import system.objects.*
 import io.circe.syntax.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder.*

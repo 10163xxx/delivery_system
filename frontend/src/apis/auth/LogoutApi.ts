@@ -1,4 +1,4 @@
-import { decodeVoid } from '@/system/api/ResponseDecoders'
+// Business note: frontend API client for the matching backend APIMessage; keep operation names and payload DTOs aligned.
 import { postWithoutBody } from '@/system/api/SharedHttpClient'
 import { defineJsonPostApi0, routeSegment } from '@/system/api/TypedApiDefinitions'
 
@@ -9,5 +9,5 @@ export const logoutApiDefinition = defineJsonPostApi0<void, void>([
 ])
 
 export function logout() {
-  return postWithoutBody(logoutApiDefinition, decodeVoid)
+  return postWithoutBody(logoutApiDefinition)
 }

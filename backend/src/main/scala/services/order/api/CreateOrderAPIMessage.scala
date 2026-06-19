@@ -1,9 +1,10 @@
 package services.order.api
 
-import domain.shared.given
+// Business note: typed HTTP contract for this service operation; keep the matching frontend API client aligned by operation name.
+import system.objects.given
 
-import domain.order.CreateOrderRequest
-import domain.shared.{DeliveryAppState}
+import services.order.objects.apiTypes.CreateOrderRequest
+import system.app.objects.{DeliveryAppState}
 import system.api.*
 
 val createOrderApi: FixedMethodApi[NoPathParams, DeliveryAppState] =

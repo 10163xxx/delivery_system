@@ -1,7 +1,8 @@
 package services.auth.utils
 
-import domain.shared.Password
-import domain.shared.PasswordHash
+// Business note: service business action/support code; keep validation and state transitions explicit and side effects in IO.
+import services.auth.objects.Password
+import services.auth.objects.PasswordHash
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest

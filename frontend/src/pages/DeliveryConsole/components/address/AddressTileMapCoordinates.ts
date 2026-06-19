@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { geocodeDeliveryAddress } from '@/pages/DeliveryConsole/functions/map/DeliveryGeocoding'
 import { sameCoordinate } from '@/pages/DeliveryConsole/components/address/AddressTileMapGeometry'
-import type { DeliveryCoordinate } from '@/objects/domain/DeliveryCoordinate'
+import type { DeliveryCoordinate } from '@/objects/system/valueTypes/DeliveryCoordinate'
 import type { AddressTileMapCoordinateParams } from '@/pages/DeliveryConsole/components/address/AddressTileMapTypes'
 
 export function useAddressTileMapCoordinates(params: AddressTileMapCoordinateParams) {

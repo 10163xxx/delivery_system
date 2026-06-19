@@ -1,9 +1,9 @@
 package system
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.{IO, Resource}
-import domain.shared.DatabaseRuntimeDefaults
+import system.objects.DatabaseRuntimeDefaults
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
@@ -11,16 +11,16 @@ import java.sql.Connection
 import java.util.concurrent.atomic.AtomicReference
 
 private val databaseSessionLogger = Slf4jLogger.getLogger[IO]
-private val databaseSessionConfig = defaultDatabaseConfig
 private val databaseDataSourceRef = AtomicReference[Option[HikariDataSource]](None)
 
 def initializeDatabaseSession: Resource[IO, Unit] =
   for
-    dataSource <- Resource.make(createDatabaseDataSource)(closeDatabaseDataSource)
+    databaseSessionConfig <- Resource.eval(loadDefaultDatabaseConfig)
+    dataSource <- Resource.make(createDatabaseDataSource(databaseSessionConfig))(closeDatabaseDataSource)
     _ <- Resource.make(registerDatabaseDataSource(dataSource))(_ => clearDatabaseDataSourceRegistration)
   yield ()
 
-private def createDatabaseDataSource: IO[HikariDataSource] =
+private def createDatabaseDataSource(databaseSessionConfig: DatabaseConfig): IO[HikariDataSource] =
   IO.blocking {
     Class.forName(DatabaseRuntimeDefaults.DriverClassName.raw)
     val hikariConfig = HikariConfig()

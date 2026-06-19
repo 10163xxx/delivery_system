@@ -1,12 +1,15 @@
 package services.merchant.routes
 
+// Business note: route adapter for a typed API message; delegate business decisions to service actions instead of embedding them here.
 import services.merchant.api.*
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
-import domain.merchant.UpdateStoreOperationalRequest
-import domain.shared.{DeliveryAppState, StoreId, UserRole}
+import services.merchant.objects.apiTypes.UpdateStoreOperationalRequest
+import system.app.objects.{DeliveryAppState}
+import services.auth.objects.{UserRole}
+import services.merchant.objects.{StoreId}
 import services.merchant.utils.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*

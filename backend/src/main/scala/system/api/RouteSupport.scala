@@ -1,13 +1,15 @@
 package system.api
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
 import services.auth.utils.getSession
 import io.circe.syntax.*
-import domain.auth.AuthAccount
-import domain.merchant.ImageUploadResponse
-import domain.shared.{DeliveryAppState, ErrorMessage, HttpHeaders, SessionToken, UserRole}
+import services.auth.objects.AuthAccount
+import services.merchant.objects.apiTypes.ImageUploadResponse
+import system.objects.{ErrorMessage, HttpHeaders}
+import system.app.objects.{DeliveryAppState}
+import services.auth.objects.{SessionToken, UserRole}
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
@@ -45,4 +47,4 @@ def unauthorized(message: ErrorMessage): IO[Response[IO]] =
   IO.pure(Response[IO](status = Status.Unauthorized).withEntity(message))
 
 def readToken(req: Request[IO]): Option[SessionToken] =
-  req.headers.get(HttpHeaders.SessionToken).map(_.head.value)
+  req.headers.get(HttpHeaders.SessionToken).map(header => new SessionToken(header.head.value))

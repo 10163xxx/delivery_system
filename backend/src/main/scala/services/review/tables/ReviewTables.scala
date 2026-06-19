@@ -1,14 +1,17 @@
 package services.review.tables
 
+// Business note: database boundary for this service; keep JDBC row mapping separate from protocol DTOs and action logic.
 import cats.effect.IO
-import domain.review.{EligibilityReview, PersistedReviewState, ReviewAppeal}
+import services.review.objects.{EligibilityReview, PersistedReviewState, ReviewAppeal}
+import services.review.tables.eligibilityreviews.*
+import services.review.tables.reviewappeals.*
 
 import java.sql.{Connection, Timestamp}
 
 def initializeReviewTables(connection: Connection): IO[Unit] =
   List(
-    initializeDeliveryReviewAppealsTable(connection),
-    initializeDeliveryEligibilityReviewsTable(connection),
+    initializeReviewAppealTable(connection),
+    initializeEligibilityReviewTable(connection),
   ).foldLeft(IO.unit)(_ *> _)
 
 def loadPersistedReviewState(connection: Connection): IO[PersistedReviewState] =

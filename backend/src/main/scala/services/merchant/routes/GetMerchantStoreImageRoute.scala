@@ -1,11 +1,12 @@
 package services.merchant.routes
 
+// Business note: route adapter for a typed API message; delegate business decisions to service actions instead of embedding them here.
 import services.merchant.api.*
 
-import domain.shared.given
+import system.objects.given
 
 import cats.effect.IO
-import domain.shared.FileNameText
+import system.objects.FileNameText
 import services.merchant.utils.findMerchantStoreImage
 import org.http4s.HttpRoutes
 import org.http4s.MediaType
